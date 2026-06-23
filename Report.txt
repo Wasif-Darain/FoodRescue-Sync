@@ -1,157 +1,61 @@
-## Tech Stack Review FoodRescue Sync
-
-Your proposed tech stack is modern, robust, and highly practical for an SDP-II (Software Development Project) MVP. Here is a quick breakdown of why it works and one minor detail to keep in mind
-
- 
-Flutter & Riverpod Excellent choice. Flutter is the industry standard for cross-platform development (building for iOS and Android simultaneously), saving you double the development time. Riverpod is a modern, compile-safe state management solution that avoids the nesting headaches of older alternatives.
-
-
- 
-Firebase Highly efficient for rapid prototyping. It eliminates the need to build and maintain a custom Node.jsPython backend from scratch.
-
-
- 💡 A minor technical note You listed Firebase as a Local Database. Firebase is actually a Cloud Backend-as-a-Service (BaaS). While it does support offline data persistence, if you need a dedicated, lightweight on-device local database to pair with it, look into Isar or Hive for Flutter.
- 
- 
-
-
- 
-TensorFlow Lite & Google Maps API Perfect fits. TF Lite handles on-device machine learning efficiently (e.g., predicting food expiration patterns), and Google Maps is essential for your Surplus Radar real-time tracking.
-
-
+💡 **Quick Tech Note:** Firebase is actually a Cloud Backend (BaaS), not a local database. It *does* save data offline, but if your course requires a dedicated on-device local DB for Flutter, look into **Isar** or **Hive** to pair with it!
 
 ---
 
-## How to Prepare Your Project Report
+📋 **HOW TO PREPARE OUR PROJECT REPORT**
+Here is how we need to translate our proposal into the final report structure.
 
-Here is a concise guide on how to translate your project proposal into the finalized report structure required by your course.
+### 1️⃣ Front Page
 
-### 1. Front Page
+* **How to prepare:** Use the uni template.
+* **Title:** FoodRescue Sync
+* **1-Line Description:** *A real-time, rapid-response circular logistics platform connecting commercial food donors with NGOs and consumers to eliminate food waste.*
 
- How to findprepare Use your university template to fill in the standard metadata (Course Code, Name, Group Number, and Member Names).
- 
-Project Title & Description Use your title, FoodRescue Sync. For the 1-line description, synthesize your core goal A real-time, rapid-response circular logistics platform connecting commercial food donors with NGOs and consumers to eliminate food waste. 
+### 2️⃣ Problem Statement & Objectives
 
+* **How to prepare:** Copy from our proposal, but condense it.
+* **Core Issues:** Commercial food waste, landfill emissions, and urban food insecurity.
+* **3 Objectives:** Build the circular supply chain, create revenue recovery for businesses, and combat poverty-driven food insecurity.
 
+### 3️⃣ Finalized Features (By User Persona)
 
-### 2. Problem Statement & Project Objectives
+* **Donors:** Inventory Management, Expiry Tracking, Flash Sales, Donation Logging.
+* **NGOs:** Surplus Radar, Bulk Claiming.
+* **Consumers:** Discount Marketplace, Custom Alerts.
 
- How to findprepare Move these directly from your proposal into the report.
- Condense the Problem Statement to highlight the core issues commercial food waste from poor tracking, landfill emissions, and urban food insecurity.
+### 4️⃣ ER (Entity-Relationship) Diagram
 
+* **How to prepare:** Draw a diagram showing how these Firebase collections connect:
+* **User Entity:** UserID, Role (Donor/NGO/Consumer), Location, Contact Info.
+* **FoodItem Entity:** ItemID, DonorID, Name, ExpiryDate, Status (Available/Claimed/Sold).
+* **TransactionClaim Entity:** TransactionID, ItemID, BuyerClaimerID, Timestamp, Type (Donation vs. Sale).
 
- List your three Objectives exactly as defined building the circular supply chain, creating revenue recovery for businesses, and combating poverty-driven food insecurity.
+### 5️⃣ Tentative UI Pages (Mobile Screens)
 
+* **Auth Screen:** Sign up/Login + role selection.
+* **Donor Dashboard:** Scan items, track expiry, list surplus.
+* **Surplus Radar (Map):** Real-time local map pinpointing available food for NGOs/Consumers.
+* **Discount Marketplace:** Consumers browse/buy near-expiry meals cheap.
+* **Donation Ledger:** Donors view automated tax logs & download receipts.
 
+### 6️⃣ Tentative APIs (Firebase Triggers/Rest Format)
 
-### 3. Finalized Features
+* `POST /auth/register` – Registers a new user with a specific role.
+* `POST /inventory/add` – Donors upload food via manual input or barcode.
+* `GET /food/surplus-nearby` – Fetches food listings based on GPS coordinates.
+* `PUT /food/claim/{id}` – Reserves bulk food for an NGO / updates status.
+* `GET /donations/receipts` – Generates tax-deductible logs for donor businesses.
 
- 
-How to findprepare Take the features listed on Page 5 and group them by user persona to show structural planning
+### 7️⃣ App Review (Competitor Analysis)
 
+*Each of us needs to test one app and drop findings into a simple chart:*
 
- 
-For Donors Inventory Management, Expiry Tracking, Flash Sales, and Donation Logging.
+* **Too Good To Go:** Great for consumer surplus bags, but lacks direct NGO donations or B2B bulk features.
+* **Olio:** Great for peer-to-peer sharing, but relies too much on manual listings and lacks smart expiry tracking.
+* **Food Rescue US:** Great for volunteer delivery routing, but lacks a consumer marketplace or business revenue recovery.
 
+### 8️⃣ Contribution Table
 
- 
-For NGOs Surplus Radar and Bulk Claiming.
-
-
- 
-For Consumers Discount Marketplace and Custom Alerts.
-
-
-
-
-
-### 4. ER (Entity-Relationship) Diagram
-
- How to prepare Map out the database tables (Collections in Firebase) implied by your features. You will need to draw a diagram showing how these entities relate to one another
- `User Entity` Fields like `UserID`, `Role` (Donor, NGO, Consumer), `Location`, `Contact Info`.
- 
-`FoodItem Entity` Fields like `ItemID`, `DonorID`, `Name`, `ExpiryDate`, `Status` (Available, Claimed, Sold).
-
-
- 
-`TransactionClaim Entity` Fields like `TransactionID`, `ItemID`, `BuyerClaimerID`, `Timestamp`, `Type` (Donation vs. Sale).
-
-
-
-
-
-### 5. Tentative UI Pages
-
- How to prepare Create a clean list mapping your user journey to specific mobile screens. Keep descriptions to a single line
- Auth Screen Users can sign up or log in and select their role (Donor, NGO, or Consumer).
- 
-Donor Dashboard Food businesses can scan items, track upcoming expirations, and list surplus food.
-
-
- 
-Surplus Radar (Map View) NGOs and consumers can view real-time local maps pinpointing available food.
-
-
- 
-Discount Marketplace Consumers can browse and purchase near-expiry meals at discounted rates.
-
-
- 
-Donation Ledger Donors can view automated tax logs and download generated receipts.
-
-
-
-
-
-### 6. Tentative APIs
-
- How to prepare Since you are using Firebase, these APIs represent your cloud functions or database fetch triggers. Write them in a standard REST format for clarity
- `POST authregister` – Registers a new user with a specific role (DonorNGOConsumer).
- 
-`POST inventoryadd` – Allows donors to upload a food item via manual input or barcode scan.
-
-
- 
-`GET foodsurplus-nearby` – Fetches available food listings based on the user's geographic coordinates.
-
-
- 
-`PUT foodclaim{id}` – Reserves a bulk food listing for an NGO or updates an item's status to claimed.
-
-
- 
-`GET donationsreceipts` – Generates and retrieves tax-deductible logs for a specific donor business.
-
-
-
-
-
-### 7. App Review (Competitor Analysis Table)
-
- How to prepare Have each team member download and test one existing market competitor (e.g., Too Good To Go, Olio, or Food Rescue US). Aggregate their findings into a structured comparison table
-
- Member Name  App Reviewed  Core Features  Limitations 
- ---  ---  ---  --- 
- Member 1  Too Good To Go  Surplus bags from local stores; consumer marketplace; payment integration.  No direct donation channel for NGOs; limited B2B bulk clearing features. 
- Member 2  Olio  Peer-to-peer free food sharing; hyper-local community focus.  Relies heavily on manual listings; lacks algorithmic expiry trackingpredictive logic. 
- Member 3  Food Rescue US  Volunteer-driven transfer logs; direct NGO delivery routing.  No consumer marketplace or revenue recovery stream for businesses. 
-
-### 8. Contribution Table
-
- How to prepare Construct a grid showing clear division of labor across the project components. This prevents overlapping workloads and clarifies accountability
-
- Group Member Name  Project Role  Assigned Modules  Report Documentation Deliverables 
- ---  ---  --- 
- Member A  Flutter UI Lead (Marketplace & Radar UI) 
-
-  Tentative UI Pages & App Review 
- Member B  Firebase Backend & DB Architecture 
-
-  ER Diagram & Tentative API Design 
- Member C  ML Integration (TF Lite Expiry Core) 
-
-  Problem Statement, Objectives & Formatting 
-
----
-
-Which specific competitor apps are you planning to assign your group members for the App Review section
+* **Member A (UI Lead):** Handles Marketplace & Radar UI + does UI Pages & App Review docs.
+* **Member B (Backend/DB Lead):** Handles Firebase & DB Architecture + does ER Diagram & API Design docs.
+* **Member C (ML/Expiry Lead):** Handles TF Lite Expiry Core + does Problem Statement, Objectives, & Formatting docs.
