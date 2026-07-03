@@ -19,9 +19,11 @@ class PickupCoordination extends StatelessWidget {
           Row(children: [
             for (final s in [PickupStatus.scheduled, PickupStatus.enRoute, PickupStatus.completed]) ...[
               if (s != PickupStatus.scheduled) const SizedBox(width: 12),
-              Expanded(child: _PickupStat(
-                status: s,
-                count: mockPickups.where((p) => p.status == s).length,
+              Expanded(child: _HoverScale(
+                child: _PickupStat(
+                  status: s,
+                  count: mockPickups.where((p) => p.status == s).length,
+                ),
               )),
             ],
           ]),
@@ -30,7 +32,7 @@ class PickupCoordination extends StatelessWidget {
           const SizedBox(height: 12),
           ...mockPickups.map((p) => Padding(
             padding: const EdgeInsets.only(bottom: 14),
-            child: _PickupCard(pickup: p),
+            child: _HoverScale(child: _PickupCard(pickup: p)),
           )),
         ],
       ),
@@ -117,4 +119,35 @@ class _InfoRow extends StatelessWidget {
     const SizedBox(width: 6),
     Expanded(child: Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))),
   ]);
+}
+
+class _HoverScale extends StatefulWidget {
+  final Widget child;
+  const _HoverScale({required this.child});
+
+  @override
+  State<_HoverScale> createState() => _HoverScaleState();
+}
+
+class _HoverScaleState extends State<_HoverScale> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 180),
+          scale: (_hovered || _pressed) ? 1.02 : 1.0,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
 }

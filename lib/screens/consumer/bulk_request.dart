@@ -24,88 +24,98 @@ class _BulkRequestState extends State<BulkRequest> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Organization Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827))),
-                const SizedBox(height: 16),
-                const _FormField(label: 'Organization Name', placeholder: 'Your NGO or food bank name'),
-                const SizedBox(height: 12),
-                Row(children: const [
-                  Expanded(child: _FormField(label: 'Contact Person', placeholder: 'Full name')),
-                  SizedBox(width: 12),
-                  Expanded(child: _FormField(label: 'Phone', placeholder: '+880 XXXX XXXXXX', keyboardType: TextInputType.phone)),
-                ]),
-                const SizedBox(height: 12),
-                const _FormField(label: 'Delivery / Pickup Address', placeholder: 'Full address'),
-                const SizedBox(height: 12),
-                Row(children: const [
-                  Expanded(child: _FormField(label: 'Required Date', placeholder: 'YYYY-MM-DD')),
-                  SizedBox(width: 12),
-                  Expanded(child: _FormField(label: 'People to Feed', placeholder: '0', keyboardType: TextInputType.number)),
-                ]),
-              ]),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  const Text('Food Items', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827))),
-                  TextButton.icon(
-                    onPressed: () => setState(() => _items.add(_RequestItem())),
-                    icon: const Icon(Icons.add, size: 14),
-                    label: const Text('Add Item', style: TextStyle(fontSize: 12)),
-                  ),
-                ]),
-                const SizedBox(height: 12),
-                ..._items.asMap().entries.map((e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(children: [
-                    Expanded(flex: 3, child: const _FormField(label: '', placeholder: 'Food item name')),
-                    const SizedBox(width: 10),
-                    Expanded(child: const _FormField(label: '', placeholder: 'Qty', keyboardType: TextInputType.number)),
-                    const SizedBox(width: 10),
-                    Expanded(child: const _FormField(label: '', placeholder: 'Unit (kg/pcs)')),
-                    if (_items.length > 1) ...[
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: () => setState(() => _items.removeAt(e.key)),
-                        icon: const Icon(Icons.remove_circle_outline, color: Color(0xFFEF4444), size: 18),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
+            _HoverScale(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('Organization Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827))),
+                  const SizedBox(height: 16),
+                  const _FormField(label: 'Organization Name', placeholder: 'Your NGO or food bank name'),
+                  const SizedBox(height: 12),
+                  Row(children: const [
+                    Expanded(child: _FormField(label: 'Contact Person', placeholder: 'Full name')),
+                    SizedBox(width: 12),
+                    Expanded(child: _FormField(label: 'Phone', placeholder: '+880 XXXX XXXXXX', keyboardType: TextInputType.phone)),
                   ]),
-                )),
-              ]),
+                  const SizedBox(height: 12),
+                  const _FormField(label: 'Delivery / Pickup Address', placeholder: 'Full address'),
+                  const SizedBox(height: 12),
+                  Row(children: const [
+                    Expanded(child: _FormField(label: 'Required Date', placeholder: 'YYYY-MM-DD')),
+                    SizedBox(width: 12),
+                    Expanded(child: _FormField(label: 'People to Feed', placeholder: '0', keyboardType: TextInputType.number)),
+                  ]),
+                ]),
+              ),
             ),
             const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
-              child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Additional Notes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827))),
-                SizedBox(height: 12),
-                _FormField(label: '', placeholder: 'Any dietary restrictions, special requirements, or notes...', maxLines: 4),
-              ]),
+            _HoverScale(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    const Text('Food Items', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827))),
+                    _HoverScale(
+                      child: TextButton.icon(
+                        onPressed: () => setState(() => _items.add(_RequestItem())),
+                        icon: const Icon(Icons.add, size: 14),
+                        label: const Text('Add Item', style: TextStyle(fontSize: 12)),
+                      ),
+                    ),
+                  ]),
+                  const SizedBox(height: 12),
+                  ..._items.asMap().entries.map((e) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(children: [
+                      Expanded(flex: 3, child: const _FormField(label: '', placeholder: 'Food item name')),
+                      const SizedBox(width: 10),
+                      Expanded(child: const _FormField(label: '', placeholder: 'Qty', keyboardType: TextInputType.number)),
+                      const SizedBox(width: 10),
+                      Expanded(child: const _FormField(label: '', placeholder: 'Unit (kg/pcs)')),
+                      if (_items.length > 1) ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () => setState(() => _items.removeAt(e.key)),
+                          icon: const Icon(Icons.remove_circle_outline, color: Color(0xFFEF4444), size: 18),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ]),
+                  )),
+                ]),
+              ),
+            ),
+            const SizedBox(height: 20),
+            _HoverScale(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+                child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Additional Notes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827))),
+                  SizedBox(height: 12),
+                  _FormField(label: '', placeholder: 'Any dietary restrictions, special requirements, or notes...', maxLines: 4),
+                ]),
+              ),
             ),
             const SizedBox(height: 24),
             Row(children: [
-              AppButton(label: 'Cancel', outlined: true, onPressed: () => context.go('/consumer')),
+              _HoverScale(child: AppButton(label: 'Cancel', outlined: true, onPressed: () => context.go('/consumer'))),
               const SizedBox(width: 12),
-              AppButton(
-                label: 'Submit Request',
-                icon: const Icon(Icons.send, size: 16),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Bulk request submitted successfully!'),
-                    backgroundColor: Color(0xFF16A34A),
-                  ));
-                  context.go('/consumer/requests');
-                },
+              _HoverScale(
+                child: AppButton(
+                  label: 'Submit Request',
+                  icon: const Icon(Icons.send, size: 16),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Bulk request submitted successfully!'),
+                      backgroundColor: Color(0xFF16A34A),
+                    ));
+                    context.go('/consumer/requests');
+                  },
+                ),
               ),
             ]),
           ],
@@ -147,4 +157,35 @@ class _FormField extends StatelessWidget {
       ),
     ],
   );
+}
+
+class _HoverScale extends StatefulWidget {
+  final Widget child;
+  const _HoverScale({required this.child});
+
+  @override
+  State<_HoverScale> createState() => _HoverScaleState();
+}
+
+class _HoverScaleState extends State<_HoverScale> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 180),
+          scale: (_hovered || _pressed) ? 1.02 : 1.0,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
 }
