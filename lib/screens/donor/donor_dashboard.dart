@@ -182,9 +182,9 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: const Color(0xFF141416),
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: const Color(0xFFF3F4F6)),
+      border: Border.all(color: const Color(0xFF262626)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,7 +197,7 @@ class _SectionCard extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: titleColor ?? const Color(0xFF111827),
+                color: titleColor ?? const Color(0xFFF5F5F5),
               ),
             ),
             ?action,
@@ -314,7 +314,7 @@ class _QuickAction extends StatelessWidget {
     trailing: const Icon(
       Icons.arrow_forward_ios,
       size: 12,
-      color: Color(0xFFD1D5DB),
+      color: Color(0xFF3F3F46),
     ),
     dense: true,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -353,7 +353,7 @@ class _DonationRow extends StatelessWidget {
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
+            color: Color(0xFFB0B3B8),
           ),
         ),
       ],

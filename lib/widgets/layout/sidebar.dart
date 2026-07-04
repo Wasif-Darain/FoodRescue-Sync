@@ -54,32 +54,28 @@ class Sidebar extends StatelessWidget {
     final isDonor = user.mode == UserMode.donor;
     final navItems = isDonor ? _donorNav : _consumerNav;
     final accent = isDonor ? const Color(0xFF16A34A) : const Color(0xFFEA580C);
-    final accentBg = isDonor ? const Color(0xFFDCFCE7) : const Color(0xFFFFF7ED);
+    final accentBg = isDonor ? const Color(0xFF14301F) : const Color(0xFF2A1B0D);
 
     return Container(
       width: 240,
       decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(right: BorderSide(color: Color(0xFFF3F4F6))),
+        color: Color(0xFF141416),
+        border: Border(right: BorderSide(color: Color(0xFF262626))),
       ),
       child: Column(
         children: [
           // Logo
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6)))),
+            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF262626)))),
             child: Row(
               children: [
-                Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(color: const Color(0xFF16A34A), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.eco, color: Colors.white, size: 18),
-                ),
+                Image.asset('assets/images/logo.png', width: 36, height: 36),
                 const SizedBox(width: 10),
                 const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('FoodRescue', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827))),
+                    Text('FoodRescue', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFF5F5F5))),
                     Text('Sync', style: TextStyle(color: Color(0xFF16A34A), fontSize: 11, fontWeight: FontWeight.w600)),
                   ],
                 ),
@@ -89,22 +85,22 @@ class Sidebar extends StatelessWidget {
           // User + mode toggle
           Container(
             padding: const EdgeInsets.all(14),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6)))),
+            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF262626)))),
             child: Column(
               children: [
                 Row(
                   children: [
                     Container(
                       width: 36, height: 36,
-                      decoration: BoxDecoration(color: const Color(0xFFDCFCE7), shape: BoxShape.circle),
-                      child: Center(child: Text(user.name[0], style: const TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold))),
+                      decoration: BoxDecoration(color: const Color(0xFF14301F), shape: BoxShape.circle),
+                      child: Center(child: Text(user.name[0], style: const TextStyle(color: Color(0xFF4ADE80), fontWeight: FontWeight.bold))),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(user.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF111827)), overflow: TextOverflow.ellipsis),
+                          Text(user.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFFF5F5F5)), overflow: TextOverflow.ellipsis),
                           Text(_accountTypeLabel[user.accountType] ?? '', style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
                         ],
                       ),
@@ -119,7 +115,8 @@ class Sidebar extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: accentBg,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: accent.withValues(alpha: 0.3)),
+                      border: Border.all(color: accent.withValues(alpha: 0.55)),
+                      boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.35), blurRadius: 12, spreadRadius: 0.5)],
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -143,12 +140,12 @@ class Sidebar extends StatelessWidget {
                 children: [
                   ...navItems.map((item) => _NavTile(item: item, current: currentRoute, accent: accent, accentBg: accentBg, isDonor: isDonor)),
                   const SizedBox(height: 12),
-                  Container(height: 1, color: const Color(0xFFF3F4F6), margin: const EdgeInsets.symmetric(vertical: 4)),
+                  Container(height: 1, color: const Color(0xFF262626), margin: const EdgeInsets.symmetric(vertical: 4)),
                   ..._sharedBottom.map((item) => _NavTile(
                     item: item,
                     current: currentRoute,
                     accent: const Color(0xFF16A34A),
-                    accentBg: const Color(0xFFDCFCE7),
+                    accentBg: const Color(0xFF14301F),
                     isDonor: true,
                     badge: item.route == '/notifications' ? 3 : null,
                   )),
@@ -159,7 +156,7 @@ class Sidebar extends StatelessWidget {
           // Logout
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFF3F4F6)))),
+            decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF262626)))),
             child: ListTile(
               onTap: () {
                 auth.logout();
@@ -169,7 +166,8 @@ class Sidebar extends StatelessWidget {
               title: const Text('Logout', style: TextStyle(color: Color(0xFFEF4444), fontSize: 13, fontWeight: FontWeight.w500)),
               dense: true,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              hoverColor: const Color(0xFFFEF2F2),
+              tileColor: Colors.transparent,
+              hoverColor: const Color(0xFF2A1414),
             ),
           ),
         ],
@@ -196,17 +194,20 @@ class _NavTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: isActive ? accentBg : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
+        border: isActive ? Border.all(color: accent.withValues(alpha: 0.4)) : null,
+        boxShadow: isActive ? [BoxShadow(color: accent.withValues(alpha: 0.3), blurRadius: 10, spreadRadius: 0.5)] : null,
       ),
       child: ListTile(
         onTap: () => context.go(item.route),
-        leading: Icon(item.icon, size: 18, color: isActive ? accent : const Color(0xFF6B7280)),
-        title: Text(item.label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isActive ? accent : const Color(0xFF374151))),
+        leading: Icon(item.icon, size: 18, color: isActive ? accent : const Color(0xFF9CA3AF)),
+        title: Text(item.label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isActive ? accent : const Color(0xFFB0B3B8))),
         trailing: badge != null ? Container(
           width: 18, height: 18,
           decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle),
           child: Center(child: Text('$badge', style: const TextStyle(color: Colors.white, fontSize: 10))),
         ) : null,
         dense: true,
+        tileColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );

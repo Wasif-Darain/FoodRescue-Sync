@@ -26,19 +26,20 @@ class StatCard extends StatelessWidget {
       _        => const Color(0xFF6B7280),
     };
     final bg = switch (color) {
-      'green'  => const Color(0xFFDCFCE7),
-      'orange' => const Color(0xFFFFF7ED),
-      'red'    => const Color(0xFFFEE2E2),
-      'blue'   => const Color(0xFFDBEAFE),
-      _        => const Color(0xFFF3F4F6),
+      'green'  => const Color(0xFF14301F),
+      'orange' => const Color(0xFF2A1B0D),
+      'red'    => const Color(0xFF3A1919),
+      'blue'   => const Color(0xFF11223A),
+      _        => const Color(0xFF262626),
     };
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF141416),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
+        border: Border.all(color: c.withValues(alpha: 0.5)),
+        boxShadow: [BoxShadow(color: c.withValues(alpha: 0.3), blurRadius: 14, spreadRadius: 0.5)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,9 +50,9 @@ class StatCard extends StatelessWidget {
             child: Center(child: IconTheme(data: IconThemeData(color: c, size: 18), child: icon)),
           ),
           const SizedBox(height: 10),
-          Text('$value', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
+          Text('$value', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFF5F5F5))),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+          Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
           if (subtitle != null) ...[
             const SizedBox(height: 2),
             Text(subtitle!, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),

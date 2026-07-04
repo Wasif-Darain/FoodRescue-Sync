@@ -26,7 +26,7 @@ class _CreateListingState extends State<CreateListing> {
         constraints: const BoxConstraints(maxWidth: 700),
         child: Container(
           padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFF3F4F6))),
+          decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF262626))),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -52,14 +52,14 @@ class _CreateListingState extends State<CreateListing> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        border: Border.all(color: const Color(0xFF2E2E32)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: DropdownButton<String>(
                         value: _category,
                         isExpanded: true,
                         underline: const SizedBox(),
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF374151)),
+                        style: const TextStyle(fontSize: 13, color: Color(0xFFB0B3B8)),
                         items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                         onChanged: (v) => setState(() => _category = v ?? _category),
                       ),
@@ -122,16 +122,16 @@ class _TypeToggle extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? color.withValues(alpha: 0.08) : const Color(0xFFF9FAFB),
+            color: isSelected ? color.withValues(alpha: 0.08) : const Color(0xFF0A0A0A),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: isSelected ? color : const Color(0xFFE5E7EB), width: isSelected ? 2 : 1),
+            border: Border.all(color: isSelected ? color : const Color(0xFF2E2E32), width: isSelected ? 2 : 1),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: isSelected ? color : const Color(0xFF6B7280)),
+              Icon(icon, size: 16, color: isSelected ? color : const Color(0xFF9CA3AF)),
               const SizedBox(width: 8),
-              Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isSelected ? color : const Color(0xFF6B7280))),
+              Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isSelected ? color : const Color(0xFF9CA3AF))),
             ],
           ),
         ),
@@ -144,7 +144,7 @@ class _Label extends StatelessWidget {
   final String text;
   const _Label(this.text);
   @override
-  Widget build(BuildContext context) => Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF374151)));
+  Widget build(BuildContext context) => Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFFB0B3B8)));
 }
 
 class _FormField extends StatelessWidget {
@@ -165,10 +165,10 @@ class _FormField extends StatelessWidget {
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 13),
+          hintStyle: const TextStyle(color: Color(0xFF3F3F46), fontSize: 13),
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2)),
         ),
         style: const TextStyle(fontSize: 13),

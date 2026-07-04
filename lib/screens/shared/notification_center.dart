@@ -16,7 +16,7 @@ class NotificationCenter extends StatelessWidget {
       currentRoute: '/notifications',
       action: TextButton(onPressed: () {}, child: const Text('Mark all read', style: TextStyle(color: Color(0xFF16A34A), fontSize: 13))),
       child: Container(
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+        decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
         child: Column(
           children: mockNotifications.map((n) => _NotificationTile(notification: n)).toList(),
         ),
@@ -35,9 +35,9 @@ class _NotificationTile extends StatelessWidget {
       NotificationType.listing => (Icons.storefront_outlined,        const Color(0xFF16A34A)),
       NotificationType.request => (Icons.assignment_outlined,        const Color(0xFF2563EB)),
       NotificationType.pickup  => (Icons.local_shipping_outlined,    const Color(0xFFEA580C)),
-      NotificationType.system  => (Icons.notifications_outlined,     const Color(0xFF6B7280)),
+      NotificationType.system  => (Icons.notifications_outlined,     const Color(0xFF9CA3AF)),
     };
-    final bg = notification.isRead ? Colors.white : const Color(0xFFF0FDF4);
+    final bg = notification.isRead ? const Color(0xFF141416) : const Color(0xFF0D2818);
 
     return Container(
       color: bg,
@@ -55,7 +55,7 @@ class _NotificationTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(notification.message, style: TextStyle(fontSize: 13, color: const Color(0xFF374151), fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w500)),
+                Text(notification.message, style: TextStyle(fontSize: 13, color: const Color(0xFFB0B3B8), fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w500)),
                 const SizedBox(height: 4),
                 Text(
                   '${notification.createdAt.hour.toString().padLeft(2, '0')}:${notification.createdAt.minute.toString().padLeft(2, '0')} · ${notification.createdAt.day}/${notification.createdAt.month}/${notification.createdAt.year}',

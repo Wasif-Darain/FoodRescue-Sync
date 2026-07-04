@@ -24,7 +24,7 @@ class SurplusRadar extends StatelessWidget {
             child: Container(
               height: 500,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFBFDBFE), Color(0xFF93C5FD)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                gradient: const LinearGradient(colors: [Color(0xFF1C3252), Color(0xFF24406B)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Stack(
@@ -74,11 +74,11 @@ class SurplusRadar extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFE5E7EB))),
+                  decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF2E2E32))),
                   child: const Row(children: [
-                    Icon(Icons.sort, size: 16, color: Color(0xFF6B7280)),
+                    Icon(Icons.sort, size: 16, color: Color(0xFF9CA3AF)),
                     SizedBox(width: 8),
-                    Text('Nearest first', style: TextStyle(fontSize: 12, color: Color(0xFF374151))),
+                    Text('Nearest first', style: TextStyle(fontSize: 12, color: Color(0xFFB0B3B8))),
                   ]),
                 ),
                 const SizedBox(height: 12),
@@ -86,7 +86,7 @@ class SurplusRadar extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Container(
                     padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFF3F4F6))),
+                    decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF262626))),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                         Expanded(child: Text(l.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis)),
@@ -96,9 +96,9 @@ class SurplusRadar extends StatelessWidget {
                       Text(l.donorName, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
                       const SizedBox(height: 6),
                       Row(children: [
-                        const Icon(Icons.location_on, size: 12, color: Color(0xFF6B7280)),
+                        const Icon(Icons.location_on, size: 12, color: Color(0xFF9CA3AF)),
                         const SizedBox(width: 4),
-                        Text('${l.distance} km away', style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+                        Text('${l.distance} km away', style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
                       ]),
                     ]),
                   ),

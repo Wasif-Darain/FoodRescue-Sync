@@ -26,9 +26,9 @@ class _BulkRequestState extends State<BulkRequest> {
           children: [
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+              decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Organization Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827))),
+                const Text('Organization Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFF5F5F5))),
                 const SizedBox(height: 16),
                 const _FormField(label: 'Organization Name', placeholder: 'Your NGO or food bank name'),
                 const SizedBox(height: 12),
@@ -50,10 +50,10 @@ class _BulkRequestState extends State<BulkRequest> {
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+              decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  const Text('Food Items', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827))),
+                  const Text('Food Items', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFF5F5F5))),
                   TextButton.icon(
                     onPressed: () => setState(() => _items.add(_RequestItem())),
                     icon: const Icon(Icons.add, size: 14),
@@ -85,9 +85,9 @@ class _BulkRequestState extends State<BulkRequest> {
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+              decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
               child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Additional Notes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827))),
+                Text('Additional Notes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFF5F5F5))),
                 SizedBox(height: 12),
                 _FormField(label: '', placeholder: 'Any dietary restrictions, special requirements, or notes...', maxLines: 4),
               ]),
@@ -129,7 +129,7 @@ class _FormField extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       if (label.isNotEmpty) ...[
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF374151))),
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFFB0B3B8))),
         const SizedBox(height: 4),
       ],
       TextField(
@@ -137,10 +137,10 @@ class _FormField extends StatelessWidget {
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 12),
+          hintStyle: const TextStyle(color: Color(0xFF3F3F46), fontSize: 12),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2)),
         ),
         style: const TextStyle(fontSize: 13),

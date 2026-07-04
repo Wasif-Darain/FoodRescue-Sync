@@ -16,14 +16,14 @@ class ListingImageManager extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 16),
           child: Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+            decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(child: Text(listing.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF111827)))),
+                    Expanded(child: Text(listing.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFF5F5F5)))),
                     Text(listing.category, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
                   ],
                 ),
@@ -36,9 +36,9 @@ class ListingImageManager extends StatelessWidget {
                       child: Container(
                         width: 100, height: 100,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF9FAFB),
+                          color: const Color(0xFF0A0A0A),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFE5E7EB), style: BorderStyle.solid),
+                          border: Border.all(color: const Color(0xFF2E2E32), style: BorderStyle.solid),
                         ),
                         child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -61,8 +61,8 @@ class ListingImageManager extends StatelessWidget {
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: i == 0
-                                    ? [const Color(0xFFD1FAE5), const Color(0xFFA7F3D0)]
-                                    : [const Color(0xFFFED7AA), const Color(0xFFFDBA74)],
+                                    ? [const Color(0xFF163527), const Color(0xFF1D4433)]
+                                    : [const Color(0xFF3D2612), const Color(0xFF4A2E15)],
                                 begin: Alignment.topLeft, end: Alignment.bottomRight,
                               ),
                               borderRadius: BorderRadius.circular(10),
@@ -76,7 +76,7 @@ class ListingImageManager extends StatelessWidget {
                               child: Container(
                                 width: 22, height: 22,
                                 decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4)]),
-                                child: const Icon(Icons.close, size: 12, color: Color(0xFF374151)),
+                                child: const Icon(Icons.close, size: 12, color: Color(0xFFB0B3B8)),
                               ),
                             ),
                           ),

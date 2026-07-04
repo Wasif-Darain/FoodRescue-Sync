@@ -31,7 +31,11 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
         title: 'FoodRescue Sync',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF16A34A)),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF16A34A),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF0A0A0A),
           fontFamily: 'Roboto',
           useMaterial3: true,
         ),

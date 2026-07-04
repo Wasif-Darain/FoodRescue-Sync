@@ -27,7 +27,7 @@ class RequestStatusTracker extends StatelessWidget {
           ]),
           const SizedBox(height: 20),
           Container(
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+            decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
             child: Column(children: [
               _RequestHeader(),
               ...mockRequests.map((r) => _RequestRow(request: r)),
@@ -47,10 +47,10 @@ class _StatusSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color, bg) = switch (status) {
-      RequestStatus.pending   => ('Pending',   const Color(0xFFD97706), const Color(0xFFFEFCE8)),
-      RequestStatus.accepted  => ('Accepted',  const Color(0xFF16A34A), const Color(0xFFF0FDF4)),
-      RequestStatus.completed => ('Completed', const Color(0xFF2563EB), const Color(0xFFEFF6FF)),
-      RequestStatus.rejected  => ('Rejected',  const Color(0xFFEF4444), const Color(0xFFFEF2F2)),
+      RequestStatus.pending   => ('Pending',   const Color(0xFFD97706), const Color(0xFF2A2410)),
+      RequestStatus.accepted  => ('Accepted',  const Color(0xFF16A34A), const Color(0xFF0D2818)),
+      RequestStatus.completed => ('Completed', const Color(0xFF2563EB), const Color(0xFF11223A)),
+      RequestStatus.rejected  => ('Rejected',  const Color(0xFFEF4444), const Color(0xFF2A1414)),
     };
     return Container(
       padding: const EdgeInsets.all(16),
@@ -68,13 +68,13 @@ class _RequestHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-    decoration: const BoxDecoration(color: Color(0xFFF9FAFB), borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12))),
+    decoration: const BoxDecoration(color: Color(0xFF0A0A0A), borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12))),
     child: const Row(children: [
-      Expanded(flex: 3, child: Text('Item', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-      Expanded(flex: 2, child: Text('Donor', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-      Expanded(child: Text('Qty', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-      Expanded(flex: 2, child: Text('Date', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-      Expanded(child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
+      Expanded(flex: 3, child: Text('Item', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+      Expanded(flex: 2, child: Text('Donor', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+      Expanded(child: Text('Qty', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+      Expanded(flex: 2, child: Text('Date', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+      Expanded(child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
     ]),
   );
 }
@@ -93,10 +93,10 @@ class _RequestRow extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFF3F4F6)))),
+      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF262626)))),
       child: Row(children: [
         Expanded(flex: 3, child: Text(request.listingTitle, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500), maxLines: 2, overflow: TextOverflow.ellipsis)),
-        Expanded(flex: 2, child: Text(request.donorName, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))),
+        Expanded(flex: 2, child: Text(request.donorName, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)))),
         Expanded(child: Text('×${request.quantity}', style: const TextStyle(fontSize: 13))),
         Expanded(flex: 2, child: Text(
           '${request.createdAt.year}-${request.createdAt.month.toString().padLeft(2, '0')}-${request.createdAt.day.toString().padLeft(2, '0')}',

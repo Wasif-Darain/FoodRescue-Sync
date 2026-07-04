@@ -18,16 +18,16 @@ class DonationLogScreen extends StatelessWidget {
         children: [
           // Summary cards
           Row(children: [
-            Expanded(child: _SummaryCard(value: '${mockDonationLogs.length}', label: 'Total Donations', color: const Color(0xFF16A34A), bg: const Color(0xFFF0FDF4))),
+            Expanded(child: _SummaryCard(value: '${mockDonationLogs.length}', label: 'Total Donations', color: const Color(0xFF16A34A), bg: const Color(0xFF0D2818))),
             const SizedBox(width: 12),
-            Expanded(child: _SummaryCard(value: '$total', label: 'Items Donated', color: const Color(0xFF2563EB), bg: const Color(0xFFEFF6FF))),
+            Expanded(child: _SummaryCard(value: '$total', label: 'Items Donated', color: const Color(0xFF2563EB), bg: const Color(0xFF11223A))),
             const SizedBox(width: 12),
-            Expanded(child: _SummaryCard(value: '${mockDonationLogs.map((l) => l.recipientOrg).toSet().length}', label: 'Organizations Helped', color: const Color(0xFFEA580C), bg: const Color(0xFFFFF7ED))),
+            Expanded(child: _SummaryCard(value: '${mockDonationLogs.map((l) => l.recipientOrg).toSet().length}', label: 'Organizations Helped', color: const Color(0xFFEA580C), bg: const Color(0xFF2A1B0D))),
           ]),
           const SizedBox(height: 20),
           // Log table
           Container(
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+            decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
             child: Column(
               children: [
                 _LogHeader(),
@@ -64,13 +64,13 @@ class _LogHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-    decoration: const BoxDecoration(color: Color(0xFFF9FAFB), borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12))),
+    decoration: const BoxDecoration(color: Color(0xFF0A0A0A), borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12))),
     child: const Row(children: [
-      Expanded(flex: 2, child: Text('Item', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-      Expanded(child: Text('Qty', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-      Expanded(flex: 2, child: Text('Recipient', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-      Expanded(flex: 2, child: Text('Date', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-      Expanded(child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
+      Expanded(flex: 2, child: Text('Item', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+      Expanded(child: Text('Qty', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+      Expanded(flex: 2, child: Text('Recipient', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+      Expanded(flex: 2, child: Text('Date', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+      Expanded(child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
     ]),
   );
 }
@@ -82,11 +82,11 @@ class _LogRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-    decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFF3F4F6)))),
+    decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF262626)))),
     child: Row(children: [
       Expanded(flex: 2, child: Text(log.itemName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
       Expanded(child: Text('×${log.quantity}', style: const TextStyle(fontSize: 13))),
-      Expanded(flex: 2, child: Text(log.recipientOrg, style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)))),
+      Expanded(flex: 2, child: Text(log.recipientOrg, style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)))),
       Expanded(flex: 2, child: Text(
         '${log.loggedAt.year}-${log.loggedAt.month.toString().padLeft(2, '0')}-${log.loggedAt.day.toString().padLeft(2, '0')}',
         style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
