@@ -18,7 +18,6 @@ class SurplusRadar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Map placeholder
           Expanded(
             flex: 3,
             child: Container(
@@ -29,21 +28,32 @@ class SurplusRadar extends StatelessWidget {
               ),
               child: Stack(
                 children: [
-                  const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Icon(Icons.map_outlined, size: 64, color: Color(0xFF1D4ED8)),
-                    SizedBox(height: 12),
-                    Text('Interactive Map', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8))),
-                    SizedBox(height: 4),
-                    Text('Dhaka, Bangladesh', style: TextStyle(fontSize: 12, color: Color(0xFF2563EB))),
-                  ])),
-                  // Pins
+                  Positioned.fill(child: CustomPaint(painter: _DhakaMapPainter())),
+                  Positioned(
+                    top: 16,
+                    left: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(999)),
+                      child: Row(children: const [
+                        Icon(Icons.waves, size: 16, color: Color(0xFF1D4ED8)),
+                        SizedBox(width: 6),
+                        Text('Live Radar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8))),
+                      ]),
+                    ),
+                  ),
+                  Positioned(
+                    top: 140,
+                    left: 120,
+                    child: _LocationMarker(label: 'You'),
+                  ),
                   ...sorted.take(5).toList().asMap().entries.map((e) {
-                    final offsets = [const Offset(0.35, 0.4), const Offset(0.6, 0.55), const Offset(0.45, 0.65), const Offset(0.7, 0.35), const Offset(0.25, 0.6)];
-                    final offset = offsets[e.key % offsets.length];
+                    final positions = [const Offset(110, 220), const Offset(220, 310), const Offset(170, 140), const Offset(260, 200), const Offset(90, 320)];
+                    final position = positions[e.key % positions.length];
                     final isDonation = e.value.listingType == ListingType.donation;
                     return Positioned(
-                      left: MediaQuery.of(context).size.width * 0.3 * offset.dx,
-                      top: 500 * offset.dy,
+                      left: position.dx,
+                      top: position.dy,
                       child: GestureDetector(
                         onTap: () {},
                         child: Column(children: [
@@ -67,7 +77,6 @@ class SurplusRadar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 20),
-          // Listing panel
           SizedBox(
             width: 280,
             child: Column(
@@ -84,29 +93,114 @@ class SurplusRadar extends StatelessWidget {
                 const SizedBox(height: 12),
                 ...sorted.map((l) => Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF262626))),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                        Expanded(child: Text(l.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                        AppBadge(label: l.listingType == ListingType.donation ? 'FREE' : '৳${l.price.toInt()}', variant: l.listingType == ListingType.donation ? BadgeVariant.green : BadgeVariant.orange),
+                  child: _HoverScale(
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF262626))),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                          Expanded(child: Text(l.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                          AppBadge(label: l.listingType == ListingType.donation ? 'FREE' : '৳${l.price.toInt()}', variant: l.listingType == ListingType.donation ? BadgeVariant.green : BadgeVariant.orange),
+                        ]),
+                        const SizedBox(height: 6),
+                        Text(l.donorName, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+                        const SizedBox(height: 6),
+                        Row(children: [
+                          const Icon(Icons.location_on, size: 12, color: Color(0xFF9CA3AF)),
+                          const SizedBox(width: 4),
+                          Text('${l.distance} km away', style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+                        ]),
                       ]),
-                      const SizedBox(height: 6),
-                      Text(l.donorName, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
-                      const SizedBox(height: 6),
-                      Row(children: [
-                        const Icon(Icons.location_on, size: 12, color: Color(0xFF9CA3AF)),
-                        const SizedBox(width: 4),
-                        Text('${l.distance} km away', style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
-                      ]),
-                    ]),
+                    ),
                   ),
                 )),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LocationMarker extends StatelessWidget {
+  final String label;
+  const _LocationMarker({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(color: const Color(0xFF1D4ED8), borderRadius: BorderRadius.circular(999)),
+        child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+      ),
+      const SizedBox(height: 4),
+      Container(width: 12, height: 12, decoration: const BoxDecoration(color: Color(0xFF1D4ED8), shape: BoxShape.circle)),
+    ]);
+  }
+}
+
+class _DhakaMapPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bg = Paint()..color = const Color(0xFFE0F2FE);
+    canvas.drawRect(Offset.zero & size, bg);
+
+    final roadPaint = Paint()
+      ..color = const Color(0xFF93C5FD)
+      ..strokeWidth = 5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(const Offset(40, 80), Offset(size.width - 50, 80), roadPaint);
+    canvas.drawLine(const Offset(80, 40), Offset(80, size.height - 60), roadPaint);
+    canvas.drawLine(const Offset(150, 140), Offset(size.width - 70, 140), roadPaint);
+    canvas.drawLine(const Offset(220, 70), Offset(220, size.height - 90), roadPaint);
+    canvas.drawLine(const Offset(50, 260), Offset(size.width - 90, 260), roadPaint);
+
+    final blockPaint = Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: 0.45)..style = PaintingStyle.fill;
+    final blocks = [Rect.fromLTWH(40, 100, 70, 70), Rect.fromLTWH(140, 180, 80, 70), Rect.fromLTWH(240, 100, 70, 80), Rect.fromLTWH(120, 300, 90, 60)];
+    for (final block in blocks) {
+      canvas.drawRect(block, blockPaint);
+    }
+
+    final textPainter = TextPainter(
+      text: TextSpan(text: 'Dhaka', style: TextStyle(color: const Color(0xFF1E3A8A), fontSize: 26, fontWeight: FontWeight.bold)),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(canvas, const Offset(24, 24));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _HoverScale extends StatefulWidget {
+  final Widget child;
+  const _HoverScale({required this.child});
+
+  @override
+  State<_HoverScale> createState() => _HoverScaleState();
+}
+
+class _HoverScaleState extends State<_HoverScale> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 180),
+          scale: (_hovered || _pressed) ? 1.02 : 1.0,
+          child: widget.child,
+        ),
       ),
     );
   }

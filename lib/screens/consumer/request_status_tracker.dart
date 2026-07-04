@@ -15,13 +15,14 @@ class RequestStatusTracker extends StatelessWidget {
       currentRoute: '/consumer/requests',
       child: Column(
         children: [
-          // Summary
           Row(children: [
             for (final s in [RequestStatus.pending, RequestStatus.accepted, RequestStatus.completed, RequestStatus.rejected]) ...[
               if (s != RequestStatus.pending) const SizedBox(width: 12),
-              Expanded(child: _StatusSummary(
-                status: s,
-                count: mockRequests.where((r) => r.status == s).length,
+              Expanded(child: _HoverScale(
+                child: _StatusSummary(
+                  status: s,
+                  count: mockRequests.where((r) => r.status == s).length,
+                ),
               )),
             ],
           ]),
@@ -30,7 +31,7 @@ class RequestStatusTracker extends StatelessWidget {
             decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
             child: Column(children: [
               _RequestHeader(),
-              ...mockRequests.map((r) => _RequestRow(request: r)),
+              ...mockRequests.map((r) => _HoverScale(child: _RequestRow(request: r))),
             ]),
           ),
         ],
@@ -104,6 +105,37 @@ class _RequestRow extends StatelessWidget {
         )),
         Expanded(child: AppBadge(label: label, variant: variant)),
       ]),
+    );
+  }
+}
+
+class _HoverScale extends StatefulWidget {
+  final Widget child;
+  const _HoverScale({required this.child});
+
+  @override
+  State<_HoverScale> createState() => _HoverScaleState();
+}
+
+class _HoverScaleState extends State<_HoverScale> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 180),
+          scale: (_hovered || _pressed) ? 1.02 : 1.0,
+          child: widget.child,
+        ),
+      ),
     );
   }
 }
