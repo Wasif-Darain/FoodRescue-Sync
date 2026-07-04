@@ -29,13 +29,13 @@ class ExpiryTracker extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Expanded(child: _ExpiryStatCard(count: expired.length, label: 'Expired', color: const Color(0xFFEF4444), bg: const Color(0xFFFEF2F2))),
+            Expanded(child: _ExpiryStatCard(count: expired.length, label: 'Expired', color: const Color(0xFFEF4444), bg: const Color(0xFF2A1414))),
             const SizedBox(width: 12),
-            Expanded(child: _ExpiryStatCard(count: today.length, label: 'Expires Today', color: const Color(0xFFEA580C), bg: const Color(0xFFFFF7ED))),
+            Expanded(child: _ExpiryStatCard(count: today.length, label: 'Expires Today', color: const Color(0xFFEA580C), bg: const Color(0xFF2A1B0D))),
             const SizedBox(width: 12),
-            Expanded(child: _ExpiryStatCard(count: thisWeek.length, label: 'This Week', color: const Color(0xFFD97706), bg: const Color(0xFFFEFCE8))),
+            Expanded(child: _ExpiryStatCard(count: thisWeek.length, label: 'This Week', color: const Color(0xFFD97706), bg: const Color(0xFF2A2410))),
             const SizedBox(width: 12),
-            Expanded(child: _ExpiryStatCard(count: safe.length, label: 'Safe', color: const Color(0xFF16A34A), bg: const Color(0xFFF0FDF4))),
+            Expanded(child: _ExpiryStatCard(count: safe.length, label: 'Safe', color: const Color(0xFF16A34A), bg: const Color(0xFF0D2818))),
           ]),
           const SizedBox(height: 24),
           if (expired.isNotEmpty) _ExpirySection(title: 'Expired', items: expired, variant: BadgeVariant.red),
@@ -80,14 +80,14 @@ class _ExpirySection extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF374151))),
+      Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFFB0B3B8))),
       const SizedBox(height: 8),
       Container(
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+        decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
         child: Column(
           children: items.map((item) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFF3F4F6)))),
+            decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF262626)))),
             child: Row(
               children: [
                 const Icon(Icons.inventory_2_outlined, size: 16, color: Color(0xFF9CA3AF)),
@@ -101,7 +101,7 @@ class _ExpirySection extends StatelessWidget {
                 )),
                 Text(
                   '${item.expiryDate.year}-${item.expiryDate.month.toString().padLeft(2, '0')}-${item.expiryDate.day.toString().padLeft(2, '0')}',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
                 ),
                 const SizedBox(width: 12),
                 AppBadge(label: item.isSurplus ? 'Surplus' : 'Normal', variant: variant),

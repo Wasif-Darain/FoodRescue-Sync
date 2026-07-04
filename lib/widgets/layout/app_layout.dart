@@ -20,65 +20,75 @@ class AppLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      body: Row(
-        children: [
-          Sidebar(currentRoute: currentRoute),
-          Expanded(
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 20,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(
-                      bottom: BorderSide(color: Color(0xFFF3F4F6)),
+      backgroundColor: Colors.black,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.topCenter,
+            radius: 1.4,
+            colors: [Color(0xFF0D1F13), Color(0xFF0A0A0A), Colors.black],
+            stops: [0.0, 0.5, 1.0],
+          ),
+        ),
+        child: Row(
+          children: [
+            Sidebar(currentRoute: currentRoute),
+            Expanded(
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 20,
                     ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF111827),
-                            ),
-                          ),
-                          if (subtitle != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                subtitle!,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF6B7280),
-                                ),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF141416),
+                      border: Border(
+                        bottom: BorderSide(color: Color(0xFF262626)),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFF5F5F5),
                               ),
                             ),
-                        ],
-                      ),
-                      ?action,
-                    ],
+                            if (subtitle != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  subtitle!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF9CA3AF),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        ?action,
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(32),
-                    child: child,
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(32),
+                      child: child,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

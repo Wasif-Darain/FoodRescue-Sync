@@ -41,10 +41,20 @@ class AppButton extends StatelessWidget {
               backgroundColor: bg,
               foregroundColor: Colors.white,
               elevation: 0,
+              shadowColor: bg.withValues(alpha: 0.6),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
           );
-    return fullWidth ? SizedBox(width: double.infinity, child: btn) : btn;
+    final glowed = outlined
+        ? btn
+        : DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: onPressed == null ? null : [BoxShadow(color: bg.withValues(alpha: 0.45), blurRadius: 14, spreadRadius: 0.5)],
+            ),
+            child: btn,
+          );
+    return fullWidth ? SizedBox(width: double.infinity, child: glowed) : glowed;
   }
 }

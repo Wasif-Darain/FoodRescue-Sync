@@ -11,15 +11,20 @@ class AppBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, fg) = switch (variant) {
-      BadgeVariant.green  => (const Color(0xFFDCFCE7), const Color(0xFF15803D)),
-      BadgeVariant.orange => (const Color(0xFFFFF7ED), const Color(0xFFEA580C)),
-      BadgeVariant.blue   => (const Color(0xFFEFF6FF), const Color(0xFF1D4ED8)),
-      BadgeVariant.red    => (const Color(0xFFFEF2F2), const Color(0xFFDC2626)),
-      BadgeVariant.gray   => (const Color(0xFFF9FAFB), const Color(0xFF374151)),
+      BadgeVariant.green  => (const Color(0xFF14301F), const Color(0xFF4ADE80)),
+      BadgeVariant.orange => (const Color(0xFF2A1B0D), const Color(0xFFFB923C)),
+      BadgeVariant.blue   => (const Color(0xFF11223A), const Color(0xFF60A5FA)),
+      BadgeVariant.red    => (const Color(0xFF3A1919), const Color(0xFFF87171)),
+      BadgeVariant.gray   => (const Color(0xFF262626), const Color(0xFFB0B3B8)),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: fg.withValues(alpha: 0.5)),
+        boxShadow: [BoxShadow(color: fg.withValues(alpha: 0.3), blurRadius: 8)],
+      ),
       child: Text(label, style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.w600)),
     );
   }

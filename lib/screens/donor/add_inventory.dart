@@ -24,18 +24,18 @@ class AddInventory extends StatelessWidget {
           // Search bar
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+            decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
             child: Row(
               children: [
                 const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 18),
                 const SizedBox(width: 10),
                 const Expanded(child: TextField(
-                  decoration: InputDecoration(hintText: 'Search inventory...', border: InputBorder.none, hintStyle: TextStyle(color: Color(0xFFD1D5DB), fontSize: 13)),
+                  decoration: InputDecoration(hintText: 'Search inventory...', border: InputBorder.none, hintStyle: TextStyle(color: Color(0xFF3F3F46), fontSize: 13)),
                 )),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFFE5E7EB))),
-                  child: const Row(children: [Icon(Icons.filter_list, size: 14, color: Color(0xFF6B7280)), SizedBox(width: 4), Text('Filter', style: TextStyle(fontSize: 12, color: Color(0xFF374151)))]),
+                  decoration: BoxDecoration(color: const Color(0xFF0A0A0A), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF2E2E32))),
+                  child: const Row(children: [Icon(Icons.filter_list, size: 14, color: Color(0xFF9CA3AF)), SizedBox(width: 4), Text('Filter', style: TextStyle(fontSize: 12, color: Color(0xFFB0B3B8)))]),
                 ),
               ],
             ),
@@ -43,7 +43,7 @@ class AddInventory extends StatelessWidget {
           const SizedBox(height: 16),
           // Table
           Container(
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF3F4F6))),
+            decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
             child: Column(
               children: [
                 _TableHeader(),
@@ -65,14 +65,14 @@ class _TableHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-    decoration: const BoxDecoration(color: Color(0xFFF9FAFB), borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12))),
+    decoration: const BoxDecoration(color: Color(0xFF0A0A0A), borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12))),
     child: const Row(
       children: [
-        Expanded(flex: 3, child: Text('Item Name', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-        Expanded(flex: 2, child: Text('Category', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-        Expanded(child: Text('Qty', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-        Expanded(flex: 2, child: Text('Expiry Date', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
-        Expanded(child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)))),
+        Expanded(flex: 3, child: Text('Item Name', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+        Expanded(flex: 2, child: Text('Category', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+        Expanded(child: Text('Qty', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+        Expanded(flex: 2, child: Text('Expiry Date', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+        Expanded(child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
       ],
     ),
   );
@@ -90,22 +90,22 @@ class _InventoryRow extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFF3F4F6)))),
+      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF262626)))),
       child: Row(
         children: [
           Expanded(flex: 3, child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(item.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF111827))),
+              Text(item.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFFF5F5F5))),
               if (item.barcode != null && item.barcode!.isNotEmpty)
                 Text(item.barcode!, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
             ],
           )),
-          Expanded(flex: 2, child: Text(item.category, style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)))),
+          Expanded(flex: 2, child: Text(item.category, style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)))),
           Expanded(child: Text('${item.quantity}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
           Expanded(flex: 2, child: Text(
             '${item.expiryDate.year}-${item.expiryDate.month.toString().padLeft(2, '0')}-${item.expiryDate.day.toString().padLeft(2, '0')}',
-            style: TextStyle(fontSize: 13, color: isExpiringSoon ? const Color(0xFFEF4444) : const Color(0xFF374151)),
+            style: TextStyle(fontSize: 13, color: isExpiringSoon ? const Color(0xFFEF4444) : const Color(0xFFB0B3B8)),
           )),
           Expanded(child: AppBadge(
             label: item.isSurplus ? 'Surplus' : 'Normal',
@@ -161,16 +161,16 @@ class _DialogField extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF374151))),
+      Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFFB0B3B8))),
       const SizedBox(height: 4),
       TextField(
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 12),
+          hintStyle: const TextStyle(color: Color(0xFF3F3F46), fontSize: 12),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2)),
         ),
         style: const TextStyle(fontSize: 13),
