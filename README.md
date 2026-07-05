@@ -158,15 +158,12 @@ FoodRescue-Sync/
 
 7. Notification System: Receive alerts for listing updates, request status changes, and pickup reminders
 
-## Development Guidelines
+## Tech Stack
 
-1. Code Analysis: Run flutter analyze to check for code quality issues
-
-2. Format Code: Execute dart format lib/ to maintain consistent code formatting
-
-3. Run Tests: Execute flutter test to run the test suite
-
-4. Build Documentation: Generated documentation can be viewed through dart doc
+- Flutter 3.12.2
+- Dart 3.12.2
+- go_router 14.0.0
+- provider 6.1.2
 
 ## Deployment Notes
 
