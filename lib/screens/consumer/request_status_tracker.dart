@@ -103,7 +103,7 @@ class _RequestRow extends StatelessWidget {
           '${request.createdAt.year}-${request.createdAt.month.toString().padLeft(2, '0')}-${request.createdAt.day.toString().padLeft(2, '0')}',
           style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
         )),
-        Expanded(child: AppBadge(label: label, variant: variant)),
+        Expanded(child: Align(alignment: Alignment.centerLeft, child: AppBadge(label: label, variant: variant))),
       ]),
     );
   }

@@ -147,13 +147,13 @@ class _FormField extends StatelessWidget {
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: const TextStyle(color: Color(0xFF3F3F46), fontSize: 12),
+          hintStyle: const TextStyle(color: Color(0xFFD9D9D9), fontSize: 12),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF5B6770))),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF5B6770))),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF9CA3AF), width: 2)),
         ),
-        style: const TextStyle(fontSize: 13),
+        style: const TextStyle(fontSize: 13, color: Color(0xFFF5F5F5)),
       ),
     ],
   );
