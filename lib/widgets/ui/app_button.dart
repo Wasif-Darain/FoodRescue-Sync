@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'animated_tap.dart';
 
 class AppButton extends StatelessWidget {
   final String label;
@@ -20,7 +21,7 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = color ?? const Color(0xFF16A34A);
+    final bg = color ?? const Color(0xFF121212);
     Widget btn = outlined
         ? OutlinedButton.icon(
             onPressed: onPressed,
@@ -46,15 +47,7 @@ class AppButton extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
           );
-    final glowed = outlined
-        ? btn
-        : DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: onPressed == null ? null : [BoxShadow(color: bg.withValues(alpha: 0.45), blurRadius: 14, spreadRadius: 0.5)],
-            ),
-            child: btn,
-          );
-    return fullWidth ? SizedBox(width: double.infinity, child: glowed) : glowed;
+    btn = AnimatedTap(pressedScale: 0.96, child: btn);
+    return fullWidth ? SizedBox(width: double.infinity, child: btn) : btn;
   }
 }

@@ -25,40 +25,61 @@ class StatCard extends StatelessWidget {
       'blue'   => const Color(0xFF2563EB),
       _        => const Color(0xFF6B7280),
     };
-    final bg = switch (color) {
-      'green'  => const Color(0xFF14301F),
-      'orange' => const Color(0xFF2A1B0D),
-      'red'    => const Color(0xFF3A1919),
-      'blue'   => const Color(0xFF11223A),
-      _        => const Color(0xFF262626),
-    };
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141416),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: c.withValues(alpha: 0.5)),
-        boxShadow: [BoxShadow(color: c.withValues(alpha: 0.3), blurRadius: 14, spreadRadius: 0.5)],
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child: Transform.translate(offset: Offset(0, (1 - t) * 14), child: child),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
-            child: Center(child: IconTheme(data: IconThemeData(color: c, size: 18), child: icon)),
-          ),
-          const SizedBox(height: 10),
-          Text('$value', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFF5F5F5))),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
-          if (subtitle != null) ...[
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFFFF),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(8)),
+              child: Center(child: IconTheme(data: IconThemeData(color: c, size: 18), child: icon)),
+            ),
+            const SizedBox(height: 10),
+            _AnimatedValue(value: value),
             const SizedBox(height: 2),
-            Text(subtitle!, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+            Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
+            if (subtitle != null) ...[
+              const SizedBox(height: 2),
+              Text(subtitle!, style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
+            ],
           ],
-        ],
+        ),
       ),
     );
+  }
+}
+
+/// Counts up from 0 to [value] when it's a whole number; otherwise just
+/// renders it as-is (e.g. a pre-formatted string like "12kg").
+class _AnimatedValue extends StatelessWidget {
+  final dynamic value;
+  const _AnimatedValue({required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF121212));
+    if (value is int) {
+      return TweenAnimationBuilder<int>(
+        tween: IntTween(begin: 0, end: value as int),
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeOutCubic,
+        builder: (context, v, _) => Text('$v', style: style),
+      );
+    }
+    return Text('$value', style: style);
   }
 }
