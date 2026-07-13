@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>FoodRescue Sync uses the camera to let you take a photo of food items when adding them to inventory.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>FoodRescue Sync needs access to your photos so you can attach a picture to a food item.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -18,6 +18,17 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void loginAsAdmin() {
+    _user = AppUser(
+      id: 0,
+      name: 'Admin',
+      email: 'admin@foodrescuesync.com',
+      accountType: AccountType.individual,
+      mode: UserMode.admin,
+    );
+    notifyListeners();
+  }
+
   void logout() {
     _user = null;
     notifyListeners();
