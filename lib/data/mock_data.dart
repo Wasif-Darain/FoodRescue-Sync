@@ -37,6 +37,17 @@ final mockDonationLogs = [
   DonationLog(id: 3, donorId: 1, requestId: 1, loggedAt: DateTime(2026, 6, 26, 21), itemName: 'Vegetable Curry', quantity: 15, recipientOrg: 'Al-Amin Shelter'),
 ];
 
+final mockAccounts = [
+  RegisteredAccount(id: 1, name: 'Green Kitchen Restaurant', email: 'contact@greenkitchen.com', accountType: AccountType.restaurant, mode: UserMode.donor, status: AccountStatus.approved, joinedAt: DateTime(2026, 5, 12)),
+  RegisteredAccount(id: 2, name: 'Dhaka Bakery House', email: 'info@dhakabakery.com', accountType: AccountType.store, mode: UserMode.donor, status: AccountStatus.approved, joinedAt: DateTime(2026, 5, 20)),
+  RegisteredAccount(id: 3, name: 'Star Caterers', email: 'hello@starcaterers.com', accountType: AccountType.caterer, mode: UserMode.donor, status: AccountStatus.pending, joinedAt: DateTime(2026, 6, 25)),
+  RegisteredAccount(id: 4, name: 'Dhaka Food Bank', email: 'admin@dhakafoodbank.org', accountType: AccountType.foodBank, mode: UserMode.consumer, status: AccountStatus.approved, joinedAt: DateTime(2026, 4, 3)),
+  RegisteredAccount(id: 5, name: 'Hunger Help BD', email: 'contact@hungerhelp.bd', accountType: AccountType.ngo, mode: UserMode.consumer, status: AccountStatus.approved, joinedAt: DateTime(2026, 4, 15)),
+  RegisteredAccount(id: 6, name: 'Al-Amin Shelter', email: 'alamin.shelter@gmail.com', accountType: AccountType.shelter, mode: UserMode.consumer, status: AccountStatus.pending, joinedAt: DateTime(2026, 6, 27)),
+  RegisteredAccount(id: 7, name: 'Bismillah Catering', email: 'bismillah.catering@gmail.com', accountType: AccountType.caterer, mode: UserMode.donor, status: AccountStatus.suspended, joinedAt: DateTime(2026, 3, 8)),
+  RegisteredAccount(id: 8, name: 'Rahim Uddin', email: 'rahim.uddin@gmail.com', accountType: AccountType.individual, mode: UserMode.consumer, status: AccountStatus.pending, joinedAt: DateTime(2026, 6, 29)),
+];
+
 final mockNotifications = [
   AppNotification(id: 1, message: 'New donation listing nearby: Chicken Biryani (30 servings) from Green Kitchen Restaurant', isRead: false, createdAt: DateTime(2026, 6, 29, 15), type: NotificationType.listing),
   AppNotification(id: 2, message: 'Your request for Vegetable Mixed Platter is pending approval', isRead: false, createdAt: DateTime(2026, 6, 29, 16, 30), type: NotificationType.request),

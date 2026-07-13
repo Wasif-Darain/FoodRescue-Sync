@@ -60,3 +60,4 @@ build/
 # Local tool config
 settings.local.json
 devtools_options.yaml
+.claude/
