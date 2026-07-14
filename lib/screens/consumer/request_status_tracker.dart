@@ -28,10 +28,9 @@ class RequestStatusTracker extends StatelessWidget {
           ]),
           const SizedBox(height: 20),
           Container(
-            decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
+            decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
             child: Column(children: [
-              _RequestHeader(),
-              ...mockRequests.map((r) => _HoverScale(child: _RequestRow(request: r))),
+              for (final r in mockRequests) _HoverScale(child: _RequestRow(request: r)),
             ]),
           ),
         ],
@@ -47,37 +46,26 @@ class _StatusSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, color, bg) = switch (status) {
-      RequestStatus.pending   => ('Pending',   const Color(0xFFD97706), const Color(0xFF2A2410)),
-      RequestStatus.accepted  => ('Accepted',  const Color(0xFF16A34A), const Color(0xFF0D2818)),
-      RequestStatus.completed => ('Completed', const Color(0xFF2563EB), const Color(0xFF11223A)),
-      RequestStatus.rejected  => ('Rejected',  const Color(0xFFEF4444), const Color(0xFF2A1414)),
+    final label = switch (status) {
+      RequestStatus.pending   => 'Pending',
+      RequestStatus.accepted  => 'Accepted',
+      RequestStatus.completed => 'Completed',
+      RequestStatus.rejected  => 'Rejected',
     };
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10), border: Border.all(color: color.withValues(alpha: 0.2))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFFFF),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+      ),
       child: Column(children: [
-        Text('$count', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+        Text('$count', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF121212))),
         const SizedBox(height: 2),
-        Text(label, style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.8), fontWeight: FontWeight.w500)),
+        Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF757575), fontWeight: FontWeight.w500)),
       ]),
     );
   }
-}
-
-class _RequestHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-    decoration: const BoxDecoration(color: Color(0xFF0A0A0A), borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12))),
-    child: const Row(children: [
-      Expanded(flex: 3, child: Text('Item', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-      Expanded(flex: 2, child: Text('Donor', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-      Expanded(child: Text('Qty', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-      Expanded(flex: 2, child: Text('Date', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-      Expanded(child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-    ]),
-  );
 }
 
 class _RequestRow extends StatelessWidget {
@@ -92,19 +80,26 @@ class _RequestRow extends StatelessWidget {
       RequestStatus.completed => ('Completed', BadgeVariant.blue),
       RequestStatus.rejected  => ('Rejected',  BadgeVariant.red),
     };
+    final date = '${request.createdAt.year}-${request.createdAt.month.toString().padLeft(2, '0')}-${request.createdAt.day.toString().padLeft(2, '0')}';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF262626)))),
-      child: Row(children: [
-        Expanded(flex: 3, child: Text(request.listingTitle, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500), maxLines: 2, overflow: TextOverflow.ellipsis)),
-        Expanded(flex: 2, child: Text(request.donorName, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)))),
-        Expanded(child: Text('×${request.quantity}', style: const TextStyle(fontSize: 13))),
-        Expanded(flex: 2, child: Text(
-          '${request.createdAt.year}-${request.createdAt.month.toString().padLeft(2, '0')}-${request.createdAt.day.toString().padLeft(2, '0')}',
-          style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
-        )),
-        Expanded(child: Align(alignment: Alignment.centerLeft, child: AppBadge(label: label, variant: variant))),
-      ]),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFE2E2E2)))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(request.listingTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+              const SizedBox(width: 8),
+              AppBadge(label: label, variant: variant),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text('${request.donorName} · ×${request.quantity} · $date', style: const TextStyle(fontSize: 12, color: Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+        ],
+      ),
     );
   }
 }
