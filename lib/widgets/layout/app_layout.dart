@@ -26,7 +26,8 @@ class AppLayout extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      floatingActionButton: const NavFab(),
+      extendBody: true,
+      floatingActionButton: NavFab(currentRoute: currentRoute),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomNavBar(currentRoute: currentRoute),
       body: Column(
@@ -87,7 +88,7 @@ class AppLayout extends StatelessWidget {
           const Divider(height: 1, color: Color(0xFFE2E2E2)),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 80),
               child: child,
             ),
           ),

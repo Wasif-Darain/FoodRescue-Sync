@@ -115,13 +115,30 @@ class WaveNotchedShape extends NotchedShape {
 
 /// Raised center "Add" button, docked into the bottom app bar's notch.
 class NavFab extends StatelessWidget {
-  const NavFab({super.key});
+  final String currentRoute;
+  const NavFab({super.key, required this.currentRoute});
 
   @override
   Widget build(BuildContext context) {
     final mode = context.watch<AuthProvider>().user!.mode;
     if (mode == UserMode.admin) return const SizedBox.shrink();
     final isDonor = mode == UserMode.donor;
+    final isPlusPage = currentRoute == '/donor/create-listing' || currentRoute == '/consumer/bulk-request';
+
+    if (isPlusPage) {
+      return const FloatingActionButton(
+        shape: CircleBorder(),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        focusElevation: 0,
+        hoverElevation: 0,
+        highlightElevation: 0,
+        disabledElevation: 0,
+        onPressed: null,
+        child: null,
+      );
+    }
+
     return AnimatedTap(
       pressedScale: 0.88,
       child: TweenAnimationBuilder<double>(
