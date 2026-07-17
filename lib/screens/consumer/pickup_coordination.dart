@@ -62,10 +62,10 @@ class _PickupStat extends StatelessWidget {
       child: Row(children: [
         Icon(icon, color: color, size: 22),
         const SizedBox(width: 12),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('$count', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF121212))),
           Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
-        ]),
+        ])),
       ]),
     );
   }
