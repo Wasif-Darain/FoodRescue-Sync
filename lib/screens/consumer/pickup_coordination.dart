@@ -16,7 +16,8 @@ class PickupCoordination extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
+          IntrinsicHeight(
+            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             for (final s in [PickupStatus.scheduled, PickupStatus.enRoute, PickupStatus.completed]) ...[
               if (s != PickupStatus.scheduled) const SizedBox(width: 12),
               Expanded(child: _HoverScale(
@@ -27,6 +28,7 @@ class PickupCoordination extends StatelessWidget {
               )),
             ],
           ]),
+          ),
           const SizedBox(height: 20),
           const Text('Active Pickups', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF121212))),
           const SizedBox(height: 12),

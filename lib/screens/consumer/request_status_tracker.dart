@@ -15,7 +15,8 @@ class RequestStatusTracker extends StatelessWidget {
       currentRoute: '/consumer/requests',
       child: Column(
         children: [
-          Row(children: [
+          IntrinsicHeight(
+            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             for (final s in [RequestStatus.pending, RequestStatus.accepted, RequestStatus.completed, RequestStatus.rejected]) ...[
               if (s != RequestStatus.pending) const SizedBox(width: 12),
               Expanded(child: _HoverScale(
@@ -26,6 +27,7 @@ class RequestStatusTracker extends StatelessWidget {
               )),
             ],
           ]),
+          ),
           const SizedBox(height: 20),
           Container(
             decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
