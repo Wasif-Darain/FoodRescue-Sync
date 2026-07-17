@@ -337,7 +337,10 @@ void showNavMenuSheet(BuildContext context) {
                   borderRadius: BorderRadius.circular(10),
                   onTap: () {
                     Navigator.pop(sheetContext);
+                    final wasDonor = auth.user!.mode == UserMode.donor;
                     auth.toggleMode();
+                    // Land on the new mode's primary tab (Dashboard / Marketplace).
+                    context.go(wasDonor ? '/consumer' : '/donor');
                   },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
