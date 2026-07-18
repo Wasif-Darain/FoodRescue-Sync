@@ -183,6 +183,7 @@ class BottomNavBar extends StatelessWidget {
                 icon: item.icon,
                 label: item.label,
                 isActive: _isActive(currentRoute, item.route),
+                isDark: isDark,
                 onTap: () => context.go(item.route),
               ),
           ],
@@ -209,6 +210,7 @@ class BottomNavBar extends StatelessWidget {
                     icon: item.icon,
                     label: item.label,
                     isActive: _isActive(currentRoute, item.route),
+                    isDark: isDark,
                     onTap: () => context.go(item.route),
                   ),
               ],
@@ -224,6 +226,7 @@ class BottomNavBar extends StatelessWidget {
                     icon: item.icon,
                     label: item.label,
                     isActive: _isActive(currentRoute, item.route),
+                    isDark: isDark,
                     onTap: () => context.go(item.route),
                   ),
               ],
@@ -235,22 +238,26 @@ class BottomNavBar extends StatelessWidget {
   }
 }
 
-class _NavIconButton extends StatelessWidget {
+  class _NavIconButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isActive;
+  final bool isDark;
   final VoidCallback onTap;
 
   const _NavIconButton({
     required this.icon,
     required this.label,
     required this.isActive,
+    required this.isDark,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? const Color(0xFFE53238) : Colors.white.withValues(alpha: 0.6);
+    final color = isActive
+        ? const Color(0xFFE53238)
+        : (isDark ? Colors.white : Colors.black);
     return AnimatedTap(
       pressedScale: 0.85,
       child: InkWell(
@@ -295,12 +302,14 @@ void showNavMenuSheet(BuildContext context) {
   final theme = context.read<ThemeProvider>();
   showModalBottomSheet(
     context: context,
-    backgroundColor: theme.isDark ? const Color(0xFF0B1410) : const Color(0xFFF4F7F5),
+    backgroundColor: Colors.transparent,
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
     builder: (sheetContext) => GlassContainer(
       margin: EdgeInsets.zero,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       padding: const EdgeInsets.only(bottom: 8),
+      tint: theme.isDark ? Colors.black : Colors.white,
+      opacity: theme.isDark ? 0.55 : 0.6,
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -321,7 +330,7 @@ void showNavMenuSheet(BuildContext context) {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(user.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF121212))),
+                        Text(user.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: theme.isDark ? Colors.white : const Color(0xFF121212))),
                         Text(isAdmin ? 'Administrator' : (_accountTypeLabel[user.accountType] ?? ''), style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
                       ],
                     ),
