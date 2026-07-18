@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/ui/glass.dart';
 
 class LoginRegisterScreen extends StatefulWidget {
   const LoginRegisterScreen({super.key});
@@ -45,7 +46,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft, end: Alignment.bottomRight,
-            colors: [Color(0xFF0D2818), Colors.black, Color(0xFF2A1B0D)],
+            colors: [Color(0xFFE8F5EC), Color(0xFFF4F7F5), Color(0xFFFEF1E6)],
           ),
         ),
         child: Center(
@@ -66,7 +67,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
                         const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('FoodRescue', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFFF5F5F5))),
+                            Text('FoodRescue', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF121212))),
                             Text('Sync', style: TextStyle(color: Color(0xFF16A34A), fontSize: 12, fontWeight: FontWeight.w600)),
                           ],
                         ),
@@ -75,19 +76,18 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(_isLogin ? 'Welcome back!' : 'Create your account',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFF5F5F5))),
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF121212))),
                   const SizedBox(height: 4),
                   Text(_isLogin ? 'Sign in to continue' : 'Join FoodRescue Sync today',
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF52525B))),
                   const SizedBox(height: 24),
                   // Form card
-                  Container(
+                  GlassContainer(
                     padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF141416),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF262626)),
-                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 24, offset: const Offset(0, 10)),
+                    ],
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -120,7 +120,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
-                            child: Text(_isLogin ? 'Sign In' : 'Create Account', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                          child: Text(_isLogin ? 'Sign In' : 'Create Account', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                           ),
                         ),
                       ],
@@ -130,7 +130,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_isLogin ? "Don't have an account? " : 'Already have an account? ', style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13)),
+                      Text(_isLogin ? "Don't have an account? " : 'Already have an account? ', style: const TextStyle(color: Color(0xFF52525B), fontSize: 13)),
                       GestureDetector(
                         onTap: () => setState(() { _isLogin = !_isLogin; }),
                         child: Text(_isLogin ? 'Sign up' : 'Sign in', style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w600, fontSize: 13)),
@@ -178,21 +178,21 @@ class _AccountTypeGrid extends StatelessWidget {
       spacing: 8, runSpacing: 8,
       children: _types.map((t) {
         final isSelected = selected == t.$1;
-        return GestureDetector(
+                return GestureDetector(
           onTap: () => onChanged(t.$1),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF0D2818) : const Color(0xFF141416),
+              color: isSelected ? const Color(0xFF16A34A) : Colors.white.withValues(alpha: 0.7),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: isSelected ? const Color(0xFF16A34A) : const Color(0xFF2E2E32), width: isSelected ? 2 : 1),
+              border: Border.all(color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFD4D4D8), width: isSelected ? 2 : 1),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(t.$3, size: 14, color: isSelected ? const Color(0xFF16A34A) : const Color(0xFF9CA3AF)),
+                Icon(t.$3, size: 14, color: isSelected ? Colors.white : const Color(0xFF52525B)),
                 const SizedBox(width: 4),
-                Text(t.$2, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFB0B3B8))),
+                Text(t.$2, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : const Color(0xFF3F3F46))),
               ],
             ),
           ),
@@ -213,17 +213,17 @@ class _Field extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFFB0B3B8))),
+      Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF3F3F46))),
       const SizedBox(height: 6),
       TextField(
         controller: ctrl,
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: const TextStyle(color: Color(0xFF3F3F46), fontSize: 13),
+          hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFD4D4D8))),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFD4D4D8))),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2)),
         ),
         style: const TextStyle(fontSize: 13),
@@ -242,19 +242,19 @@ class _PasswordField extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text('Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFFB0B3B8))),
+      const Text('Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF3F3F46))),
       const SizedBox(height: 6),
       TextField(
         controller: ctrl,
         obscureText: !show,
         decoration: InputDecoration(
           hintText: 'Enter your password',
-          hintStyle: const TextStyle(color: Color(0xFF3F3F46), fontSize: 13),
+          hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFD4D4D8))),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFD4D4D8))),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2)),
-          suffixIcon: IconButton(icon: Icon(show ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: const Color(0xFF9CA3AF)), onPressed: onToggle),
+          suffixIcon: IconButton(icon: Icon(show ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: const Color(0xFF52525B)), onPressed: onToggle),
         ),
         style: const TextStyle(fontSize: 13),
       ),

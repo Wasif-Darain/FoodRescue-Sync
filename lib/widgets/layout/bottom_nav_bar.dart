@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../models/models.dart';
 import '../ui/animated_tap.dart';
+import '../ui/glass.dart';
 
 class _NavItem {
   final String route;
@@ -168,13 +170,11 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mode = context.watch<AuthProvider>().user!.mode;
+    final isDark = context.watch<ThemeProvider>().isDark;
 
     if (mode == UserMode.admin) {
-      return BottomAppBar(
-        color: const Color(0xFF121212),
-        elevation: 8,
-        padding: EdgeInsets.zero,
-        height: 64,
+      return _GlassBottomBar(
+        isDark: isDark,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -194,13 +194,10 @@ class BottomNavBar extends StatelessWidget {
     final left = isDonor ? _donorLeft : _consumerLeft;
     final right = isDonor ? _donorRight : _consumerRight;
 
-    return BottomAppBar(
+    return _GlassBottomBar(
+      isDark: isDark,
       shape: const WaveNotchedShape(),
       notchMargin: 6,
-      color: const Color(0xFF121212),
-      elevation: 8,
-      padding: EdgeInsets.zero,
-      height: 64,
       child: Row(
         children: [
           Expanded(
@@ -295,99 +292,173 @@ void showNavMenuSheet(BuildContext context) {
   final accent = isDonor ? const Color(0xFF16A34A) : const Color(0xFFEA580C);
   final accentBg = isDonor ? const Color(0xFFDCFCE7) : const Color(0xFFFFE3CC);
 
+  final theme = context.read<ThemeProvider>();
   showModalBottomSheet(
     context: context,
-    backgroundColor: Colors.white,
+    backgroundColor: theme.isDark ? const Color(0xFF0B1410) : const Color(0xFFF4F7F5),
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-    builder: (sheetContext) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 10),
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFFE2E2E2), borderRadius: BorderRadius.circular(2))),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 40, height: 40,
-                  decoration: const BoxDecoration(color: Color(0xFFDCFCE7), shape: BoxShape.circle),
-                  child: Center(child: Text(user.name[0], style: const TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold))),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(user.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF121212))),
-                      Text(isAdmin ? 'Administrator' : (_accountTypeLabel[user.accountType] ?? ''), style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
-                    ],
+    builder: (sheetContext) => GlassContainer(
+      margin: EdgeInsets.zero,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: theme.isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E2E2), borderRadius: BorderRadius.circular(2))),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40, height: 40,
+                    decoration: const BoxDecoration(color: Color(0xFFDCFCE7), shape: BoxShape.circle),
+                    child: Center(child: Text(user.name[0], style: const TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold))),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(user.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF121212))),
+                        Text(isAdmin ? 'Administrator' : (_accountTypeLabel[user.accountType] ?? ''), style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          if (!isAdmin)
+            // Theme toggle
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Material(
-                color: accentBg,
+                color: theme.isDark ? Colors.white.withValues(alpha: 0.10) : const Color(0xFFEFF3F0),
                 borderRadius: BorderRadius.circular(10),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(10),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    final wasDonor = auth.user!.mode == UserMode.donor;
-                    auth.toggleMode();
-                    // Land on the new mode's primary tab (Dashboard / Marketplace).
-                    context.go(wasDonor ? '/consumer' : '/donor');
-                  },
+                  onTap: () => theme.toggle(),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(isDonor ? 'Switch to Consumer Mode' : 'Switch to Donor Mode', style: TextStyle(color: accent, fontWeight: FontWeight.w600, fontSize: 13)),
-                        Icon(Icons.swap_horiz, size: 18, color: accent),
+                        Text(theme.isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                          style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w600, fontSize: 13)),
+                        Icon(theme.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined, size: 18, color: const Color(0xFF16A34A)),
                       ],
                     ),
                   ),
                 ),
               ),
             ),
-          const SizedBox(height: 8),
-          Material(
-            color: Colors.transparent,
-            child: Column(
-              children: [
-                for (final item in menu)
-                  ListTile(
-                    leading: Icon(item.icon, size: 20, color: const Color(0xFF757575)),
-                    title: Text(item.label, style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 8),
+            if (!isAdmin)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Material(
+                  color: accentBg,
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
                     onTap: () {
                       Navigator.pop(sheetContext);
-                      context.go(item.route);
+                      final wasDonor = auth.user!.mode == UserMode.donor;
+                      auth.toggleMode();
+                      // Land on the new mode's primary tab (Dashboard / Marketplace).
+                      context.go(wasDonor ? '/consumer' : '/donor');
                     },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(isDonor ? 'Switch to Consumer Mode' : 'Switch to Donor Mode', style: TextStyle(color: accent, fontWeight: FontWeight.w600, fontSize: 13)),
+                          Icon(Icons.swap_horiz, size: 18, color: accent),
+                        ],
+                      ),
+                    ),
                   ),
-              ],
+                ),
+              ),
+            const SizedBox(height: 8),
+            Material(
+              color: Colors.transparent,
+              child: Column(
+                children: [
+                  for (final item in menu)
+                    ListTile(
+                      leading: Icon(item.icon, size: 20, color: const Color(0xFF757575)),
+                      title: Text(item.label, style: const TextStyle(fontSize: 14)),
+                      onTap: () {
+                        Navigator.pop(sheetContext);
+                        context.go(item.route);
+                      },
+                    ),
+                ],
+              ),
             ),
-          ),
-          const Divider(color: Color(0xFFE2E2E2), height: 1),
-          Material(
-            color: Colors.transparent,
-            child: ListTile(
-              leading: const Icon(Icons.logout, color: Color(0xFFEF4444), size: 20),
-              title: const Text('Logout', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w500)),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                auth.logout();
-                context.go('/');
-              },
+            const Divider(color: Color(0xFFE2E2E2), height: 1),
+            Material(
+              color: Colors.transparent,
+              child: ListTile(
+                leading: const Icon(Icons.logout, color: Color(0xFFEF4444), size: 20),
+                title: const Text('Logout', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w500)),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  auth.logout();
+                  context.go('/');
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-        ],
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     ),
   );
+}
+
+/// A frosted, floating bottom bar. Wraps the children in a [GlassContainer]
+/// and uses a clipped [BottomAppBar] so the notch shape still applies.
+class _GlassBottomBar extends StatelessWidget {
+  final bool isDark;
+  final NotchedShape? shape;
+  final double notchMargin;
+  final Widget child;
+
+  const _GlassBottomBar({
+    required this.isDark,
+    required this.child,
+    this.shape,
+    this.notchMargin = 6,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomAppBar(
+      shape: shape,
+      notchMargin: notchMargin,
+      color: Colors.transparent,
+      elevation: 0,
+      padding: EdgeInsets.zero,
+      height: 64,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: GlassContainer(
+          height: 56,
+          borderRadius: BorderRadius.circular(28),
+          padding: EdgeInsets.zero,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.12),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+          child: Center(child: child),
+        ),
+      ),
+    );
+  }
 }

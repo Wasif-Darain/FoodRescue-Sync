@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'bottom_nav_bar.dart';
 import '../../data/mock_data.dart';
+import '../../providers/theme_provider.dart';
 import '../ui/animated_tap.dart';
+import '../ui/glass.dart';
 
 class AppLayout extends StatelessWidget {
   final Widget child;
@@ -24,8 +27,10 @@ class AppLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final unread = mockNotifications.where((n) => !n.isRead).length;
 
+    final isDark = context.watch<ThemeProvider>().isDark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: isDark ? const Color(0xFF0B1410) : const Color(0xFFF4F7F5),
       extendBody: true,
       floatingActionButton: NavFab(currentRoute: currentRoute),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -34,9 +39,10 @@ class AppLayout extends StatelessWidget {
         children: [
           SafeArea(
             bottom: false,
-            child: Container(
-              color: Colors.white,
-              padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
+            child: GlassContainer(
+              margin: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+              padding: const EdgeInsets.fromLTRB(18, 14, 12, 14),
+              borderRadius: BorderRadius.circular(20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -47,10 +53,10 @@ class AppLayout extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF121212),
+                            color: isDark ? const Color(0xFFF5F5F5) : const Color(0xFF121212),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -59,9 +65,9 @@ class AppLayout extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 3),
                             child: Text(
                               subtitle!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF757575),
+                                color: isDark ? const Color(0xB3B0B3B8) : const Color(0xFF757575),
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -85,7 +91,6 @@ class AppLayout extends StatelessWidget {
               ),
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFE2E2E2)),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 80),
