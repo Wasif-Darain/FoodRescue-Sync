@@ -23,11 +23,20 @@ class WelcomeScreen extends StatelessWidget {
                       Center(
                         child: Column(
                           children: [
-                            Image.asset('assets/images/logo.png', width: 40, height: 40),
+                            Image.asset(
+                              'assets/images/logo.png',
+                              width: 40,
+                              height: 40,
+                            ),
                             const SizedBox(height: 4),
                             const Text(
                               'FoodRescue Sync',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.2, color: Color(0xFF121212)),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.2,
+                                color: Color(0xFF121212),
+                              ),
                             ),
                           ],
                         ),
@@ -41,7 +50,12 @@ class WelcomeScreen extends StatelessWidget {
                           const SizedBox(width: 6),
                           const Text(
                             'How will you help?',
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF121212), letterSpacing: 0.1),
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF121212),
+                              letterSpacing: 0.1,
+                            ),
                           ),
                         ],
                       ),
@@ -52,7 +66,8 @@ class WelcomeScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: _ModeCard(
-                                imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
+                                imageUrl:
+                                    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
                                 icon: Icons.restaurant_menu,
                                 title: 'Donor',
                                 subtitle: 'Restaurants · Stores',
@@ -69,7 +84,8 @@ class WelcomeScreen extends StatelessWidget {
                             const SizedBox(width: 14),
                             Expanded(
                               child: _ModeCard(
-                                imageUrl: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=600&q=80',
+                                imageUrl:
+                                    'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=600&q=80',
                                 icon: Icons.volunteer_activism_outlined,
                                 title: 'Consumer',
                                 subtitle: 'NGOs · Shelters',
@@ -125,7 +141,11 @@ class _HeroVisual extends StatelessWidget {
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => Container(
               color: const Color(0xFFF0F0F0),
-              child: const Icon(Icons.eco_outlined, size: 48, color: Color(0xFF16A34A)),
+              child: const Icon(
+                Icons.eco_outlined,
+                size: 48,
+                color: Color(0xFF16A34A),
+              ),
             ),
           ),
           DecoratedBox(
@@ -133,7 +153,10 @@ class _HeroVisual extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.black.withValues(alpha: 0.15), Colors.black.withValues(alpha: 0.82)],
+                colors: [
+                  Colors.black.withValues(alpha: 0.15),
+                  Colors.black.withValues(alpha: 0.82),
+                ],
                 stops: const [0.2, 1.0],
               ),
             ),
@@ -155,10 +178,19 @@ class _HeroVisual extends StatelessWidget {
                 const Spacer(),
                 RichText(
                   text: const TextSpan(
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white, height: 1.15, letterSpacing: 0.1),
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      height: 1.15,
+                      letterSpacing: 0.1,
+                    ),
                     children: [
                       TextSpan(text: 'Fight Food Waste,\nOne '),
-                      WidgetSpan(alignment: PlaceholderAlignment.middle, child: _HighlightWord()),
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: _HighlightWord(),
+                      ),
                       TextSpan(text: ' at a Time.'),
                     ],
                   ),
@@ -166,7 +198,12 @@ class _HeroVisual extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   'Connecting food donors with organizations and consumers — before it\'s wasted.',
-                  style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.88), height: 1.4, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.88),
+                    height: 1.4,
+                    fontWeight: FontWeight.w500,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -185,8 +222,18 @@ class _HighlightWord extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 1),
-    decoration: BoxDecoration(color: const Color(0xFFE53238), borderRadius: BorderRadius.circular(16)),
-    child: const Text('Meal', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
+    decoration: BoxDecoration(
+      color: const Color(0xFFE53238),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: const Text(
+      'Meal',
+      style: TextStyle(
+        fontSize: 26,
+        fontWeight: FontWeight.w900,
+        color: Colors.white,
+      ),
+    ),
   );
 }
 
@@ -194,23 +241,45 @@ class _StatPill extends StatelessWidget {
   final String icon;
   final String value;
   final String label;
-  const _StatPill({required this.icon, required this.value, required this.label});
+  const _StatPill({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(icon, style: const TextStyle(fontSize: 10)),
           const SizedBox(width: 3),
           Text.rich(
-            TextSpan(children: [
-              TextSpan(text: '$value ', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
-              TextSpan(text: label, style: TextStyle(fontSize: 9, color: Colors.white.withValues(alpha: 0.85))),
-            ]),
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$value ',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                TextSpan(
+                  text: label,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -232,26 +301,53 @@ class _GetStartedBar extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(40),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.16), blurRadius: 18, offset: const Offset(0, 6))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.16),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Container(
               width: 44,
               height: 44,
-              decoration: const BoxDecoration(color: Color(0xFFE53238), shape: BoxShape.circle),
-              child: const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+              decoration: const BoxDecoration(
+                color: Color(0xFFE53238),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_forward,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
             Expanded(
               child: Center(
-                child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF121212))),
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF121212),
+                  ),
+                ),
               ),
             ),
             Container(
               width: 36,
               height: 36,
-              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFFE2E2E2))),
-              child: const Icon(Icons.check, color: Color(0xFF16A34A), size: 18),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFE2E2E2)),
+              ),
+              child: const Icon(
+                Icons.check,
+                color: Color(0xFF16A34A),
+                size: 18,
+              ),
             ),
           ],
         ),
@@ -285,7 +381,13 @@ class _ModeCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: radius,
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Stack(
         fit: StackFit.expand,
@@ -293,14 +395,18 @@ class _ModeCard extends StatelessWidget {
           Image.network(
             imageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(color: accentColor),
+            errorBuilder: (context, error, stackTrace) =>
+                Container(color: accentColor),
           ),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.transparent, accentColor.withValues(alpha: 0.95)],
+                colors: [
+                  Colors.transparent,
+                  accentColor.withValues(alpha: 0.95),
+                ],
                 stops: const [0.2, 0.85],
               ),
             ),
@@ -311,33 +417,65 @@ class _ModeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 42, height: 42,
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.28), borderRadius: BorderRadius.circular(13)),
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.28),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
                   child: Icon(icon, color: Colors.white, size: 22),
                 ),
                 const Spacer(),
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
-                Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.88), fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white.withValues(alpha: 0.88),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 5,
                   runSpacing: 5,
-                  children: features.map((f) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(20)),
-                    child: Text(f, style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600)),
-                  )).toList(),
+                  children: features
+                      .map(
+                        (f) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.22),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            f,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ],
             ),
           ),
         ],
       ),
-    );
-    if (onTap == null) return card;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(onTap: onTap, child: card),
     );
   }
 }
@@ -364,7 +502,13 @@ class _ModeImageTile extends StatelessWidget {
     final tile = Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: accentColor.withValues(alpha: 0.18), blurRadius: 20, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.18),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -382,7 +526,10 @@ class _ModeImageTile extends StatelessWidget {
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.black.withValues(alpha: 0.15), Colors.black.withValues(alpha: 0.55)],
+                  colors: [
+                    Colors.black.withValues(alpha: 0.15),
+                    Colors.black.withValues(alpha: 0.55),
+                  ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -396,11 +543,21 @@ class _ModeImageTile extends StatelessWidget {
                   Container(
                     width: 40,
                     height: 40,
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.85), borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: Icon(icon, color: accentColor, size: 22),
                   ),
                   const SizedBox(width: 10),
-                  Text(label, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),
