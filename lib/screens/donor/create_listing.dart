@@ -1,7 +1,13 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_button.dart';
+import '../../widgets/ui/date_time_field.dart';
+import '../../widgets/ui/photo_picker_row.dart';
+import '../../models/models.dart';
+import '../../providers/donor_provider.dart';
 
 class CreateListing extends StatefulWidget {
   const CreateListing({super.key});
@@ -13,8 +19,59 @@ class CreateListing extends StatefulWidget {
 class _CreateListingState extends State<CreateListing> {
   String _listingType = 'donation';
   String _category = 'Cooked Meals';
+  Uint8List? _imageBytes;
+  DateTime? _pickupStart;
+  DateTime? _pickupEnd;
+
+  final _titleCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
+  final _quantityCtrl = TextEditingController();
+  final _priceCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
 
   final _categories = ['Cooked Meals', 'Bakery', 'Dairy', 'Produce', 'Grains', 'Pulses', 'Other'];
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
+    _quantityCtrl.dispose();
+    _priceCtrl.dispose();
+    _addressCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickPickupStart() async {
+    final picked = await pickDateTime(context, initial: _pickupStart, defaultTime: const TimeOfDay(hour: 18, minute: 0));
+    if (picked != null) setState(() => _pickupStart = picked);
+  }
+
+  Future<void> _pickPickupEnd() async {
+    final picked = await pickDateTime(context, initial: _pickupEnd ?? _pickupStart, defaultTime: const TimeOfDay(hour: 21, minute: 0));
+    if (picked != null) setState(() => _pickupEnd = picked);
+  }
+
+  void _submit() {
+    if (_titleCtrl.text.trim().isEmpty) return;
+    final now = DateTime.now();
+
+    context.read<DonorProvider>().addListing(
+      title: _titleCtrl.text.trim(),
+      description: _descCtrl.text.trim().isEmpty ? 'No additional details provided.' : _descCtrl.text.trim(),
+      category: _category,
+      quantity: int.tryParse(_quantityCtrl.text.trim()) ?? 1,
+      listingType: _listingType == 'donation' ? ListingType.donation : ListingType.flashSale,
+      price: _listingType == 'flash_sale' ? (double.tryParse(_priceCtrl.text.trim()) ?? 0) : 0,
+      pickupStart: _pickupStart ?? now,
+      pickupEnd: _pickupEnd ?? now.add(const Duration(hours: 3)),
+      imageBytes: _imageBytes,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Listing created successfully!'), backgroundColor: Color(0xFF16A34A)),
+    );
+    context.go('/donor');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +83,11 @@ class _CreateListingState extends State<CreateListing> {
         constraints: const BoxConstraints(maxWidth: 700),
         child: Container(
           padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF262626))),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -39,9 +100,15 @@ class _CreateListingState extends State<CreateListing> {
                 _TypeToggle(label: 'Flash Sale', icon: Icons.local_offer_outlined, value: 'flash_sale', selected: _listingType, onTap: (v) => setState(() => _listingType = v)),
               ]),
               const SizedBox(height: 20),
-              const _FormField(label: 'Title', placeholder: 'e.g. Chicken Biryani (30 servings)'),
+              _FormField(label: 'Title', placeholder: 'e.g. Chicken Biryani (30 servings)', controller: _titleCtrl),
               const SizedBox(height: 16),
-              const _FormField(label: 'Description', placeholder: 'Describe the food, quantity, freshness...', maxLines: 3),
+              _FormField(label: 'Description', placeholder: 'Describe the food, quantity, freshness...', maxLines: 3, controller: _descCtrl),
+              const SizedBox(height: 16),
+              const _Label('Photo (optional)'),
+              const SizedBox(height: 6),
+              PhotoPickerRow(imageBytes: _imageBytes, onChanged: (bytes) => setState(() => _imageBytes = bytes)),
+              const SizedBox(height: 4),
+              const Text('Shown on this listing in the consumer marketplace.', style: TextStyle(fontSize: 11, color: Color(0xFF757575))),
               const SizedBox(height: 16),
               Row(children: [
                 Expanded(child: Column(
@@ -52,14 +119,14 @@ class _CreateListingState extends State<CreateListing> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF2E2E32)),
+                        border: Border.all(color: const Color(0xFFE2E2E2)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: DropdownButton<String>(
                         value: _category,
                         isExpanded: true,
                         underline: const SizedBox(),
-                        style: const TextStyle(fontSize: 13, color: Color(0xFFB0B3B8)),
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF525252)),
                         items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                         onChanged: (v) => setState(() => _category = v ?? _category),
                       ),
@@ -67,20 +134,20 @@ class _CreateListingState extends State<CreateListing> {
                   ],
                 )),
                 const SizedBox(width: 16),
-                const Expanded(child: _FormField(label: 'Quantity', placeholder: '0', keyboardType: TextInputType.number)),
+                Expanded(child: _FormField(label: 'Quantity', placeholder: '0', keyboardType: TextInputType.number, controller: _quantityCtrl)),
               ]),
               if (_listingType == 'flash_sale') ...[
                 const SizedBox(height: 16),
-                const _FormField(label: 'Price (৳)', placeholder: '0', keyboardType: TextInputType.number),
+                _FormField(label: 'Price (৳)', placeholder: '0', keyboardType: TextInputType.number, controller: _priceCtrl),
               ],
               const SizedBox(height: 16),
-              Row(children: const [
-                Expanded(child: _FormField(label: 'Pickup Start', placeholder: 'e.g. 6:00 PM')),
-                SizedBox(width: 16),
-                Expanded(child: _FormField(label: 'Pickup End', placeholder: 'e.g. 9:00 PM')),
+              Row(children: [
+                Expanded(child: DateTimeField(label: 'Pickup Start', value: _pickupStart, onTap: _pickPickupStart)),
+                const SizedBox(width: 16),
+                Expanded(child: DateTimeField(label: 'Pickup End', value: _pickupEnd, onTap: _pickPickupEnd)),
               ]),
               const SizedBox(height: 16),
-              const _FormField(label: 'Pickup Address', placeholder: 'House/Road/Area, City'),
+              _FormField(label: 'Pickup Address', placeholder: 'House/Road/Area, City', controller: _addressCtrl),
               const SizedBox(height: 28),
               Row(children: [
                 AppButton(label: 'Cancel', outlined: true, onPressed: () => context.go('/donor')),
@@ -88,12 +155,7 @@ class _CreateListingState extends State<CreateListing> {
                 AppButton(
                   label: _listingType == 'donation' ? 'Post Donation' : 'Post Flash Sale',
                   icon: const Icon(Icons.check, size: 16),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Listing created successfully!'), backgroundColor: Color(0xFF16A34A)),
-                    );
-                    context.go('/donor');
-                  },
+                  onPressed: _submit,
                 ),
               ]),
             ],
@@ -122,16 +184,16 @@ class _TypeToggle extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? color.withValues(alpha: 0.08) : const Color(0xFF0A0A0A),
+            color: isSelected ? color.withValues(alpha: 0.08) : const Color(0xFFF0F0F0),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: isSelected ? color : const Color(0xFF2E2E32), width: isSelected ? 2 : 1),
+            border: Border.all(color: isSelected ? color : const Color(0xFFE2E2E2), width: isSelected ? 2 : 1),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: isSelected ? color : const Color(0xFF9CA3AF)),
+              Icon(icon, size: 16, color: isSelected ? color : const Color(0xFF757575)),
               const SizedBox(width: 8),
-              Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isSelected ? color : const Color(0xFF9CA3AF))),
+              Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isSelected ? color : const Color(0xFF757575))),
             ],
           ),
         ),
@@ -144,7 +206,7 @@ class _Label extends StatelessWidget {
   final String text;
   const _Label(this.text);
   @override
-  Widget build(BuildContext context) => Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFFB0B3B8)));
+  Widget build(BuildContext context) => Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF525252)));
 }
 
 class _FormField extends StatelessWidget {
@@ -152,7 +214,8 @@ class _FormField extends StatelessWidget {
   final String placeholder;
   final int maxLines;
   final TextInputType? keyboardType;
-  const _FormField({required this.label, required this.placeholder, this.maxLines = 1, this.keyboardType});
+  final TextEditingController? controller;
+  const _FormField({required this.label, required this.placeholder, this.maxLines = 1, this.keyboardType, this.controller});
 
   @override
   Widget build(BuildContext context) => Column(
@@ -161,14 +224,15 @@ class _FormField extends StatelessWidget {
       _Label(label),
       const SizedBox(height: 6),
       TextField(
+        controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: const TextStyle(color: Color(0xFF3F3F46), fontSize: 13),
+          hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontSize: 13),
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E2E2))),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E2E2))),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2)),
         ),
         style: const TextStyle(fontSize: 13),

@@ -1,15 +1,22 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/app_button.dart';
-import '../../data/mock_data.dart';
+import '../../widgets/ui/date_time_field.dart';
+import '../../widgets/ui/image_thumbnail.dart';
+import '../../widgets/ui/photo_picker_row.dart';
 import '../../models/models.dart';
+import '../../providers/donor_provider.dart';
 
 class AddInventory extends StatelessWidget {
   const AddInventory({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final inventory = context.watch<DonorProvider>().inventory;
+
     return AppLayout(
       title: 'Inventory',
       subtitle: 'Manage your food stock and mark surplus items',
@@ -24,30 +31,29 @@ class AddInventory extends StatelessWidget {
           // Search bar
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
+            decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
             child: Row(
               children: [
-                const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 18),
+                const Icon(Icons.search, color: Color(0xFF757575), size: 18),
                 const SizedBox(width: 10),
                 const Expanded(child: TextField(
-                  decoration: InputDecoration(hintText: 'Search inventory...', border: InputBorder.none, hintStyle: TextStyle(color: Color(0xFF3F3F46), fontSize: 13)),
+                  decoration: InputDecoration(hintText: 'Search inventory...', border: InputBorder.none, hintStyle: TextStyle(color: Color(0xFFBFBFBF), fontSize: 13)),
                 )),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: const Color(0xFF0A0A0A), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF2E2E32))),
-                  child: const Row(children: [Icon(Icons.filter_list, size: 14, color: Color(0xFF9CA3AF)), SizedBox(width: 4), Text('Filter', style: TextStyle(fontSize: 12, color: Color(0xFFB0B3B8)))]),
+                  decoration: BoxDecoration(color: const Color(0xFFF0F0F0), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFFE2E2E2))),
+                  child: const Row(children: [Icon(Icons.filter_list, size: 14, color: Color(0xFF757575)), SizedBox(width: 4), Text('Filter', style: TextStyle(fontSize: 12, color: Color(0xFF525252)))]),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          // Table
+          // List
           Container(
-            decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
+            decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
             child: Column(
               children: [
-                _TableHeader(),
-                ...mockInventory.map((item) => _InventoryRow(item: item)),
+                for (final item in inventory) _InventoryRow(item: item),
               ],
             ),
           ),
@@ -61,23 +67,6 @@ class AddInventory extends StatelessWidget {
   }
 }
 
-class _TableHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-    decoration: const BoxDecoration(color: Color(0xFF0A0A0A), borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12))),
-    child: const Row(
-      children: [
-        Expanded(flex: 3, child: Text('Item Name', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-        Expanded(flex: 2, child: Text('Category', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-        Expanded(child: Text('Qty', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-        Expanded(flex: 2, child: Text('Expiry Date', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-        Expanded(child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-      ],
-    ),
-  );
-}
-
 class _InventoryRow extends StatelessWidget {
   final InventoryItem item;
   const _InventoryRow({required this.item});
@@ -87,67 +76,158 @@ class _InventoryRow extends StatelessWidget {
     final now = DateTime.now();
     final diff = item.expiryDate.difference(now);
     final isExpiringSoon = diff.inDays < 2 && diff.inSeconds > 0;
+    final expiry = '${item.expiryDate.year}-${item.expiryDate.month.toString().padLeft(2, '0')}-${item.expiryDate.day.toString().padLeft(2, '0')}';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF262626)))),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFE2E2E2)))),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(flex: 3, child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(item.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFFF5F5F5))),
-              if (item.barcode != null && item.barcode!.isNotEmpty)
-                Text(item.barcode!, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
-            ],
-          )),
-          Expanded(flex: 2, child: Text(item.category, style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)))),
-          Expanded(child: Text('${item.quantity}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
-          Expanded(flex: 2, child: Text(
-            '${item.expiryDate.year}-${item.expiryDate.month.toString().padLeft(2, '0')}-${item.expiryDate.day.toString().padLeft(2, '0')}',
-            style: TextStyle(fontSize: 13, color: isExpiringSoon ? const Color(0xFFEF4444) : const Color(0xFFB0B3B8)),
-          )),
-          Expanded(child: AppBadge(
-            label: item.isSurplus ? 'Surplus' : 'Normal',
-            variant: item.isSurplus ? BadgeVariant.orange : BadgeVariant.green,
-          )),
+          ImageThumbnail(imageUrl: item.imageUrl, imageBytes: item.imageBytes),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(item.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                    const SizedBox(width: 8),
+                    AppBadge(
+                      label: item.isSurplus ? 'Surplus' : 'Normal',
+                      variant: item.isSurplus ? BadgeVariant.orange : BadgeVariant.green,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${item.category} · Qty: ${item.quantity} · Exp: $expiry',
+                  style: TextStyle(fontSize: 12, color: isExpiringSoon ? const Color(0xFFEF4444) : const Color(0xFF757575)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _AddItemDialog extends StatelessWidget {
+class _AddItemDialog extends StatefulWidget {
   const _AddItemDialog();
+
+  @override
+  State<_AddItemDialog> createState() => _AddItemDialogState();
+}
+
+class _AddItemDialogState extends State<_AddItemDialog> {
+  final _nameCtrl = TextEditingController();
+  final _barcodeCtrl = TextEditingController();
+  final _quantityCtrl = TextEditingController();
+  final _categoryCtrl = TextEditingController();
+  bool _isSurplus = false;
+  Uint8List? _imageBytes;
+  DateTime? _expiryDate;
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _barcodeCtrl.dispose();
+    _quantityCtrl.dispose();
+    _categoryCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickExpiry() async {
+    final picked = await pickDateTime(context, initial: _expiryDate);
+    if (picked != null) setState(() => _expiryDate = picked);
+  }
+
+  void _submit() {
+    if (_nameCtrl.text.trim().isEmpty) return;
+    final expiry = _expiryDate ?? DateTime.now().add(const Duration(days: 3));
+
+    context.read<DonorProvider>().addInventoryItem(
+      name: _nameCtrl.text.trim(),
+      barcode: _barcodeCtrl.text.trim().isEmpty ? null : _barcodeCtrl.text.trim(),
+      quantity: int.tryParse(_quantityCtrl.text.trim()) ?? 1,
+      category: _categoryCtrl.text.trim().isEmpty ? 'Other' : _categoryCtrl.text.trim(),
+      expiryDate: expiry,
+      isSurplus: _isSurplus,
+      imageBytes: _imageBytes,
+    );
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: const Text('Add Inventory Item', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
     content: SizedBox(
-      width: 400,
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        _DialogField(label: 'Item Name', placeholder: 'e.g. Basmati Rice'),
-        const SizedBox(height: 12),
-        _DialogField(label: 'Barcode (optional)', placeholder: 'Scan or enter barcode'),
-        const SizedBox(height: 12),
-        Row(children: [
-          Expanded(child: _DialogField(label: 'Quantity', placeholder: '0', keyboardType: TextInputType.number)),
-          const SizedBox(width: 12),
-          Expanded(child: _DialogField(label: 'Category', placeholder: 'e.g. Grains')),
+      width: MediaQuery.of(context).size.width < 460 ? double.maxFinite : 400,
+      child: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          _DialogField(label: 'Item Name', placeholder: 'e.g. Basmati Rice', controller: _nameCtrl),
+          const SizedBox(height: 12),
+          _DialogField(label: 'Barcode (optional)', placeholder: 'Scan or enter barcode', controller: _barcodeCtrl),
+          const SizedBox(height: 12),
+          Row(children: [
+            Expanded(child: _DialogField(label: 'Quantity', placeholder: '0', keyboardType: TextInputType.number, controller: _quantityCtrl)),
+            const SizedBox(width: 12),
+            Expanded(child: _DialogField(label: 'Category', placeholder: 'e.g. Grains', controller: _categoryCtrl)),
+          ]),
+          const SizedBox(height: 12),
+          DateTimeField(label: 'Expiry Date & Time', value: _expiryDate, onTap: _pickExpiry),
+          const SizedBox(height: 12),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text('Photo (optional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF525252))),
+          ),
+          const SizedBox(height: 6),
+          PhotoPickerRow(imageBytes: _imageBytes, onChanged: (bytes) => setState(() => _imageBytes = bytes)),
+          const SizedBox(height: 4),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text('Shown on this item and on the consumer marketplace if marked surplus.', style: TextStyle(fontSize: 11, color: Color(0xFF757575))),
+          ),
+          const SizedBox(height: 12),
+          Material(
+            color: const Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => setState(() => _isSurplus = !_isSurplus),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Row(children: [
+                  Checkbox(
+                    value: _isSurplus,
+                    activeColor: const Color(0xFF16A34A),
+                    onChanged: (v) => setState(() => _isSurplus = v ?? false),
+                  ),
+                  const Expanded(
+                    child: Text('Mark as surplus — instantly lists it (with photo) on the consumer marketplace', style: TextStyle(fontSize: 12, color: Color(0xFF525252))),
+                  ),
+                ]),
+              ),
+            ),
+          ),
         ]),
-        const SizedBox(height: 12),
-        _DialogField(label: 'Expiry Date', placeholder: 'YYYY-MM-DD'),
-      ]),
+      ),
     ),
     actions: [
       TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
       ElevatedButton(
-        onPressed: () => Navigator.pop(context),
-        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0),
+        onPressed: _submit,
+        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF121212), foregroundColor: Colors.white, elevation: 0),
         child: const Text('Add Item'),
       ),
     ],
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
   );
 }
 
@@ -155,22 +235,24 @@ class _DialogField extends StatelessWidget {
   final String label;
   final String placeholder;
   final TextInputType? keyboardType;
-  const _DialogField({required this.label, required this.placeholder, this.keyboardType});
+  final TextEditingController? controller;
+  const _DialogField({required this.label, required this.placeholder, this.keyboardType, this.controller});
 
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFFB0B3B8))),
+      Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF525252))),
       const SizedBox(height: 4),
       TextField(
+        controller: controller,
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: const TextStyle(color: Color(0xFF3F3F46), fontSize: 12),
+          hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontSize: 12),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E2E32))),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E2E2))),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E2E2))),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2)),
         ),
         style: const TextStyle(fontSize: 13),

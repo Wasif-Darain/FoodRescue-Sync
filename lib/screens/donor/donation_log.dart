@@ -18,20 +18,19 @@ class DonationLogScreen extends StatelessWidget {
         children: [
           // Summary cards
           Row(children: [
-            Expanded(child: _SummaryCard(value: '${mockDonationLogs.length}', label: 'Total Donations', color: const Color(0xFF16A34A), bg: const Color(0xFF0D2818))),
+            Expanded(child: _SummaryCard(value: '${mockDonationLogs.length}', label: 'Total Donations')),
             const SizedBox(width: 12),
-            Expanded(child: _SummaryCard(value: '$total', label: 'Items Donated', color: const Color(0xFF2563EB), bg: const Color(0xFF11223A))),
+            Expanded(child: _SummaryCard(value: '$total', label: 'Items Donated')),
             const SizedBox(width: 12),
-            Expanded(child: _SummaryCard(value: '${mockDonationLogs.map((l) => l.recipientOrg).toSet().length}', label: 'Organizations Helped', color: const Color(0xFFEA580C), bg: const Color(0xFF2A1B0D))),
+            Expanded(child: _SummaryCard(value: '${mockDonationLogs.map((l) => l.recipientOrg).toSet().length}', label: 'Organizations Helped')),
           ]),
           const SizedBox(height: 20),
-          // Log table
+          // Log list
           Container(
-            decoration: BoxDecoration(color: const Color(0xFF141416), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF262626))),
+            decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
             child: Column(
               children: [
-                _LogHeader(),
-                ...mockDonationLogs.map((log) => _LogRow(log: log)),
+                for (final log in mockDonationLogs) _LogRow(log: log),
               ],
             ),
           ),
@@ -44,33 +43,20 @@ class DonationLogScreen extends StatelessWidget {
 class _SummaryCard extends StatelessWidget {
   final String value;
   final String label;
-  final Color color;
-  final Color bg;
-  const _SummaryCard({required this.value, required this.label, required this.color, required this.bg});
+  const _SummaryCard({required this.value, required this.label});
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.2))),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFFFFF),
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+    ),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(value, style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: color)),
+      Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF121212))),
       const SizedBox(height: 4),
-      Text(label, style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.8))),
-    ]),
-  );
-}
-
-class _LogHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-    decoration: const BoxDecoration(color: Color(0xFF0A0A0A), borderRadius: BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12))),
-    child: const Row(children: [
-      Expanded(flex: 2, child: Text('Item', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-      Expanded(child: Text('Qty', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-      Expanded(flex: 2, child: Text('Recipient', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-      Expanded(flex: 2, child: Text('Date', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
-      Expanded(child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF9CA3AF)))),
+      Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
     ]),
   );
 }
@@ -80,18 +66,27 @@ class _LogRow extends StatelessWidget {
   const _LogRow({required this.log});
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-    decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF262626)))),
-    child: Row(children: [
-      Expanded(flex: 2, child: Text(log.itemName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
-      Expanded(child: Text('×${log.quantity}', style: const TextStyle(fontSize: 13))),
-      Expanded(flex: 2, child: Text(log.recipientOrg, style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)))),
-      Expanded(flex: 2, child: Text(
-        '${log.loggedAt.year}-${log.loggedAt.month.toString().padLeft(2, '0')}-${log.loggedAt.day.toString().padLeft(2, '0')}',
-        style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-      )),
-      const Expanded(child: AppBadge(label: 'Completed', variant: BadgeVariant.green)),
-    ]),
-  );
+  Widget build(BuildContext context) {
+    final date = '${log.loggedAt.year}-${log.loggedAt.month.toString().padLeft(2, '0')}-${log.loggedAt.day.toString().padLeft(2, '0')}';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFE2E2E2)))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('${log.itemName} ×${log.quantity}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+              const SizedBox(width: 8),
+              const AppBadge(label: 'Completed', variant: BadgeVariant.green),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text('${log.recipientOrg} · $date', style: const TextStyle(fontSize: 12, color: Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
 }

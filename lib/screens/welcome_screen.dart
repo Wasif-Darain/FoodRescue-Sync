@@ -7,117 +7,252 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0D2818), Colors.black, Color(0xFF2A1B0D)],
-          ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
-              child: Column(
-                children: [
-                  // Logo
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Image.asset('assets/images/logo.png', width: 56, height: 56),
-                      const SizedBox(width: 14),
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Center(
+                        child: Column(
+                          children: [
+                            Image.asset('assets/images/logo.png', width: 40, height: 40),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'FoodRescue Sync',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.2, color: Color(0xFF121212)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const _HeroVisual(),
+                      const SizedBox(height: 18),
+                      Row(
                         children: [
-                          Text('FoodRescue', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFFF5F5F5))),
-                          Text('Sync', style: TextStyle(fontSize: 16, color: Color(0xFF16A34A), fontWeight: FontWeight.w600)),
+                          const Text('🍽️', style: TextStyle(fontSize: 18)),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'How will you help?',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF121212), letterSpacing: 0.1),
+                          ),
                         ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Fight Food Waste in Bangladesh',
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFF5F5F5)),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'A real-time logistics platform connecting food donors with organizations and consumers — ensuring surplus food reaches those who need it before it\'s wasted.',
-                    style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF), height: 1.6),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 40),
-                  // Mode cards
-                  Row(
-                    children: [
-                      Expanded(child: _ModeCard(
-                        icon: Icons.restaurant_menu,
-                        title: 'Donor Mode',
-                        subtitle: 'Restaurants · Caterers · Stores',
-                        description: 'List surplus food for donation or discounted sale. Manage inventory, track expiry, and log donations.',
-                        features: const ['Inventory management', 'Flash sales & donations', 'Expiry tracking', 'Donation log'],
-                        accentColor: const Color(0xFF16A34A),
-                        bgColor: const Color(0xFF0D2818),
-                      )),
-                      const SizedBox(width: 20),
-                      Expanded(child: _ModeCard(
-                        icon: Icons.shopping_bag_outlined,
-                        title: 'Consumer Mode',
-                        subtitle: 'NGOs · Food Banks · Shelters · Individuals',
-                        description: 'Browse and claim surplus food nearby. Submit bulk requests, coordinate pickups, and track your impact.',
-                        features: const ['Discount marketplace', 'Bulk food requests', 'Surplus radar map', 'Pickup coordination'],
-                        accentColor: const Color(0xFFEA580C),
-                        bgColor: const Color(0xFF2A1B0D),
-                      )),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  // CTA buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () => context.go('/login'),
-                        icon: const Icon(Icons.arrow_forward, size: 18),
-                        label: const Text('Get Started', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF16A34A),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: _ModeCard(
+                                imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
+                                icon: Icons.restaurant_menu,
+                                title: 'Donor',
+                                subtitle: 'Restaurants · Stores',
+                                features: const ['Inventory', 'Donations'],
+                                accentColor: const Color(0xFF16A34A),
+                                radius: const BorderRadius.only(
+                                  topLeft: Radius.circular(32),
+                                  topRight: Radius.circular(14),
+                                  bottomLeft: Radius.circular(14),
+                                  bottomRight: Radius.circular(32),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: _ModeCard(
+                                imageUrl: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=600&q=80',
+                                icon: Icons.volunteer_activism_outlined,
+                                title: 'Consumer',
+                                subtitle: 'NGOs · Shelters',
+                                features: const ['Marketplace', 'Pickups'],
+                                accentColor: const Color(0xFFEA580C),
+                                radius: const BorderRadius.only(
+                                  topLeft: Radius.circular(14),
+                                  topRight: Radius.circular(32),
+                                  bottomLeft: Radius.circular(32),
+                                  bottomRight: Radius.circular(14),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      OutlinedButton(
-                        onPressed: () => context.go('/login'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          side: const BorderSide(color: Color(0xFF3F3F46)),
-                        ),
-                        child: const Text('Sign In', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFFB0B3B8))),
-                      ),
                     ],
                   ),
-                  const SizedBox(height: 40),
-                  // Stats
-                  Row(
-                    children: [
-                      _StatBox(value: '500+', label: 'Meals Rescued Daily'),
-                      const SizedBox(width: 16),
-                      _StatBox(value: '120+', label: 'Food Donors'),
-                      const SizedBox(width: 16),
-                      _StatBox(value: '45+', label: 'Partner Organizations'),
-                    ],
-                  ),
-                ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: _GetStartedBar(
+                  label: 'Get Started',
+                  onTap: () => context.go('/login'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroVisual extends StatelessWidget {
+  const _HeroVisual();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 230,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(28)),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=900&q=80',
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              color: const Color(0xFFF0F0F0),
+              child: const Icon(Icons.eco_outlined, size: 48, color: Color(0xFF16A34A)),
+            ),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black.withValues(alpha: 0.15), Colors.black.withValues(alpha: 0.82)],
+                stops: const [0.2, 1.0],
               ),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _StatPill(icon: '🍲', value: '500+', label: 'Meals/day'),
+                    const SizedBox(width: 8),
+                    _StatPill(icon: '🤝', value: '120+', label: 'Donors'),
+                    const SizedBox(width: 8),
+                    _StatPill(icon: '❤️', value: '45+', label: 'Partners'),
+                  ],
+                ),
+                const Spacer(),
+                RichText(
+                  text: const TextSpan(
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white, height: 1.15, letterSpacing: 0.1),
+                    children: [
+                      TextSpan(text: 'Fight Food Waste,\nOne '),
+                      WidgetSpan(alignment: PlaceholderAlignment.middle, child: _HighlightWord()),
+                      TextSpan(text: ' at a Time.'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Connecting food donors with organizations and consumers — before it\'s wasted.',
+                  style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.88), height: 1.4, fontWeight: FontWeight.w500),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HighlightWord extends StatelessWidget {
+  const _HighlightWord();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 1),
+    decoration: BoxDecoration(color: const Color(0xFFE53238), borderRadius: BorderRadius.circular(16)),
+    child: const Text('Meal', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
+  );
+}
+
+class _StatPill extends StatelessWidget {
+  final String icon;
+  final String value;
+  final String label;
+  const _StatPill({required this.icon, required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(10)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 10)),
+          const SizedBox(width: 3),
+          Text.rich(
+            TextSpan(children: [
+              TextSpan(text: '$value ', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
+              TextSpan(text: label, style: TextStyle(fontSize: 9, color: Colors.white.withValues(alpha: 0.85))),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GetStartedBar extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _GetStartedBar({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(40),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.16), blurRadius: 18, offset: const Offset(0, 6))],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: const BoxDecoration(color: Color(0xFFE53238), shape: BoxShape.circle),
+              child: const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+            ),
+            Expanded(
+              child: Center(
+                child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF121212))),
+              ),
+            ),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFFE2E2E2))),
+              child: const Icon(Icons.check, color: Color(0xFF16A34A), size: 18),
+            ),
+          ],
         ),
       ),
     );
@@ -125,86 +260,77 @@ class WelcomeScreen extends StatelessWidget {
 }
 
 class _ModeCard extends StatelessWidget {
+  final String imageUrl;
   final IconData icon;
   final String title;
   final String subtitle;
-  final String description;
   final List<String> features;
   final Color accentColor;
-  final Color bgColor;
+  final BorderRadius radius;
 
   const _ModeCard({
+    required this.imageUrl,
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.description,
     required this.features,
     required this.accentColor,
-    required this.bgColor,
+    required this.radius,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFF141416),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accentColor.withValues(alpha: 0.3), width: 2),
+        borderRadius: radius,
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 8))],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          Container(
-            width: 52, height: 52,
-            decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: accentColor, size: 26),
+          Image.network(
+            imageUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(color: accentColor),
           ),
-          const SizedBox(height: 14),
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFF5F5F5))),
-          const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
-          const SizedBox(height: 10),
-          Text(description, style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF), height: 1.5)),
-          const SizedBox(height: 14),
-          ...features.map((f) => Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, accentColor.withValues(alpha: 0.95)],
+                stops: const [0.2, 0.85],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.check_circle, size: 14, color: accentColor),
-                const SizedBox(width: 8),
-                Text(f, style: const TextStyle(fontSize: 13, color: Color(0xFFB0B3B8))),
+                Container(
+                  width: 42, height: 42,
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.28), borderRadius: BorderRadius.circular(13)),
+                  child: Icon(icon, color: Colors.white, size: 22),
+                ),
+                const Spacer(),
+                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+                Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.88), fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 5,
+                  runSpacing: 5,
+                  children: features.map((f) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(20)),
+                    child: Text(f, style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600)),
+                  )).toList(),
+                ),
               ],
             ),
-          )),
+          ),
         ],
-      ),
-    );
-  }
-}
-
-class _StatBox extends StatelessWidget {
-  final String value;
-  final String label;
-  const _StatBox({required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF141416),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF262626)),
-        ),
-        child: Column(
-          children: [
-            Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF16A34A))),
-            const SizedBox(height: 4),
-            Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)), textAlign: TextAlign.center),
-          ],
-        ),
       ),
     );
   }
