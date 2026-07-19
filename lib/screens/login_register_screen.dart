@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -42,57 +43,76 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft, end: Alignment.bottomRight,
-            colors: [Color(0xFFE8F5EC), Color(0xFFF4F7F5), Color(0xFFFEF1E6)],
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            'https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=900&q=80',
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFFF5F5F5)),
           ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Column(
-                children: [
-                  // Logo
-                  GestureDetector(
-                    onTap: () => context.go('/'),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset('assets/images/logo.png', width: 40, height: 40),
-                        const SizedBox(width: 10),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('FoodRescue', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF121212))),
-                            Text('Sync', style: TextStyle(color: Color(0xFF16A34A), fontSize: 12, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                      ],
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black.withValues(alpha: 0.25), Colors.black.withValues(alpha: 0.7)],
+                stops: const [0.0, 0.55],
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: Column(
+                    children: [
+                  Center(
+                    child: GestureDetector(
+                      onTap: () => context.go('/'),
+                      child: Image.asset('assets/images/logo.png', width: 64, height: 64),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   Text(_isLogin ? 'Welcome back!' : 'Create your account',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF121212))),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white)),
                   const SizedBox(height: 4),
                   Text(_isLogin ? 'Sign in to continue' : 'Join FoodRescue Sync today',
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF52525B))),
-                  const SizedBox(height: 24),
-                  // Form card
-                  GlassContainer(
+                    style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.85))),
+                  const SizedBox(height: 20),
+                  // Form card (glass)
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        topRight: Radius.circular(32),
+                        bottomLeft: Radius.circular(32),
+                        bottomRight: Radius.circular(8),
+                      ),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), offset: const Offset(0, 8), blurRadius: 24)],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        topRight: Radius.circular(32),
+                        bottomLeft: Radius.circular(32),
+                        bottomRight: Radius.circular(8),
+                      ),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                        child: Container(
                     padding: const EdgeInsets.all(24),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 24, offset: const Offset(0, 10)),
-                    ],
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.22),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.45)),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (!_isLogin) ...[
-                          const Text('Account Type', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF9CA3AF), letterSpacing: 0.5)),
+                          const Text('Account Type', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF757575), letterSpacing: 0.5)),
                           const SizedBox(height: 10),
                           _AccountTypeGrid(selected: _accountType, onChanged: (t) => setState(() => _accountType = t)),
                           const SizedBox(height: 16),
@@ -114,7 +134,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
                           child: ElevatedButton(
                             onPressed: _submit,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF16A34A),
+                              backgroundColor: const Color(0xFF121212),
                               foregroundColor: Colors.white,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -125,23 +145,36 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
                         ),
                       ],
                     ),
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_isLogin ? "Don't have an account? " : 'Already have an account? ', style: const TextStyle(color: Color(0xFF52525B), fontSize: 13)),
+                      Text(_isLogin ? "Don't have an account? " : 'Already have an account? ', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13)),
                       GestureDetector(
                         onTap: () => setState(() { _isLogin = !_isLogin; }),
-                        child: Text(_isLogin ? 'Sign up' : 'Sign in', style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w600, fontSize: 13)),
+                        child: Text(_isLogin ? 'Sign up' : 'Sign in', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13, decoration: TextDecoration.underline)),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: () {
+                      context.read<AuthProvider>().loginAsAdmin();
+                      context.go('/admin');
+                    },
+                    child: Text('Continue as Admin', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, decoration: TextDecoration.underline)),
                   ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+        ],
       ),
     );
   }
@@ -183,16 +216,16 @@ class _AccountTypeGrid extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF16A34A) : Colors.white.withValues(alpha: 0.7),
+              color: isSelected ? const Color(0xFFDCFCE7) : const Color(0xFFFFFFFF),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFD4D4D8), width: isSelected ? 2 : 1),
+              border: Border.all(color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFE2E2E2), width: isSelected ? 2 : 1),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(t.$3, size: 14, color: isSelected ? Colors.white : const Color(0xFF52525B)),
+                Icon(t.$3, size: 14, color: isSelected ? const Color(0xFF16A34A) : const Color(0xFF757575)),
                 const SizedBox(width: 4),
-                Text(t.$2, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : const Color(0xFF3F3F46))),
+                Text(t.$2, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? const Color(0xFF16A34A) : const Color(0xFF525252))),
               ],
             ),
           ),
@@ -213,17 +246,17 @@ class _Field extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF3F3F46))),
+      Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF525252))),
       const SizedBox(height: 6),
       TextField(
         controller: ctrl,
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+          hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontSize: 13),
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFD4D4D8))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFD4D4D8))),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E2E2))),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E2E2))),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2)),
         ),
         style: const TextStyle(fontSize: 13),
@@ -242,19 +275,19 @@ class _PasswordField extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text('Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF3F3F46))),
+      const Text('Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF525252))),
       const SizedBox(height: 6),
       TextField(
         controller: ctrl,
         obscureText: !show,
         decoration: InputDecoration(
           hintText: 'Enter your password',
-          hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+          hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontSize: 13),
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFD4D4D8))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFD4D4D8))),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E2E2))),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E2E2))),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2)),
-          suffixIcon: IconButton(icon: Icon(show ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: const Color(0xFF52525B)), onPressed: onToggle),
+          suffixIcon: IconButton(icon: Icon(show ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: const Color(0xFF757575)), onPressed: onToggle),
         ),
         style: const TextStyle(fontSize: 13),
       ),
