@@ -52,10 +52,16 @@ class StatCard extends StatelessWidget {
             _AnimatedValue(value: value),
             const SizedBox(height: 2),
             Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
-            if (subtitle != null) ...[
-              const SizedBox(height: 2),
-              Text(subtitle!, style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
-            ],
+            const SizedBox(height: 2),
+            Text(
+              subtitle ?? '\u200B',
+              style: TextStyle(
+                fontSize: 11,
+                color: subtitle != null ? const Color(0xFF757575) : Colors.transparent,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),

@@ -50,7 +50,7 @@ class DonorDashboard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Hi, ${user.name.split(' ').first} 👋', style: const TextStyle(color: Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text('Hi, ${user.name.split(' ').first}!', style: const TextStyle(color: Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 6),
                       Text(
                         surplusItems.isEmpty
