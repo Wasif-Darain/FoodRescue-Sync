@@ -205,7 +205,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 320, mainAxisExtent: 280, crossAxisSpacing: 16, mainAxisSpacing: 16),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 320, mainAxisExtent: 296, crossAxisSpacing: 16, mainAxisSpacing: 16),
             itemCount: filtered.length,
             itemBuilder: (_, i) => _ListingCard(listing: filtered[i]),
           ),
@@ -213,6 +213,27 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
       ),
     );
   }
+}
+
+// Dummy list of Dhaka-area localities used to give each listing card a
+// distinct-looking location line under the donor name.
+// TODO: remove this once real addresses come from the backend.
+const _dummyAreas = [
+  'Gulshan 1, Dhaka',
+  'Banani, Dhaka',
+  'Dhanmondi, Dhaka',
+  'Uttara, Dhaka',
+  'Mirpur, Dhaka',
+  'Bashundhara, Dhaka',
+  'Banani Time Square, Dhaka',
+  'Mohammadpur, Dhaka',
+];
+
+// Picks a dummy area for a given donor name, deterministically, so the same
+// donor always shows the same locality instead of a random one each rebuild.
+String _dummyAreaFor(String donorName) {
+  final index = donorName.hashCode.abs() % _dummyAreas.length;
+  return _dummyAreas[index];
 }
 
 // A single card representing one food listing (donation or flash sale)
@@ -305,6 +326,24 @@ class _ListingCard extends StatelessWidget {
                     Text(listing.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF121212)), maxLines: 2, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
                     Text(listing.donorName, style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
+                    const SizedBox(height: 2),
+                    // Dummy locality shown under the donor name, e.g. "Gulshan 1, Dhaka".
+                    // TODO: replace with a real address/area field once the
+                    // Listing model exposes one from the backend.
+                    Row(
+                      children: [
+                        const Icon(Icons.place_outlined, size: 11, color: Color(0xFFBFBFBF)),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            _dummyAreaFor(listing.donorName),
+                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                     const Spacer(),
                     // Claim/Buy button — label and color depend on listing type.
                     SizedBox(width: double.infinity, child: ElevatedButton(
