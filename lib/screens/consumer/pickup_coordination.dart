@@ -55,19 +55,28 @@ class _PickupStat extends StatelessWidget {
       PickupStatus.completed => ('Completed', Icons.check_circle_outline, const Color(0xFF16A34A)),
     };
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(10),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
       ),
       child: Row(children: [
-        Icon(icon, color: color, size: 22),
-        const SizedBox(width: 12),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('$count', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF121212))),
-          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
-        ]),
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('$count', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF121212))),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF757575))),
+              ),
+            ],
+          ),
+        ),
       ]),
     );
   }
