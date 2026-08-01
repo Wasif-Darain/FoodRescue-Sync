@@ -93,7 +93,12 @@ class AppLayout extends StatelessWidget {
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 80),
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: 140 + MediaQuery.of(context).padding.bottom,
+              ),
               child: child,
             ),
           ),
