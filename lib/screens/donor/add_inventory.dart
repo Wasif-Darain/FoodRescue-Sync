@@ -15,6 +15,7 @@ class AddInventory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final inventory = context.watch<DonorProvider>().inventory;
 
     return AppLayout(
@@ -31,18 +32,18 @@ class AddInventory extends StatelessWidget {
           // Search bar
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
+            decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
             child: Row(
               children: [
-                const Icon(Icons.search, color: Color(0xFF757575), size: 18),
+                Icon(Icons.search, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), size: 18),
                 const SizedBox(width: 10),
-                const Expanded(child: TextField(
-                  decoration: InputDecoration(hintText: 'Search inventory...', border: InputBorder.none, hintStyle: TextStyle(color: Color(0xFFBFBFBF), fontSize: 13)),
+                Expanded(child: TextField(
+                  decoration: InputDecoration(hintText: 'Search inventory...', border: InputBorder.none, hintStyle: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF), fontSize: 13)),
                 )),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: const Color(0xFFF0F0F0), borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFFE2E2E2))),
-                  child: const Row(children: [Icon(Icons.filter_list, size: 14, color: Color(0xFF757575)), SizedBox(width: 4), Text('Filter', style: TextStyle(fontSize: 12, color: Color(0xFF525252)))]),
+                  decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0), borderRadius: BorderRadius.circular(8), border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+                  child: Row(children: [Icon(Icons.filter_list, size: 14, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), const SizedBox(width: 4), Text('Filter', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))]),
                 ),
               ],
             ),
@@ -50,7 +51,7 @@ class AddInventory extends StatelessWidget {
           const SizedBox(height: 16),
           // List
           Container(
-            decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
+            decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
             child: Column(
               children: [
                 for (final item in inventory) _InventoryRow(item: item),
@@ -73,6 +74,7 @@ class _InventoryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final now = DateTime.now();
     final diff = item.expiryDate.difference(now);
     final isExpiringSoon = diff.inDays < 2 && diff.inSeconds > 0;
@@ -80,7 +82,7 @@ class _InventoryRow extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFE2E2E2)))),
+      decoration: BoxDecoration(border: Border(top: BorderSide(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)))),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -93,7 +95,7 @@ class _InventoryRow extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(item.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      child: Text(item.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
                     ),
                     const SizedBox(width: 8),
                     AppBadge(
@@ -105,7 +107,7 @@ class _InventoryRow extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '${item.category} · Qty: ${item.quantity} · Exp: $expiry',
-                  style: TextStyle(fontSize: 12, color: isExpiringSoon ? const Color(0xFFEF4444) : const Color(0xFF757575)),
+                  style: TextStyle(fontSize: 12, color: isExpiringSoon ? const Color(0xFFEF4444) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

@@ -25,6 +25,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final listings = context.watch<DonorProvider>().listings;
     // Sort listings by distance so the closest surplus food appears first
     // in the side list (falls back to 99 km if distance is missing).
@@ -141,11 +142,11 @@ class _SurplusRadarState extends State<SurplusRadar> {
               // "Nearest first" sort indicator (informational only for now).
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFE2E2E2))),
-                child: const Row(children: [
-                  Icon(Icons.sort, size: 16, color: Color(0xFF757575)),
-                  SizedBox(width: 8),
-                  Text('Nearest first', style: TextStyle(fontSize: 12, color: Color(0xFF525252))),
+                decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(10), border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+                child: Row(children: [
+                  Icon(Icons.sort, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                  const SizedBox(width: 8),
+                  Text('Nearest first', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252))),
                 ]),
               ),
               const SizedBox(height: 12),
@@ -163,24 +164,24 @@ class _SurplusRadarState extends State<SurplusRadar> {
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
+                          color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
                           borderRadius: BorderRadius.circular(16),
                           // Highlight the card that matches the selected marker.
                           border: isSelected ? Border.all(color: const Color(0xFF1D4ED8), width: 2) : null,
-                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
                         ),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                            Expanded(child: Text(l.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            Expanded(child: Text(l.title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis)),
                             AppBadge(label: l.listingType == ListingType.donation ? 'FREE' : '৳${l.price.toInt()}', variant: l.listingType == ListingType.donation ? BadgeVariant.green : BadgeVariant.orange),
                           ]),
                           const SizedBox(height: 6),
-                          Text(l.donorName, style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
+                          Text(l.donorName, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                           const SizedBox(height: 6),
                           Row(children: [
                             const Icon(Icons.location_on, size: 12, color: Color(0xFF757575)),
                             const SizedBox(width: 4),
-                            Text('${l.distance} km away', style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
+                            Text('${l.distance} km away', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                           ]),
                         ]),
                       ),
@@ -222,13 +223,14 @@ class _RestaurantInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDonation = listing.listingType == ListingType.donation;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.25), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Row(
         children: [
@@ -237,7 +239,7 @@ class _RestaurantInfoCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: isDonation ? const Color(0xFFDCFCE7) : const Color(0xFFFFE3CC),
+              color: isDonation ? (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7)) : (isDark ? const Color(0xFF2A1A0A) : const Color(0xFFFFE3CC)),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(Icons.storefront_outlined, color: isDonation ? const Color(0xFF16A34A) : const Color(0xFFEA580C)),
@@ -248,14 +250,14 @@ class _RestaurantInfoCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(listing.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(listing.title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
-                Text(listing.donorName, style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
+                Text(listing.donorName, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                 const SizedBox(height: 2),
                 Row(children: [
                   const Icon(Icons.location_on, size: 11, color: Color(0xFF757575)),
                   const SizedBox(width: 3),
-                  Text('${listing.distance} km away', style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
+                  Text('${listing.distance} km away', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                 ]),
               ],
             ),
@@ -265,7 +267,7 @@ class _RestaurantInfoCard extends StatelessWidget {
           AppBadge(label: isDonation ? 'FREE' : '৳${listing.price.toInt()}', variant: isDonation ? BadgeVariant.green : BadgeVariant.orange),
           // Close button to dismiss the info card.
           IconButton(
-            icon: const Icon(Icons.close, size: 18, color: Color(0xFF9CA3AF)),
+            icon: Icon(Icons.close, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF9CA3AF)),
             onPressed: onClose,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
