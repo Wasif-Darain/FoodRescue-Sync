@@ -75,6 +75,7 @@ class _CreateListingState extends State<CreateListing> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AppLayout(
       title: 'Create Listing',
       subtitle: 'List your surplus food for donation or flash sale',
@@ -84,15 +85,15 @@ class _CreateListingState extends State<CreateListing> {
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFFFF),
+            color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Listing type toggle
-              const _Label('Listing Type'),
+              _Label('Listing Type'),
               const SizedBox(height: 8),
               Row(children: [
                 _TypeToggle(label: 'Donation (Free)', icon: Icons.favorite_outline, value: 'donation', selected: _listingType, onTap: (v) => setState(() => _listingType = v)),
@@ -104,29 +105,30 @@ class _CreateListingState extends State<CreateListing> {
               const SizedBox(height: 16),
               _FormField(label: 'Description', placeholder: 'Describe the food, quantity, freshness...', maxLines: 3, controller: _descCtrl),
               const SizedBox(height: 16),
-              const _Label('Photo (optional)'),
+              _Label('Photo (optional)'),
               const SizedBox(height: 6),
               PhotoPickerRow(imageBytes: _imageBytes, onChanged: (bytes) => setState(() => _imageBytes = bytes)),
               const SizedBox(height: 4),
-              const Text('Shown on this listing in the consumer marketplace.', style: TextStyle(fontSize: 11, color: Color(0xFF757575))),
+              Text('Shown on this listing in the consumer marketplace.', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
               const SizedBox(height: 16),
               Row(children: [
                 Expanded(child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _Label('Category'),
+                    _Label('Category'),
                     const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFE2E2E2)),
+                        border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: DropdownButton<String>(
                         value: _category,
                         isExpanded: true,
                         underline: const SizedBox(),
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF525252)),
+                        style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)),
+                        dropdownColor: isDark ? const Color(0xFF2A2A2A) : Colors.white,
                         items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                         onChanged: (v) => setState(() => _category = v ?? _category),
                       ),

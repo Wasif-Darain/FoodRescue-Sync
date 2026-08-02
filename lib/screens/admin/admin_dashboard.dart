@@ -13,6 +13,7 @@ class AdminDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final accounts = context.watch<AdminProvider>().accounts;
     final pending = accounts.where((a) => a.status == AccountStatus.pending).length;
     final totalDonated = mockDonationLogs.fold<int>(0, (s, l) => s + l.quantity);
@@ -104,8 +105,9 @@ class _ManageAccountsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
-      color: const Color(0xFF121212),
+      color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF121212),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -116,7 +118,7 @@ class _ManageAccountsCard extends StatelessWidget {
             children: [
               Container(
                 width: 44, height: 44,
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: isDark ? 0.12 : 0.12), borderRadius: BorderRadius.circular(12)),
                 child: const Icon(Icons.manage_accounts_outlined, color: Colors.white, size: 22),
               ),
               const SizedBox(width: 14),
@@ -149,28 +151,31 @@ class _SectionCard extends StatelessWidget {
   const _SectionCard({required this.title, required this.icon, required this.child});
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFFFFF),
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 16, color: const Color(0xFF121212)),
-            const SizedBox(width: 6),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF121212))),
-          ],
-        ),
-        const SizedBox(height: 12),
-        child,
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: isDark ? Colors.white : const Color(0xFF121212)),
+              const SizedBox(width: 6),
+              Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+            ],
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
 }
 
 class _ActivityRow extends StatelessWidget {
@@ -180,24 +185,27 @@ class _ActivityRow extends StatelessWidget {
   const _ActivityRow({required this.title, required this.subtitle, this.trailing});
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6),
-    child: Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
-              Text(subtitle, style: const TextStyle(fontSize: 11, color: Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
-            ],
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(subtitle, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+              ],
+            ),
           ),
-        ),
-        if (trailing != null) ...[
-          const SizedBox(width: 8),
-          Text(trailing!, style: const TextStyle(fontSize: 11, color: Color(0xFF757575), fontWeight: FontWeight.w600)),
+          if (trailing != null) ...[
+            const SizedBox(width: 8),
+            Text(trailing!, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontWeight: FontWeight.w600)),
+          ],
         ],
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }

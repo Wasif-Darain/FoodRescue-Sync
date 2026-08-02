@@ -23,6 +23,7 @@ class ProfileSettings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
     final isWide = MediaQuery.of(context).size.width >= _kWideBreakpoint;
 
@@ -33,10 +34,11 @@ class ProfileSettings extends StatelessWidget {
       (Icons.help_outline, 'Help & Support'),
     ];
 
-    const cardDecoration = BoxDecoration(
-      color: Color(0xFF141416),
+    final cardDecoration = BoxDecoration(
+      color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
       borderRadius: BorderRadius.all(Radius.circular(16)),
-      border: Border.fromBorderSide(BorderSide(color: Color(0xFF262626))),
+      border: Border.fromBorderSide(BorderSide(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
     );
 
     final profileCard = Container(
@@ -47,8 +49,8 @@ class ProfileSettings extends StatelessWidget {
           Container(
             width: 76,
             height: 76,
-            decoration: const BoxDecoration(
-              color: Color(0xFF14301F),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0D2818) : const Color(0xFF14301F),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -65,24 +67,24 @@ class ProfileSettings extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             user.name,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 17,
-              color: Color(0xFFF5F5F5),
+              color: isDark ? Colors.white : const Color(0xFFF5F5F5),
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
           Text(
             user.email,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+            style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF9CA3AF)),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             decoration: BoxDecoration(
-              color: const Color(0xFF0D2818),
+              color: isDark ? const Color(0xFF0D2818) : const Color(0xFF0D2818),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -104,28 +106,28 @@ class ProfileSettings extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
             child: Text(
               'Quick Links',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF9CA3AF),
+                color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF9CA3AF),
               ),
             ),
           ),
           for (final item in quickLinks)
             ListTile(
-              leading: Icon(item.$1, size: 18, color: const Color(0xFF9CA3AF)),
+              leading: Icon(item.$1, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF9CA3AF)),
               title: Text(
                 item.$2,
-                style: const TextStyle(fontSize: 13, color: Color(0xFFF5F5F5)),
+                style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFFF5F5F5)),
               ),
-              trailing: const Icon(
+              trailing: Icon(
                 Icons.arrow_forward_ios,
                 size: 12,
-                color: Color(0xFF3F3F46),
+                color: isDark ? const Color(0xFF3F3F46) : const Color(0xFF3F3F46),
               ),
               dense: true,
               onTap: () {},
@@ -140,12 +142,12 @@ class ProfileSettings extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Personal Information',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
-              color: Color(0xFFF5F5F5),
+              color: isDark ? Colors.white : const Color(0xFFF5F5F5),
             ),
           ),
           const SizedBox(height: 18),
@@ -158,7 +160,7 @@ class ProfileSettings extends StatelessWidget {
           const SizedBox(height: 14),
           _FieldRow(
             children: [
-              const _Field(label: 'Phone Number', value: '+880 1234 567890'),
+              _Field(label: 'Phone Number', value: '+880 1234 567890'),
               _Field(
                 label: 'Account Type',
                 value: _accountTypeLabel[user.accountType] ?? '',
@@ -167,16 +169,16 @@ class ProfileSettings extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          const _Field(label: 'Address', value: 'Dhaka, Bangladesh'),
+          _Field(label: 'Address', value: 'Dhaka, Bangladesh'),
           const SizedBox(height: 22),
-          const Divider(color: Color(0xFF262626)),
+          Divider(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFF262626)),
           const SizedBox(height: 18),
-          const Text(
+          Text(
             'Change Password',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
-              color: Color(0xFFF5F5F5),
+              color: isDark ? Colors.white : const Color(0xFFF5F5F5),
             ),
           ),
           const SizedBox(height: 16),
@@ -257,11 +259,11 @@ class ProfileSettings extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFFFFF),
+                    color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.14),
+                        color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14),
                         offset: const Offset(0, 4),
                         blurRadius: 0,
                       ),
@@ -272,8 +274,8 @@ class ProfileSettings extends StatelessWidget {
                       Container(
                         width: 72,
                         height: 72,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFDCFCE7),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -290,18 +292,18 @@ class ProfileSettings extends StatelessWidget {
                       const SizedBox(height: 14),
                       Text(
                         user.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: Color(0xFF121212),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         user.email,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF757575),
+                          color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -311,7 +313,7 @@ class ProfileSettings extends StatelessWidget {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFDCFCE7),
+                          color: isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -329,11 +331,11 @@ class ProfileSettings extends StatelessWidget {
                 const SizedBox(height: 14),
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFFFFF),
+                    color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.14),
+                        color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14),
                         offset: const Offset(0, 4),
                         blurRadius: 0,
                       ),
@@ -356,16 +358,16 @@ class ProfileSettings extends StatelessWidget {
                             leading: Icon(
                               item.$1,
                               size: 18,
-                              color: const Color(0xFF757575),
+                              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575),
                             ),
                             title: Text(
                               item.$2,
-                              style: const TextStyle(fontSize: 13),
+                              style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
                             ),
-                            trailing: const Icon(
+                            trailing: Icon(
                               Icons.arrow_forward_ios,
                               size: 12,
-                              color: Color(0xFFBFBFBF),
+                              color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF),
                             ),
                             dense: true,
                             onTap: () {},
@@ -381,11 +383,11 @@ class ProfileSettings extends StatelessWidget {
           final editForm = Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFFFF),
+              color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14),
                   offset: const Offset(0, 4),
                   blurRadius: 0,
                 ),
@@ -394,12 +396,12 @@ class ProfileSettings extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Personal Information',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: Color(0xFF121212),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -434,20 +436,20 @@ class ProfileSettings extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const _Field(label: 'Address', value: 'Dhaka, Bangladesh'),
+                _Field(label: 'Address', value: 'Dhaka, Bangladesh'),
                 const SizedBox(height: 24),
-                const Divider(color: Color(0xFFE2E2E2)),
+                Divider(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   'Change Password',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: Color(0xFF121212),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Row(
+                Row(
                   children: [
                     Expanded(
                       child: _Field(
@@ -457,7 +459,7 @@ class ProfileSettings extends StatelessWidget {
                         placeholder: '••••••••',
                       ),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: _Field(
                         label: 'New Password',
@@ -530,48 +532,51 @@ class _Field extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF525252),
-        ),
-      ),
-      const SizedBox(height: 6),
-      TextField(
-        controller: TextEditingController(text: value),
-        readOnly: readOnly,
-        obscureText: obscure,
-        decoration: InputDecoration(
-          hintText: placeholder,
-          hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontSize: 13),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 12,
-          ),
-          filled: readOnly,
-          fillColor: const Color(0xFFF0F0F0),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFFE2E2E2)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFFE2E2E2)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2),
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252),
           ),
         ),
-        style: const TextStyle(fontSize: 13),
-      ),
-    ],
-  );
+        const SizedBox(height: 6),
+        TextField(
+          controller: TextEditingController(text: value),
+          readOnly: readOnly,
+          obscureText: obscure,
+          decoration: InputDecoration(
+            hintText: placeholder,
+            hintStyle: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF), fontSize: 13),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
+            filled: readOnly,
+            fillColor: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2),
+            ),
+          ),
+          style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
+        ),
+      ],
+    );
+  }
 }
 
 class _FieldRow extends StatelessWidget {

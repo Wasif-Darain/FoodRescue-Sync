@@ -15,6 +15,7 @@ class DonorDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
     final donor = context.watch<DonorProvider>();
     final surplusItems = donor.inventory.where((i) => i.isSurplus).toList();
@@ -40,9 +41,9 @@ class DonorDashboard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFFFF),
+              color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
               borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
             ),
             child: Row(
               children: [
@@ -50,13 +51,13 @@ class DonorDashboard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Hi, ${user.name.split(' ').first}!', style: const TextStyle(color: Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 6),
                       Text(
                         surplusItems.isEmpty
                             ? 'Your inventory is in great shape today.'
                             : '${surplusItems.length} item${surplusItems.length == 1 ? '' : 's'} ready to redistribute today.',
-                        style: const TextStyle(color: Color(0xFF757575), fontSize: 13),
+                        style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                       ),
                     ],
                   ),
@@ -64,7 +65,7 @@ class DonorDashboard extends StatelessWidget {
                 Container(
                   width: 52,
                   height: 52,
-                  decoration: const BoxDecoration(color: Color(0xFFF5F5F5), borderRadius: BorderRadius.all(Radius.circular(14))),
+                  decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.all(Radius.circular(14))),
                   child: const Icon(Icons.eco_outlined, color: Color(0xFF16A34A), size: 26),
                 ),
               ],
@@ -219,13 +220,14 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = titleColor ?? const Color(0xFF121212);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = titleColor ?? (isDark ? Colors.white : const Color(0xFF121212));
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
