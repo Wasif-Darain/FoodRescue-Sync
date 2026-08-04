@@ -8,15 +8,16 @@ class NotificationCenter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final unread = mockNotifications.where((n) => !n.isRead).length;
 
     return AppLayout(
       title: 'Notifications',
       subtitle: '$unread unread notifications',
       currentRoute: '/notifications',
-      action: TextButton(onPressed: () {}, child: const Text('Mark all read', style: TextStyle(color: Color(0xFF16A34A), fontSize: 13))),
+      action: TextButton(onPressed: () {}, child: Text('Mark all read', style: TextStyle(color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A), fontSize: 13))),
       child: Container(
-        decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
+        decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
         child: Column(
           children: mockNotifications.map((n) => _NotificationTile(notification: n)).toList(),
         ),
@@ -31,13 +32,14 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final (icon, color) = switch (notification.type) {
       NotificationType.listing => (Icons.storefront_outlined,        const Color(0xFF16A34A)),
       NotificationType.request => (Icons.assignment_outlined,        const Color(0xFF2563EB)),
       NotificationType.pickup  => (Icons.local_shipping_outlined,    const Color(0xFFEA580C)),
       NotificationType.system  => (Icons.notifications_outlined,     const Color(0xFF757575)),
     };
-    final bg = notification.isRead ? const Color(0xFFFFFFFF) : const Color(0xFFDCFCE7);
+    final bg = notification.isRead ? (isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF)) : (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7));
 
     return Container(
       color: bg,
@@ -55,11 +57,11 @@ class _NotificationTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(notification.message, style: TextStyle(fontSize: 13, color: const Color(0xFF525252), fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w500)),
+                Text(notification.message, style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFFE5E5E5) : const Color(0xFF525252), fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w500)),
                 const SizedBox(height: 4),
                 Text(
                   '${notification.createdAt.hour.toString().padLeft(2, '0')}:${notification.createdAt.minute.toString().padLeft(2, '0')} · ${notification.createdAt.day}/${notification.createdAt.month}/${notification.createdAt.year}',
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF757575)),
+                  style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                 ),
               ],
             ),

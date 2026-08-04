@@ -10,6 +10,7 @@ class ExpiryTracker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final inventory = context.watch<DonorProvider>().inventory;
     final now = DateTime.now();
     final expired = inventory.where((i) => i.expiryDate.isBefore(now)).toList();
@@ -57,22 +58,25 @@ class _ExpiryStatCard extends StatelessWidget {
   const _ExpiryStatCard({required this.count, required this.label, required this.color});
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFFFFF),
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('$count', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.8), fontWeight: FontWeight.w500)),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('$count', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
+          const SizedBox(height: 4),
+          Text(label, style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.8), fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
 }
 
 class _ExpirySection extends StatelessWidget {
@@ -81,38 +85,41 @@ class _ExpirySection extends StatelessWidget {
   const _ExpirySection({required this.title, required this.items});
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF525252))),
-      const SizedBox(height: 8),
-      Container(
-        decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
-        child: Column(
-          children: items.map((item) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFE2E2E2)))),
-            child: Row(
-              children: [
-                const Icon(Icons.inventory_2_outlined, size: 16, color: Color(0xFF757575)),
-                const SizedBox(width: 12),
-                Expanded(child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.name, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
-                    Text('${item.category} · Qty: ${item.quantity}', style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
-                  ],
-                )),
-                Text(
-                  '${item.expiryDate.year}-${item.expiryDate.month.toString().padLeft(2, '0')}-${item.expiryDate.day.toString().padLeft(2, '0')}',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF757575)),
-                ),
-              ],
-            ),
-          )).toList(),
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252))),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
+          child: Column(
+            children: items.map((item) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(border: Border(top: BorderSide(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)))),
+              child: Row(
+                children: [
+                  Icon(Icons.inventory_2_outlined, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.name, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      Text('${item.category} · Qty: ${item.quantity}', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                    ],
+                  )),
+                  Text(
+                    '${item.expiryDate.year}-${item.expiryDate.month.toString().padLeft(2, '0')}-${item.expiryDate.day.toString().padLeft(2, '0')}',
+                    style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                  ),
+                ],
+              ),
+            )).toList(),
+          ),
         ),
-      ),
-      const SizedBox(height: 20),
-    ],
-  );
+        const SizedBox(height: 20),
+      ],
+    );
+  }
 }

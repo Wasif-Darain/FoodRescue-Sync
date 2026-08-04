@@ -27,6 +27,7 @@ class _AccountManagementState extends State<AccountManagement> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final accounts = context.watch<AdminProvider>().accounts;
     final filtered = _filter == null ? accounts : accounts.where((a) => a.status == _filter).toList();
 
@@ -65,9 +66,9 @@ class _AccountManagementState extends State<AccountManagement> {
           ),
           const SizedBox(height: 16),
           if (filtered.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
-              child: Center(child: Text('No accounts in this filter.', style: TextStyle(color: Color(0xFF757575)))),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Center(child: Text('No accounts in this filter.', style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)))),
             )
           else
             Column(
@@ -90,16 +91,17 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF121212) : Colors.white,
+          color: selected ? (isDark ? Colors.white : const Color(0xFF121212)) : (isDark ? const Color(0xFF2A2A2A) : Colors.white),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: selected ? const Color(0xFF121212) : const Color(0xFFE2E2E2)),
+          border: Border.all(color: selected ? (isDark ? Colors.white : const Color(0xFF121212)) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
         ),
-        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: selected ? Colors.white : const Color(0xFF525252))),
+        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: selected ? (isDark ? const Color(0xFF121212) : Colors.white) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
       ),
     );
   }
@@ -111,6 +113,7 @@ class _AccountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final (label, variant) = switch (account.status) {
       AccountStatus.pending => ('Pending', BadgeVariant.orange),
       AccountStatus.approved => ('Approved', BadgeVariant.green),
@@ -121,9 +124,9 @@ class _AccountCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +136,7 @@ class _AccountCard extends StatelessWidget {
               Container(
                 width: 40, height: 40,
                 decoration: BoxDecoration(
-                  color: account.mode == UserMode.donor ? const Color(0xFFDCFCE7) : const Color(0xFFFFE3CC),
+                  color: account.mode == UserMode.donor ? (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7)) : (isDark ? const Color(0xFF2A1A0A) : const Color(0xFFFFE3CC)),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -141,7 +144,7 @@ class _AccountCard extends StatelessWidget {
                     account.name.isNotEmpty ? account.name[0] : '?',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: account.mode == UserMode.donor ? const Color(0xFF15803D) : const Color(0xFFC2410C),
+                      color: account.mode == UserMode.donor ? (isDark ? const Color(0xFF4ADE80) : const Color(0xFF15803D)) : (isDark ? const Color(0xFFF97316) : const Color(0xFFC2410C)),
                     ),
                   ),
                 ),
@@ -151,8 +154,8 @@ class _AccountCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(account.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text(account.email, style: const TextStyle(fontSize: 11, color: Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(account.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(account.email, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
@@ -232,11 +235,14 @@ class _Tag extends StatelessWidget {
   const _Tag({required this.text});
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(20)),
-    child: Text(text, style: const TextStyle(fontSize: 10, color: Color(0xFF525252), fontWeight: FontWeight.w500)),
-  );
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(20)),
+      child: Text(text, style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252), fontWeight: FontWeight.w500)),
+    );
+  }
 }
 
 class _ActionButton extends StatelessWidget {
@@ -248,8 +254,9 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
-      color: outlined ? Colors.white : color,
+      color: outlined ? (isDark ? const Color(0xFF2A2A2A) : Colors.white) : color,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),

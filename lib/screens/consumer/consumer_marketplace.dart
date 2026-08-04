@@ -29,6 +29,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     // Grab the logged-in user and the list of available listings from providers.
     final user = context.watch<AuthProvider>().user!;
     final listings = context.watch<DonorProvider>().listings;
@@ -54,15 +55,9 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFFFF),
+              color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
               borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  offset: const Offset(0, 4),
-                  blurRadius: 0,
-                ),
-              ],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
             ),
             child: Row(
               children: [
@@ -71,18 +66,11 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Hi, ${user.name.split(' ').first}!',
-                        style: const TextStyle(
-                          color: Color(0xFF121212),
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 6),
                       Text(
                         '${listings.length} surplus listing${listings.length == 1 ? '' : 's'} near you right now.',
-                        style: const TextStyle(color: Color(0xFF757575), fontSize: 13),
+                        style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                       ),
                     ],
                   ),
@@ -95,10 +83,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                     Container(
                       width: 52,
                       height: 52,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.all(Radius.circular(14)),
-                      ),
+                      decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.all(Radius.circular(14))),
                       child: const Icon(Icons.restaurant_outlined, color: Color(0xFFEA580C), size: 26),
                     ),
                     const SizedBox(height: 6),
@@ -109,7 +94,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                         const SizedBox(width: 2),
                         Text(
                           _dummyLocation,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF757575), fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),
@@ -165,23 +150,13 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
           Builder(builder: (context) {
             final searchBox = Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE2E2E2)),
-              ),
-              child: const Row(children: [
-                Icon(Icons.search, size: 18, color: Color(0xFF757575)),
-                SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search food listings...',
-                      border: InputBorder.none,
-                      hintStyle: TextStyle(fontSize: 13, color: Color(0xFFBFBFBF)),
-                    ),
-                  ),
-                ),
+              decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(10), border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+              child: Row(children: [
+                Icon(Icons.search, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                const SizedBox(width: 8),
+                Expanded(child: TextField(
+                  decoration: InputDecoration(hintText: 'Search food listings...', border: InputBorder.none, hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF))),
+                )),
               ]),
             );
 
@@ -199,24 +174,14 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFFDCFCE7) : const Color(0xFFFFFFFF),
+                        color: isSelected ? (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7)) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFE2E2E2),
-                          width: isSelected ? 2 : 1,
-                        ),
+                        border: Border.all(color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)), width: isSelected ? 2 : 1),
                       ),
                       child: Row(children: [
-                        Icon(f.$2, size: 14, color: isSelected ? const Color(0xFF16A34A) : const Color(0xFF757575)),
+                        Icon(f.$2, size: 14, color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                         const SizedBox(width: 4),
-                        Text(
-                          f.$1,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: isSelected ? const Color(0xFF16A34A) : const Color(0xFF525252),
-                          ),
-                        ),
+                        Text(f.$1, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
                       ]),
                     ),
                   ),
@@ -257,20 +222,11 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFE53238) : const Color(0xFFFFFFFF),
+                          color: isSelected ? const Color(0xFFE53238) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isSelected ? const Color(0xFFE53238) : const Color(0xFFE2E2E2),
-                          ),
+                          border: Border.all(color: isSelected ? const Color(0xFFE53238) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
                         ),
-                        child: Text(
-                          cat,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: isSelected ? Colors.white : const Color(0xFF525252),
-                          ),
-                        ),
+                        child: Text(cat, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
                       ),
                     ),
                   ),
@@ -322,6 +278,7 @@ class _ListingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDonation = listing.listingType == ListingType.donation;
 
     final imageUrl = listing.imageUrl ??
@@ -332,16 +289,10 @@ class _ListingCard extends StatelessWidget {
     return _HoverScale(
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFFFF),
+          color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E2E2)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05), blurRadius: 10, offset: const Offset(0, 3))],
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -425,14 +376,9 @@ class _ListingCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      listing.title,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF121212)),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    Text(listing.title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 2, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
-                    Text(listing.donorName, style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
+                    Text(listing.donorName, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                     const SizedBox(height: 2),
                     Row(
                       children: [

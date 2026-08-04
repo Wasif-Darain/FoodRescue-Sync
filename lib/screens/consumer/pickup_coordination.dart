@@ -9,6 +9,7 @@ class PickupCoordination extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AppLayout(
       title: 'Pickups',
       subtitle: 'Coordinate and track your food pickups',
@@ -30,7 +31,7 @@ class PickupCoordination extends StatelessWidget {
           ]),
           ),
           const SizedBox(height: 20),
-          const Text('Active Pickups', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF121212))),
+          Text('Active Pickups', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
           const SizedBox(height: 12),
           ...mockPickups.map((p) => Padding(
             padding: const EdgeInsets.only(bottom: 14),
@@ -49,25 +50,35 @@ class _PickupStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final (label, icon, color) = switch (status) {
       PickupStatus.scheduled => ('Scheduled', Icons.schedule, const Color(0xFF2563EB)),
       PickupStatus.enRoute   => ('En Route',  Icons.directions_car, const Color(0xFFEA580C)),
       PickupStatus.completed => ('Completed', Icons.check_circle_outline, const Color(0xFF16A34A)),
     };
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
       ),
       child: Row(children: [
-        Icon(icon, color: color, size: 22),
-        const SizedBox(width: 12),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('$count', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF121212))),
-          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
-        ]),
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('$count', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(label, style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+              ),
+            ],
+          ),
+        ),
       ]),
     );
   }
@@ -79,6 +90,7 @@ class _PickupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final (label, variant, statusColor) = switch (pickup.status) {
       PickupStatus.scheduled => ('Scheduled', BadgeVariant.blue,   const Color(0xFF2563EB)),
       PickupStatus.enRoute   => ('En Route',  BadgeVariant.orange, const Color(0xFFEA580C)),
@@ -88,13 +100,13 @@ class _PickupCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(pickup.donorName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF121212))),
+          Text(pickup.donorName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
           AppBadge(label: label, variant: variant),
         ]),
         const SizedBox(height: 12),
@@ -105,8 +117,8 @@ class _PickupCard extends StatelessWidget {
         const SizedBox(height: 10),
         Wrap(spacing: 6, children: pickup.items.map((item) => Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(color: const Color(0xFFE2E2E2), borderRadius: BorderRadius.circular(16)),
-          child: Text(item, style: const TextStyle(fontSize: 11, color: Color(0xFF525252))),
+          decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE2E2E2), borderRadius: BorderRadius.circular(16)),
+          child: Text(item, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252))),
         )).toList()),
       ]),
     );
@@ -119,11 +131,14 @@ class _InfoRow extends StatelessWidget {
   const _InfoRow({required this.icon, required this.label});
 
   @override
-  Widget build(BuildContext context) => Row(children: [
-    Icon(icon, size: 14, color: const Color(0xFF757575)),
-    const SizedBox(width: 6),
-    Expanded(child: Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF757575)))),
-  ]);
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(children: [
+      Icon(icon, size: 14, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+      const SizedBox(width: 6),
+      Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)))),
+    ]);
+  }
 }
 
 class _HoverScale extends StatefulWidget {

@@ -10,12 +10,13 @@ class AppBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final (bg, fg) = switch (variant) {
-      BadgeVariant.green  => (const Color(0xFFDCFCE7), const Color(0xFF15803D)),
-      BadgeVariant.orange => (const Color(0xFFFFE3CC), const Color(0xFFC2410C)),
-      BadgeVariant.blue   => (const Color(0xFFDBEAFE), const Color(0xFF1D4ED8)),
-      BadgeVariant.red    => (const Color(0xFFFEE2E2), const Color(0xFFDC2626)),
-      BadgeVariant.gray   => (const Color(0xFFE2E2E2), const Color(0xFF525252)),
+      BadgeVariant.green  => (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7), isDark ? const Color(0xFF4ADE80) : const Color(0xFF15803D)),
+      BadgeVariant.orange => (isDark ? const Color(0xFF2A1A0A) : const Color(0xFFFFE3CC), isDark ? const Color(0xFFF97316) : const Color(0xFFC2410C)),
+      BadgeVariant.blue   => (isDark ? const Color(0xFF0A1A2A) : const Color(0xFFDBEAFE), isDark ? const Color(0xFF60A5FA) : const Color(0xFF1D4ED8)),
+      BadgeVariant.red    => (isDark ? const Color(0xFF2A0A0A) : const Color(0xFFFEE2E2), isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626)),
+      BadgeVariant.gray   => (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE2E2E2), isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)),
     };
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),

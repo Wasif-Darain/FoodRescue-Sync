@@ -21,7 +21,9 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = color ?? const Color(0xFF121212);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = color ?? (isDark ? const Color(0xFFE5E5E5) : const Color(0xFF121212));
+    final fg = color == null ? (isDark ? const Color(0xFF121212) : Colors.white) : Colors.white;
     Widget btn = outlined
         ? OutlinedButton.icon(
             onPressed: onPressed,
@@ -37,10 +39,10 @@ class AppButton extends StatelessWidget {
         : ElevatedButton.icon(
             onPressed: onPressed,
             icon: icon ?? const SizedBox.shrink(),
-            label: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            label: Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: fg)),
             style: ElevatedButton.styleFrom(
               backgroundColor: bg,
-              foregroundColor: Colors.white,
+              foregroundColor: fg,
               elevation: 0,
               shadowColor: bg.withValues(alpha: 0.6),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

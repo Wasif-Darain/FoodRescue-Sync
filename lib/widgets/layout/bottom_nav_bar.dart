@@ -216,7 +216,7 @@ class BottomNavBar extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 150),
+          const SizedBox(width: 80),
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -238,7 +238,7 @@ class BottomNavBar extends StatelessWidget {
   }
 }
 
-  class _NavIconButton extends StatelessWidget {
+class _NavIconButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isActive;
@@ -264,7 +264,7 @@ class BottomNavBar extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -278,7 +278,10 @@ class BottomNavBar extends StatelessWidget {
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 200),
                 style: TextStyle(fontSize: 9, color: color, fontWeight: isActive ? FontWeight.w600 : FontWeight.normal),
-                child: Text(label),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(label),
+                ),
               ),
             ],
           ),

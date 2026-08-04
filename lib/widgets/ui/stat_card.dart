@@ -18,6 +18,7 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final c = switch (color) {
       'green'  => const Color(0xFF16A34A),
       'orange' => const Color(0xFFEA580C),
@@ -36,28 +37,28 @@ class StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFFFF),
+          color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               width: 36, height: 36,
-              decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(8)),
               child: Center(child: IconTheme(data: IconThemeData(color: c, size: 18), child: icon)),
             ),
             const SizedBox(height: 10),
             _AnimatedValue(value: value),
             const SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
+            Text(label, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
             const SizedBox(height: 2),
             Text(
               subtitle ?? '\u200B',
               style: TextStyle(
                 fontSize: 11,
-                color: subtitle != null ? const Color(0xFF757575) : Colors.transparent,
+                color: subtitle != null ? (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)) : Colors.transparent,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
