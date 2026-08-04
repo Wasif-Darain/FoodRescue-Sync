@@ -18,6 +18,8 @@ import 'screens/shared/notification_center.dart';
 import 'screens/shared/profile_settings.dart';
 import 'screens/admin/admin_dashboard.dart';
 import 'screens/admin/account_management.dart';
+import 'screens/rewards/rewards_screen.dart';
+import 'screens/leaderboard/leaderboard_screen.dart';
 import 'models/models.dart';
 
 /// Fade + gentle upward slide used for every route so navigating around
@@ -76,8 +78,11 @@ GoRouter buildRouter(AuthProvider auth) => GoRouter(
     // Shared
     GoRoute(path: '/notifications', pageBuilder: (_, state) => _fadeThrough(state, const NotificationCenter())),
     GoRoute(path: '/profile',       pageBuilder: (_, state) => _fadeThrough(state, const ProfileSettings())),
+    GoRoute(path: '/rewards',       pageBuilder: (_, state) => _fadeThrough(state, const RewardsScreen())),
+    GoRoute(path: '/leaderboard',   pageBuilder: (_, state) => _fadeThrough(state, const LeaderboardScreen())),
     // Admin
     GoRoute(path: '/admin',          pageBuilder: (_, state) => _fadeThrough(state, const AdminDashboard())),
     GoRoute(path: '/admin/accounts', pageBuilder: (_, state) => _fadeThrough(state, const AccountManagement())),
   ],
 );
+

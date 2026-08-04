@@ -160,11 +160,23 @@ class DonorDashboard extends StatelessWidget {
                         color: const Color(0xFFEA580C),
                         onTap: () => context.go('/donor/expiry'),
                       ),
-                      _QuickAction(
+                                            _QuickAction(
                         icon: Icons.receipt_long_outlined,
                         label: 'Donation Log',
                         color: const Color(0xFF16A34A),
                         onTap: () => context.go('/donor/donation-log'),
+                      ),
+                      _QuickAction(
+                        icon: Icons.emoji_events_outlined,
+                        label: 'Rewards',
+                        color: const Color(0xFFF59E0B),
+                        onTap: () => context.go('/rewards'),
+                      ),
+                      _QuickAction(
+                        icon: Icons.leaderboard_outlined,
+                        label: 'Leaderboard',
+                        color: const Color(0xFF6B7280),
+                        onTap: () => context.go('/leaderboard'),
                       ),
                     ],
                   ),
