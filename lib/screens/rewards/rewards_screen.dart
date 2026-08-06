@@ -88,6 +88,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
     final totalPoints = 1250;
     final level = 'Gold';
@@ -113,9 +114,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF),
+                color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
                 borderRadius: BorderRadius.circular(18),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
               ),
               child: Row(
                 children: [
@@ -123,11 +124,11 @@ class _RewardsScreenState extends State<RewardsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Hi, ${user.name.split(' ').first}!', style: const TextStyle(color: Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 6),
                         Text(
                           'You\'ve earned $thisPeriodPoints points this $periodLabel and reached $level level.',
-                          style: const TextStyle(color: Color(0xFF757575), fontSize: 13),
+                          style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                         ),
                         const SizedBox(height: 12),
                         ClipRRect(
@@ -135,14 +136,14 @@ class _RewardsScreenState extends State<RewardsScreen> {
                           child: LinearProgressIndicator(
                             value: 0.72,
                             minHeight: 8,
-                            backgroundColor: const Color(0xFFF0F0F0),
+                            backgroundColor: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0),
                             valueColor: const AlwaysStoppedAnimation(Color(0xFF16A34A)),
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           '500 pts to Platinum',
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF757575)),
+                          style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                         ),
                       ],
                     ),
@@ -150,7 +151,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   Container(
                     width: 52,
                     height: 52,
-                    decoration: const BoxDecoration(color: Color(0xFFFFF7ED), borderRadius: BorderRadius.all(Radius.circular(14))),
+                    decoration: BoxDecoration(color: isDark ? const Color(0xFF2A1A0A) : const Color(0xFFFFF7ED), borderRadius: const BorderRadius.all(Radius.circular(14))),
                     child: const Icon(Icons.emoji_events_outlined, color: Color(0xFFF59E0B), size: 26),
                   ),
                 ],
@@ -211,18 +212,18 @@ class _RewardsScreenState extends State<RewardsScreen> {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF),
+                color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.workspace_premium_outlined, size: 16, color: Color(0xFF121212)),
+                      Icon(Icons.workspace_premium_outlined, size: 16, color: isDark ? Colors.white : const Color(0xFF121212)),
                       const SizedBox(width: 6),
-                      Text('Stat Breakdown — $_timeFrame', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF121212))),
+                      Text('Stat Breakdown — $_timeFrame', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -255,12 +256,13 @@ class _RewardsScreenState extends State<RewardsScreen> {
   }
 
   Widget _buildCertifications() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,9 +272,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.workspace_premium_outlined, size: 16, color: Color(0xFF121212)),
+                  Icon(Icons.workspace_premium_outlined, size: 16, color: isDark ? Colors.white : const Color(0xFF121212)),
                   const SizedBox(width: 6),
-                  const Text('Certifications', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF121212))),
+                  Text('Certifications', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
                 ],
               ),
               AppBadge(label: '2 New', variant: BadgeVariant.green),
@@ -286,9 +288,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF9FAFB),
+                    color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF9FAFB),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E2E2)),
+                    border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
                   ),
                   child: Row(
                     children: [
@@ -311,7 +313,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                                 Expanded(
                                   child: Text(
                                     cert['title']! as String,
-                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF121212)),
+                                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
                                   ),
                                 ),
                                 AppBadge(label: cert['date']! as String, variant: cert['variant'] as BadgeVariant),
@@ -320,7 +322,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                             const SizedBox(height: 4),
                             Text(
                               cert['description']! as String,
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF757575)),
+                              style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                             ),
                           ],
                         ),
@@ -337,14 +339,15 @@ class _RewardsScreenState extends State<RewardsScreen> {
   }
 
   Widget _buildBadges() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Badges', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const Text('8 / 15 unlocked', style: TextStyle(fontSize: 12, color: Color(0xFF757575))),
+            Text('Badges', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
+            Text('8 / 15 unlocked', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
           ],
         ),
         const SizedBox(height: 12),
@@ -359,9 +362,9 @@ class _RewardsScreenState extends State<RewardsScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFFFFF),
+                  color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -373,7 +376,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                           width: 46,
                           height: 46,
                           decoration: BoxDecoration(
-                            color: achieved ? color.withValues(alpha: 0.15) : const Color(0xFFF0F0F0),
+                            color: achieved ? color.withValues(alpha: 0.15) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0)),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
@@ -395,13 +398,13 @@ class _RewardsScreenState extends State<RewardsScreen> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: achieved ? const Color(0xFF121212) : const Color(0xFF757575),
+                        color: achieved ? (isDark ? Colors.white : const Color(0xFF121212)) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       badge['description'] as String,
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF757575)),
+                      style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                     ),
                     const SizedBox(height: 12),
                     ClipRRect(
@@ -409,7 +412,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 6,
-                        backgroundColor: const Color(0xFFF0F0F0),
+                        backgroundColor: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0),
                         valueColor: AlwaysStoppedAnimation(achieved ? color : const Color(0xFF9CA3AF)),
                       ),
                     ),
@@ -438,22 +441,23 @@ class _TimeFrameChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF121212) : const Color(0xFFFFFFFF),
+          color: selected ? (isDark ? Colors.white : const Color(0xFF121212)) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: selected ? const Color(0xFF121212) : const Color(0xFFE2E2E2)),
+          border: Border.all(color: selected ? (isDark ? Colors.white : const Color(0xFF121212)) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : const Color(0xFF525252),
+            color: selected ? (isDark ? const Color(0xFF121212) : Colors.white) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)),
           ),
         ),
       ),
@@ -471,6 +475,7 @@ class _BreakdownCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -484,7 +489,7 @@ class _BreakdownCell extends StatelessWidget {
           const SizedBox(height: 8),
           Text('$value', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
+          Text(label, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
         ],
       ),
     );
@@ -500,19 +505,20 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E2E2)),
+        border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 10.5, color: Color(0xFF757575))),
+          Text(label, style: TextStyle(fontSize: 10.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
         ],
       ),
     );
