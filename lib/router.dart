@@ -16,6 +16,11 @@ import 'screens/consumer/request_status_tracker.dart';
 import 'screens/consumer/pickup_coordination.dart';
 import 'screens/shared/notification_center.dart';
 import 'screens/shared/profile_settings.dart';
+import 'screens/shared/edit_profile.dart';
+import 'screens/shared/notification_preferences.dart';
+import 'screens/shared/privacy_security.dart';
+import 'screens/shared/language_region.dart';
+import 'screens/shared/help_support.dart';
 import 'screens/admin/admin_dashboard.dart';
 import 'screens/admin/account_management.dart';
 import 'screens/rewards/rewards_screen.dart';
@@ -78,6 +83,11 @@ GoRouter buildRouter(AuthProvider auth) => GoRouter(
     // Shared
     GoRoute(path: '/notifications', pageBuilder: (_, state) => _fadeThrough(state, const NotificationCenter())),
     GoRoute(path: '/profile',       pageBuilder: (_, state) => _fadeThrough(state, const ProfileSettings())),
+    GoRoute(path: '/profile/edit',              pageBuilder: (_, state) => _fadeThrough(state, const EditProfile())),
+    GoRoute(path: '/profile/notifications',     pageBuilder: (_, state) => _fadeThrough(state, const NotificationPreferences())),
+    GoRoute(path: '/profile/privacy-security',  pageBuilder: (_, state) => _fadeThrough(state, const PrivacySecurity())),
+    GoRoute(path: '/profile/language-region',   pageBuilder: (_, state) => _fadeThrough(state, const LanguageRegion())),
+    GoRoute(path: '/profile/help-support',      pageBuilder: (_, state) => _fadeThrough(state, const HelpSupport())),
     GoRoute(path: '/rewards',       pageBuilder: (_, state) => _fadeThrough(state, const RewardsScreen())),
     GoRoute(path: '/leaderboard',   pageBuilder: (_, state) => _fadeThrough(state, const LeaderboardScreen())),
     // Admin
