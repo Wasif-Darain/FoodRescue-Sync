@@ -16,8 +16,8 @@ class _NavItem {
 }
 
 const _donorLeft = [
-  _NavItem('/donor/marketplace', Icons.storefront_outlined, 'Marketplace'),
   _NavItem('/donor', Icons.dashboard_outlined, 'Dashboard'),
+  _NavItem('/donor/marketplace', Icons.storefront_outlined, 'Marketplace'),
   _NavItem('/donor/inventory', Icons.inventory_2_outlined, 'Inventory'),
 ];
 

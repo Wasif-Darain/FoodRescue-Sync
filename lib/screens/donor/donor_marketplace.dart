@@ -37,7 +37,7 @@ class _DonorMarketplaceState extends State<DonorMarketplace> {
 
     return AppLayout(
       title: 'Marketplace',
-      subtitle: 'Choose a consumer to give food to',
+      subtitle: 'Assign your listings to available consumers',
       currentRoute: '/donor/marketplace',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,46 +88,6 @@ class _DonorMarketplaceState extends State<DonorMarketplace> {
                       ],
                     ),
                   ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          _SectionCard(
-            title: 'Quick Actions',
-            icon: Icons.bolt_outlined,
-            child: Column(
-              children: [
-                _QuickAction(
-                  icon: Icons.add_circle_outline,
-                  label: 'Create Listing',
-                  color: const Color(0xFF16A34A),
-                  onTap: () => context.go('/donor/create-listing'),
-                ),
-                _QuickAction(
-                  icon: Icons.inventory_2_outlined,
-                  label: 'Add Inventory',
-                  color: const Color(0xFF2563EB),
-                  onTap: () => context.go('/donor/inventory'),
-                ),
-                _QuickAction(
-                  icon: Icons.receipt_long_outlined,
-                  label: 'Donation Log',
-                  color: const Color(0xFFEA580C),
-                  onTap: () => context.go('/donor/donation-log'),
-                ),
-                _QuickAction(
-                  icon: Icons.emoji_events_outlined,
-                  label: 'Rewards',
-                  color: const Color(0xFFF59E0B),
-                  onTap: () => context.go('/rewards'),
-                ),
-                _QuickAction(
-                  icon: Icons.leaderboard_outlined,
-                  label: 'Leaderboard',
-                  color: const Color(0xFF6B7280),
-                  onTap: () => context.go('/leaderboard'),
                 ),
               ],
             ),
@@ -246,7 +206,7 @@ class _DonorMarketplaceState extends State<DonorMarketplace> {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 320,
-                mainAxisExtent: 296,
+                mainAxisExtent: 340,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
@@ -259,15 +219,11 @@ class _DonorMarketplaceState extends State<DonorMarketplace> {
   }
 }
 
-const _accountTypeLabel = {
-  AccountType.restaurant: 'Restaurant',
-  AccountType.caterer: 'Caterer',
-  AccountType.store: 'Store',
-  AccountType.ngo: 'NGO',
-  AccountType.foodBank: 'Food Bank',
-  AccountType.shelter: 'Shelter',
-  AccountType.individual: 'Individual',
-};
+List<RegisteredAccount> get _consumers =>
+    mockAccounts.where((a) => a.mode == UserMode.consumer).toList();
+
+RegisteredAccount _consumerFor(int listingId) =>
+    _consumers[(listingId - 1) % _consumers.length];
 
 class _ListingCard extends StatelessWidget {
   final Listing listing;
@@ -277,6 +233,8 @@ class _ListingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDonation = listing.listingType == ListingType.donation;
+    final consumer = _consumerFor(listing.id);
+    final isAvailable = consumer.isAvailable;
 
     final imageUrl = listing.imageUrl ??
         (isDonation
@@ -374,21 +332,80 @@ class _ListingCard extends StatelessWidget {
                     Text(listing.title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 2, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
                     Text('${listing.category} · Qty: ${listing.quantity}', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 12,
+                            backgroundColor: const Color(0xFFDCFCE7),
+                            child: Text(consumer.name[0], style: const TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold, fontSize: 11)),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(consumer.name, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isAvailable ? (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7)) : (isDark ? const Color(0xFF2A1A0A) : const Color(0xFFFFE3CC)),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: isAvailable ? const Color(0xFF16A34A) : const Color(0xFFEA580C)),
+                            ),
+                            child: Text(
+                              isAvailable ? 'Available' : 'Unavailable',
+                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: isAvailable ? const Color(0xFF16A34A) : const Color(0xFFEA580C)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     const Spacer(),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () => _showConsumerPicker(context),
+                        onPressed: () {
+                          if (isAvailable) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text('${listing.title} donated to ${consumer.name}'),
+                              backgroundColor: const Color(0xFF16A34A),
+                            ));
+                          } else {
+                            mockNotifications.insert(0, AppNotification(
+                              id: mockNotifications.length + 1,
+                              message: '${consumer.name} is now available. Your listing "${listing.title}" can be assigned.',
+                              isRead: false,
+                              createdAt: DateTime.now(),
+                              type: NotificationType.listing,
+                            ));
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text('${consumer.name} will be notified when available'),
+                              backgroundColor: const Color(0xFF2563EB),
+                            ));
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF16A34A),
+                          backgroundColor: isAvailable ? const Color(0xFF16A34A) : const Color(0xFFE53238),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                        child: const Text(
-                          'Choose Consumer',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(isAvailable ? Icons.volunteer_activism_outlined : Icons.notifications_active_outlined, size: 14),
+                            const SizedBox(width: 6),
+                            Text(
+                              isAvailable ? 'Donate' : 'Notify When Available',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -397,65 +414,6 @@ class _ListingCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  void _showConsumerPicker(BuildContext context) {
-    final consumers = mockAccounts.where((a) => a.mode == UserMode.consumer).toList();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (sheetContext) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.only(bottom: 8),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 10),
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E2E2), borderRadius: BorderRadius.circular(2))),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Text('Choose a Consumer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
-                  ],
-                ),
-              ),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: consumers.length,
-                  itemBuilder: (context, i) {
-                    final c = consumers[i];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: const Color(0xFFDCFCE7),
-                        child: Text(c.name[0], style: const TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold)),
-                      ),
-                      title: Text(c.name, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
-                      subtitle: Text(_accountTypeLabel[c.accountType] ?? '', style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
-                      onTap: () {
-                        Navigator.pop(sheetContext);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text('${listing.title} assigned to ${c.name}'),
-                          backgroundColor: const Color(0xFF16A34A),
-                        ));
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -493,113 +451,3 @@ class _HoverScaleState extends State<_HoverScale> {
   }
 }
 
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final IconData? icon;
-  final Widget child;
-  final Widget? action;
-  final Color? titleColor;
-
-  const _SectionCard({
-    required this.title,
-    required this.child,
-    this.icon,
-    this.action,
-    this.titleColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = titleColor ?? (isDark ? Colors.white : const Color(0xFF121212));
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  if (icon != null) ...[
-                    Icon(icon, size: 16, color: color),
-                    const SizedBox(width: 6),
-                  ],
-                  Text(
-                    title,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: color),
-                  ),
-                ],
-              ),
-              if (action != null) action!,
-            ],
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _QuickAction({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(icon, color: color, size: 16),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const Icon(
-                    Icons.arrow_forward_ios,
-                    size: 12,
-                    color: Color(0xFFBFBFBF),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-}

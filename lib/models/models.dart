@@ -167,6 +167,7 @@ class RegisteredAccount {
   final UserMode mode;
   final AccountStatus status;
   final DateTime joinedAt;
+  final bool isAvailable;
 
   RegisteredAccount({
     required this.id,
@@ -176,9 +177,10 @@ class RegisteredAccount {
     required this.mode,
     required this.status,
     required this.joinedAt,
+    this.isAvailable = true,
   });
 
-  RegisteredAccount copyWith({AccountStatus? status}) => RegisteredAccount(
+  RegisteredAccount copyWith({AccountStatus? status, bool? isAvailable}) => RegisteredAccount(
     id: id,
     name: name,
     email: email,
@@ -186,6 +188,7 @@ class RegisteredAccount {
     mode: mode,
     status: status ?? this.status,
     joinedAt: joinedAt,
+    isAvailable: isAvailable ?? this.isAvailable,
   );
 }
 
