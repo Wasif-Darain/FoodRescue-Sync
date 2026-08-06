@@ -6,35 +6,27 @@ import '../../widgets/ui/app_badge.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
+import '../../data/mock_data.dart';
 
-// Main marketplace screen shown to consumers, letting them browse
-// nearby surplus food listings (donations and flash sales).
-class ConsumerMarketplace extends StatefulWidget {
-  const ConsumerMarketplace({super.key});
+class DonorMarketplace extends StatefulWidget {
+  const DonorMarketplace({super.key});
 
   @override
-  State<ConsumerMarketplace> createState() => _ConsumerMarketplaceState();
+  State<DonorMarketplace> createState() => _DonorMarketplaceState();
 }
 
-class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
-  // Currently selected food category filter (e.g. "Bakery", "Dairy").
+class _DonorMarketplaceState extends State<DonorMarketplace> {
   String _selectedCategory = 'All';
-  // Currently selected listing-type filter ("All", "Free", "Sale").
   String _filter = 'All';
-  // Available category chips shown in the horizontal scroll row.
   final _categories = ['All', 'Cooked Meals', 'Bakery', 'Dairy', 'Produce', 'Grains'];
-
-  // Placeholder location shown under the restaurant icon in the banner.
   final String _dummyLocation = 'Gulshan, Dhaka';
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Grab the logged-in user and the list of available listings from providers.
     final user = context.watch<AuthProvider>().user!;
     final listings = context.watch<DonorProvider>().listings;
 
-    // Apply both the category filter and the type filter (Free/Sale) to the listings.
     final filtered = listings.where((l) {
       final catMatch = _selectedCategory == 'All' || l.category == _selectedCategory;
       final typeMatch = _filter == 'All' ||
@@ -45,12 +37,11 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
 
     return AppLayout(
       title: 'Marketplace',
-      subtitle: 'Browse nearby surplus food listings',
-      currentRoute: '/consumer',
+      subtitle: 'Choose a consumer to give food to',
+      currentRoute: '/donor/marketplace',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ---- Welcome banner ----
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -61,7 +52,6 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
             ),
             child: Row(
               children: [
-                // Left side: greeting text + listing count.
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,13 +59,12 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                       Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 6),
                       Text(
-                        '${listings.length} surplus listing${listings.length == 1 ? '' : 's'} near you right now.',
+                        '${listings.length} active listing${listings.length == 1 ? '' : 's'} ready to share.',
                         style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                       ),
                     ],
                   ),
                 ),
-                // Right side: restaurant icon badge with location.
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -84,7 +73,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                       width: 52,
                       height: 52,
                       decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.all(Radius.circular(14))),
-                      child: const Icon(Icons.restaurant_outlined, color: Color(0xFFEA580C), size: 26),
+                      child: const Icon(Icons.storefront_outlined, color: Color(0xFF16A34A), size: 26),
                     ),
                     const SizedBox(height: 6),
                     Row(
@@ -105,29 +94,28 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
           ),
           const SizedBox(height: 20),
 
-          // ---- Quick Actions ----
           _SectionCard(
             title: 'Quick Actions',
             icon: Icons.bolt_outlined,
             child: Column(
               children: [
                 _QuickAction(
-                  icon: Icons.radar_outlined,
-                  label: 'Surplus Radar',
-                  color: const Color(0xFF2563EB),
-                  onTap: () => context.go('/consumer/radar'),
-                ),
-                _QuickAction(
-                  icon: Icons.shopping_cart_outlined,
-                  label: 'Bulk Request',
-                  color: const Color(0xFFEA580C),
-                  onTap: () => context.go('/consumer/bulk-request'),
-                ),
-                _QuickAction(
-                  icon: Icons.history_outlined,
-                  label: 'Request Status',
+                  icon: Icons.add_circle_outline,
+                  label: 'Create Listing',
                   color: const Color(0xFF16A34A),
-                  onTap: () => context.go('/consumer/requests'),
+                  onTap: () => context.go('/donor/create-listing'),
+                ),
+                _QuickAction(
+                  icon: Icons.inventory_2_outlined,
+                  label: 'Add Inventory',
+                  color: const Color(0xFF2563EB),
+                  onTap: () => context.go('/donor/inventory'),
+                ),
+                _QuickAction(
+                  icon: Icons.receipt_long_outlined,
+                  label: 'Donation Log',
+                  color: const Color(0xFFEA580C),
+                  onTap: () => context.go('/donor/donation-log'),
                 ),
                 _QuickAction(
                   icon: Icons.emoji_events_outlined,
@@ -146,7 +134,6 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
           ),
           const SizedBox(height: 20),
 
-          // ---- Search bar + type filter chips (Free / Sale / All) ----
           Builder(builder: (context) {
             final searchBox = Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -155,7 +142,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                 Icon(Icons.search, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                 const SizedBox(width: 8),
                 Expanded(child: TextField(
-                  decoration: InputDecoration(hintText: 'Search food listings...', border: InputBorder.none, hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF))),
+                  decoration: InputDecoration(hintText: 'Search your listings...', border: InputBorder.none, hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF))),
                 )),
               ]),
             );
@@ -208,7 +195,6 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
           }),
           const SizedBox(height: 14),
 
-          // ---- Category filter chips (All / Cooked Meals / Bakery / etc.) ----
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -236,41 +222,52 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
           ),
           const SizedBox(height: 20),
 
-          // ---- Grid of listing cards ----
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 320,
-              mainAxisExtent: 296,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+          if (filtered.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.storefront_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
+                  const SizedBox(height: 12),
+                  Text('No listings found', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                  const SizedBox(height: 4),
+                  Text('Create a listing to start sharing food.', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                ],
+              ),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 320,
+                mainAxisExtent: 296,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: filtered.length,
+              itemBuilder: (_, i) => _ListingCard(listing: filtered[i]),
             ),
-            itemCount: filtered.length,
-            itemBuilder: (_, i) => _ListingCard(listing: filtered[i]),
-          ),
         ],
       ),
     );
   }
 }
 
-// Dummy list of Dhaka-area localities used for card display.
-const _dummyAreas = [
-  'Gulshan 1, Dhaka',
-  'Banani, Dhaka',
-  'Dhanmondi, Dhaka',
-  'Uttara, Dhaka',
-  'Mirpur, Dhaka',
-  'Bashundhara, Dhaka',
-  'Banani Time Square, Dhaka',
-  'Mohammadpur, Dhaka',
-];
-
-String _dummyAreaFor(String donorName) {
-  final index = donorName.hashCode.abs() % _dummyAreas.length;
-  return _dummyAreas[index];
-}
+const _accountTypeLabel = {
+  AccountType.restaurant: 'Restaurant',
+  AccountType.caterer: 'Caterer',
+  AccountType.store: 'Store',
+  AccountType.ngo: 'NGO',
+  AccountType.foodBank: 'Food Bank',
+  AccountType.shelter: 'Shelter',
+  AccountType.individual: 'Individual',
+};
 
 class _ListingCard extends StatelessWidget {
   final Listing listing;
@@ -298,7 +295,6 @@ class _ListingCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ---- Image header with badges ----
             Container(
               height: 120,
               decoration: BoxDecoration(
@@ -369,7 +365,6 @@ class _ListingCard extends StatelessWidget {
                 ),
               ]),
             ),
-            // ---- Card body ----
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -378,42 +373,22 @@ class _ListingCard extends StatelessWidget {
                   children: [
                     Text(listing.title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 2, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
-                    Text(listing.donorName, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        const Icon(Icons.place_outlined, size: 11, color: Color(0xFFBFBFBF)),
-                        const SizedBox(width: 3),
-                        Expanded(
-                          child: Text(
-                            _dummyAreaFor(listing.donorName),
-                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF)),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
+                    Text('${listing.category} · Qty: ${listing.quantity}', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                     const Spacer(),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('Claimed: ${listing.title}'),
-                            backgroundColor: const Color(0xFF16A34A),
-                          ));
-                        },
+                        onPressed: () => _showConsumerPicker(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isDonation ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
+                          backgroundColor: const Color(0xFF16A34A),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                        child: Text(
-                          isDonation ? 'Claim Free' : 'Buy Now',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        child: const Text(
+                          'Choose Consumer',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -426,9 +401,67 @@ class _ListingCard extends StatelessWidget {
       ),
     );
   }
+
+  void _showConsumerPicker(BuildContext context) {
+    final consumers = mockAccounts.where((a) => a.mode == UserMode.consumer).toList();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (sheetContext) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.only(bottom: 8),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E2E2), borderRadius: BorderRadius.circular(2))),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Text('Choose a Consumer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
+                  ],
+                ),
+              ),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: consumers.length,
+                  itemBuilder: (context, i) {
+                    final c = consumers[i];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: const Color(0xFFDCFCE7),
+                        child: Text(c.name[0], style: const TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold)),
+                      ),
+                      title: Text(c.name, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      subtitle: Text(_accountTypeLabel[c.accountType] ?? '', style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
+                      onTap: () {
+                        Navigator.pop(sheetContext);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('${listing.title} assigned to ${c.name}'),
+                          backgroundColor: const Color(0xFF16A34A),
+                        ));
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-// Widget definition for _HoverScale
 class _HoverScale extends StatefulWidget {
   final Widget child;
   const _HoverScale({required this.child});
@@ -484,13 +517,7 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14),
-            offset: const Offset(0, 4),
-            blurRadius: 0,
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -4,6 +4,7 @@ import 'providers/auth_provider.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/login_register_screen.dart';
 import 'screens/donor/donor_dashboard.dart';
+import 'screens/donor/donor_marketplace.dart';
 import 'screens/donor/add_inventory.dart';
 import 'screens/donor/expiry_tracker.dart';
 import 'screens/donor/create_listing.dart';
@@ -69,6 +70,7 @@ GoRouter buildRouter(AuthProvider auth) => GoRouter(
     GoRoute(path: '/login', pageBuilder: (_, state) => _fadeThrough(state, const LoginRegisterScreen())),
     // Donor
     GoRoute(path: '/donor',                pageBuilder: (_, state) => _fadeThrough(state, const DonorDashboard())),
+    GoRoute(path: '/donor/marketplace',    pageBuilder: (_, state) => _fadeThrough(state, const DonorMarketplace())),
     GoRoute(path: '/donor/inventory',      pageBuilder: (_, state) => _fadeThrough(state, const AddInventory())),
     GoRoute(path: '/donor/expiry',         pageBuilder: (_, state) => _fadeThrough(state, const ExpiryTracker())),
     GoRoute(path: '/donor/create-listing', pageBuilder: (_, state) => _fadeThrough(state, const CreateListing())),
