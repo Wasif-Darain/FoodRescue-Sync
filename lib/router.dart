@@ -4,6 +4,7 @@ import 'providers/auth_provider.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/login_register_screen.dart';
 import 'screens/donor/donor_dashboard.dart';
+import 'screens/donor/donor_marketplace.dart';
 import 'screens/donor/add_inventory.dart';
 import 'screens/donor/expiry_tracker.dart';
 import 'screens/donor/create_listing.dart';
@@ -16,6 +17,11 @@ import 'screens/consumer/request_status_tracker.dart';
 import 'screens/consumer/pickup_coordination.dart';
 import 'screens/shared/notification_center.dart';
 import 'screens/shared/profile_settings.dart';
+import 'screens/shared/edit_profile.dart';
+import 'screens/shared/notification_preferences.dart';
+import 'screens/shared/privacy_security.dart';
+import 'screens/shared/language_region.dart';
+import 'screens/shared/help_support.dart';
 import 'screens/admin/admin_dashboard.dart';
 import 'screens/admin/account_management.dart';
 import 'screens/rewards/rewards_screen.dart';
@@ -64,6 +70,7 @@ GoRouter buildRouter(AuthProvider auth) => GoRouter(
     GoRoute(path: '/login', pageBuilder: (_, state) => _fadeThrough(state, const LoginRegisterScreen())),
     // Donor
     GoRoute(path: '/donor',                pageBuilder: (_, state) => _fadeThrough(state, const DonorDashboard())),
+    GoRoute(path: '/donor/marketplace',    pageBuilder: (_, state) => _fadeThrough(state, const DonorMarketplace())),
     GoRoute(path: '/donor/inventory',      pageBuilder: (_, state) => _fadeThrough(state, const AddInventory())),
     GoRoute(path: '/donor/expiry',         pageBuilder: (_, state) => _fadeThrough(state, const ExpiryTracker())),
     GoRoute(path: '/donor/create-listing', pageBuilder: (_, state) => _fadeThrough(state, const CreateListing())),
@@ -78,6 +85,11 @@ GoRouter buildRouter(AuthProvider auth) => GoRouter(
     // Shared
     GoRoute(path: '/notifications', pageBuilder: (_, state) => _fadeThrough(state, const NotificationCenter())),
     GoRoute(path: '/profile',       pageBuilder: (_, state) => _fadeThrough(state, const ProfileSettings())),
+    GoRoute(path: '/profile/edit',              pageBuilder: (_, state) => _fadeThrough(state, const EditProfile())),
+    GoRoute(path: '/profile/notifications',     pageBuilder: (_, state) => _fadeThrough(state, const NotificationPreferences())),
+    GoRoute(path: '/profile/privacy-security',  pageBuilder: (_, state) => _fadeThrough(state, const PrivacySecurity())),
+    GoRoute(path: '/profile/language-region',   pageBuilder: (_, state) => _fadeThrough(state, const LanguageRegion())),
+    GoRoute(path: '/profile/help-support',      pageBuilder: (_, state) => _fadeThrough(state, const HelpSupport())),
     GoRoute(path: '/rewards',       pageBuilder: (_, state) => _fadeThrough(state, const RewardsScreen())),
     GoRoute(path: '/leaderboard',   pageBuilder: (_, state) => _fadeThrough(state, const LeaderboardScreen())),
     // Admin

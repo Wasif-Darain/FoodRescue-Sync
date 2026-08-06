@@ -18,6 +18,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
     final topDonors = _getMockDonors(_timeFrame);
     final topConsumers = _getMockConsumers(_timeFrame);
@@ -37,9 +38,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF),
+                color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
                 borderRadius: BorderRadius.circular(18),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
               ),
               child: Row(
                 children: [
@@ -47,11 +48,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Hi, ${user.name.split(' ').first}!', style: const TextStyle(color: Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 6),
                         Text(
                           'You\'re ranked #$myDonorRank among donors and #$myConsumerRank among consumers this $periodLabel.',
-                          style: const TextStyle(color: Color(0xFF757575), fontSize: 13),
+                          style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                         ),
                       ],
                     ),
@@ -59,7 +60,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   Container(
                     width: 52,
                     height: 52,
-                    decoration: const BoxDecoration(color: Color(0xFFF5F5F5), borderRadius: BorderRadius.all(Radius.circular(14))),
+                    decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: const BorderRadius.all(Radius.circular(14))),
                     child: const Icon(Icons.leaderboard_outlined, color: Color(0xFF2563EB), size: 26),
                   ),
                 ],
@@ -251,22 +252,23 @@ class _TimeFrameChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF121212) : const Color(0xFFFFFFFF),
+          color: selected ? (isDark ? Colors.white : const Color(0xFF121212)) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: selected ? const Color(0xFF121212) : const Color(0xFFE2E2E2)),
+          border: Border.all(color: selected ? (isDark ? Colors.white : const Color(0xFF121212)) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : const Color(0xFF525252),
+            color: selected ? (isDark ? const Color(0xFF121212) : Colors.white) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)),
           ),
         ),
       ),
@@ -291,12 +293,13 @@ class _LeaderboardSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,7 +311,7 @@ class _LeaderboardSection extends StatelessWidget {
                 children: [
                   Icon(icon, size: 16, color: iconColor),
                   const SizedBox(width: 6),
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF121212))),
+                  Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
                 ],
               ),
               AppBadge(label: 'Top 5', variant: BadgeVariant.green),
@@ -327,10 +330,10 @@ class _LeaderboardSection extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isTop3 ? _getRankColor(index).withValues(alpha: 0.06) : const Color(0xFFF9FAFB),
+                  color: isTop3 ? _getRankColor(index).withValues(alpha: 0.06) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF9FAFB)),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isTop3 ? _getRankColor(index).withValues(alpha: 0.4) : const Color(0xFFE2E2E2),
+                    color: isTop3 ? _getRankColor(index).withValues(alpha: 0.4) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
                   ),
                 ),
                 child: Row(
@@ -343,14 +346,14 @@ class _LeaderboardSection extends StatelessWidget {
                         children: [
                           Text(
                             user['name'] as String,
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF121212)),
+                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
                           Text(
                             user['org'] as String,
-                            style: const TextStyle(fontSize: 11, color: Color(0xFF757575)),
+                            style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -363,7 +366,7 @@ class _LeaderboardSection extends StatelessWidget {
                       children: [
                         Text(
                           '${user['count']} items',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF121212)),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)),
                         ),
                         const SizedBox(height: 2),
                         Row(
@@ -396,7 +399,7 @@ class _LeaderboardSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFDCFCE7),
+              color: isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.3)),
             ),
@@ -411,15 +414,15 @@ class _LeaderboardSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Your current position',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF15803D)),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF15803D)),
                   ),
                 ),
                 Text(
                   '#$myRank',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF15803D)),
                 ),
               ],
             ),
@@ -447,12 +450,13 @@ class _RankBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isTop3 = rank <= 3;
     return Container(
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: isTop3 ? color : const Color(0xFFF0F0F0),
+        color: isTop3 ? color : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0)),
         shape: BoxShape.circle,
       ),
       child: Center(
@@ -468,7 +472,7 @@ class _RankBadge extends StatelessWidget {
               )
             : Text(
                 '$rank',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF757575)),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
               ),
       ),
     );

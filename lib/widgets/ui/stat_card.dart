@@ -78,7 +78,8 @@ class _AnimatedValue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF121212));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final style = TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212));
     if (value is int) {
       return TweenAnimationBuilder<int>(
         tween: IntTween(begin: 0, end: value as int),
