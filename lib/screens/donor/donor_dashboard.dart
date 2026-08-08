@@ -6,6 +6,7 @@ import '../../widgets/ui/stat_card.dart';
 import '../../widgets/ui/responsive_grid.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/user_badge.dart';
+import '../../widgets/ui/countdown_timer.dart';
 import '../../data/mock_data.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
@@ -340,6 +341,8 @@ class _ListingRow extends StatelessWidget {
                 '${listing.category} · Qty: ${listing.quantity}',
                 style: const TextStyle(fontSize: 11, color: Color(0xFF757575)),
               ),
+              const SizedBox(height: 4),
+              CountdownTimer(expiry: listing.pickupEnd, fontSize: 9),
             ],
           ),
         ),

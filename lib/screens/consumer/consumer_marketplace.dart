@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/user_badge.dart';
+import '../../widgets/ui/countdown_timer.dart';
+import '../../widgets/ui/date_time_field.dart';
 import '../../data/mock_data.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
@@ -37,12 +39,13 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
     final listings = context.watch<DonorProvider>().listings;
 
     // Apply both the category filter and the type filter (Free/Sale) to the listings.
+    final now = DateTime.now();
     final filtered = listings.where((l) {
       final catMatch = _selectedCategory == 'All' || l.category == _selectedCategory;
       final typeMatch = _filter == 'All' ||
           (_filter == 'Free' && l.listingType == ListingType.donation) ||
           (_filter == 'Sale' && l.listingType == ListingType.flashSale);
-      return catMatch && typeMatch;
+      return catMatch && typeMatch && l.pickupEnd.isAfter(now);
     }).toList();
 
     return AppLayout(
@@ -254,12 +257,12 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 320,
-              mainAxisExtent: 320,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-            ),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 320,
+                mainAxisExtent: 380,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
             itemCount: filtered.length,
             itemBuilder: (_, i) => _ListingCard(listing: filtered[i]),
           ),
@@ -289,6 +292,107 @@ String _dummyAreaFor(String donorName) {
 class _ListingCard extends StatelessWidget {
   final Listing listing;
   const _ListingCard({required this.listing});
+
+  void _showClaimSheet(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDonation = listing.listingType == ListingType.donation;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (sheetContext) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(listing.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                    onPressed: () => Navigator.pop(sheetContext),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(listing.donorName, style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+              const SizedBox(height: 4),
+              Text(listing.description, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+              const SizedBox(height: 12),
+              Row(children: [
+                AppBadge(label: isDonation ? 'FREE' : '৳${listing.price.toInt()}', variant: isDonation ? BadgeVariant.green : BadgeVariant.orange),
+                const SizedBox(width: 8),
+                AppBadge(label: 'Qty: ${listing.quantity}', variant: BadgeVariant.blue),
+                const SizedBox(width: 8),
+                AppBadge(label: '${listing.distance} km', variant: BadgeVariant.gray),
+              ]),
+              const SizedBox(height: 8),
+              Row(children: [
+                const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF757575)),
+                const SizedBox(width: 4),
+                Text('Pickup by: ${listing.pickupEnd.hour.toString().padLeft(2, '0')}:${listing.pickupEnd.minute.toString().padLeft(2, '0')} · ${listing.pickupEnd.day}/${listing.pickupEnd.month}/${listing.pickupEnd.year}',
+                  style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+              ]),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Claimed: ${listing.title}'),
+                      backgroundColor: const Color(0xFF16A34A),
+                    ));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF16A34A),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Claim Now', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final picked = await pickDateTime(sheetContext, initial: DateTime.now().add(const Duration(hours: 1)));
+                    if (picked == null) return;
+                    Navigator.pop(sheetContext);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Scheduled pickup for ${listing.title}'),
+                      backgroundColor: const Color(0xFF2563EB),
+                    ));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Schedule Pickup', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -422,16 +526,18 @@ class _ListingCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: CountdownTimer(expiry: listing.pickupEnd),
+                    ),
                     const Spacer(),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('Claimed: ${listing.title}'),
-                            backgroundColor: const Color(0xFF16A34A),
-                          ));
-                        },
+                        onPressed: listing.pickupEnd.isBefore(DateTime.now())
+                            ? null
+                            : () => _showClaimSheet(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: isDonation ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
                           foregroundColor: Colors.white,
@@ -440,7 +546,9 @@ class _ListingCard extends StatelessWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
                         child: Text(
-                          isDonation ? 'Claim Free' : 'Buy Now',
+                          listing.pickupEnd.isBefore(DateTime.now())
+                              ? 'Expired'
+                              : (isDonation ? 'Claim Free' : 'Buy Now'),
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                         ),
                       ),

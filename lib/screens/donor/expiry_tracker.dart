@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/responsive_grid.dart';
+import '../../widgets/ui/countdown_timer.dart';
 import '../../models/models.dart';
 import '../../providers/donor_provider.dart';
 
@@ -109,9 +110,16 @@ class _ExpirySection extends StatelessWidget {
                       Text('${item.category} · Qty: ${item.quantity}', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                     ],
                   )),
-                  Text(
-                    '${item.expiryDate.year}-${item.expiryDate.month.toString().padLeft(2, '0')}-${item.expiryDate.day.toString().padLeft(2, '0')}',
-                    style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${item.expiryDate.year}-${item.expiryDate.month.toString().padLeft(2, '0')}-${item.expiryDate.day.toString().padLeft(2, '0')}',
+                        style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                      ),
+                      const SizedBox(height: 4),
+                      CountdownTimer(expiry: item.expiryDate, fontSize: 9),
+                    ],
                   ),
                 ],
               ),

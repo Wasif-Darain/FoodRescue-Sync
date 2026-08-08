@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
+import '../../widgets/ui/countdown_timer.dart';
 import '../../models/models.dart';
 import '../../providers/donor_provider.dart';
 
@@ -26,7 +27,8 @@ class _SurplusRadarState extends State<SurplusRadar> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final listings = context.watch<DonorProvider>().listings;
+    final now = DateTime.now();
+    final listings = context.watch<DonorProvider>().listings.where((l) => l.pickupEnd.isAfter(now)).toList();
     // Sort listings by distance so the closest surplus food appears first
     // in the side list (falls back to 99 km if distance is missing).
     final sorted = [...listings]..sort((a, b) => (a.distance ?? 99).compareTo(b.distance ?? 99));
@@ -183,6 +185,11 @@ class _SurplusRadarState extends State<SurplusRadar> {
                             const SizedBox(width: 4),
                             Text('${l.distance} km away', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                           ]),
+                          const SizedBox(height: 6),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: CountdownTimer(expiry: l.pickupEnd, fontSize: 9),
+                          ),
                         ]),
                       ),
                     ),
@@ -259,6 +266,8 @@ class _RestaurantInfoCard extends StatelessWidget {
                   const SizedBox(width: 3),
                   Text('${listing.distance} km away', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                 ]),
+                const SizedBox(height: 4),
+                CountdownTimer(expiry: listing.pickupEnd, fontSize: 9),
               ],
             ),
           ),

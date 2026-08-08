@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_button.dart';
+import '../../widgets/ui/date_time_field.dart';
 
 class BulkRequest extends StatefulWidget {
   const BulkRequest({super.key});
@@ -12,6 +13,12 @@ class BulkRequest extends StatefulWidget {
 
 class _BulkRequestState extends State<BulkRequest> {
   final _items = <_RequestItem>[_RequestItem()];
+  DateTime _requiredDate = DateTime.now();
+
+  Future<void> _pickRequiredDate() async {
+    final picked = await pickDateTime(context, initial: _requiredDate);
+    if (picked != null) setState(() => _requiredDate = picked);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +50,7 @@ class _BulkRequestState extends State<BulkRequest> {
                   _FormField(label: 'Delivery / Pickup Address', placeholder: 'Full address'),
                   const SizedBox(height: 12),
                   Row(children: [
-                    Expanded(child: _FormField(label: 'Required Date', placeholder: 'YYYY-MM-DD')),
+                    Expanded(child: DateTimeField(label: 'Required Date & Time', value: _requiredDate, onTap: _pickRequiredDate)),
                     const SizedBox(width: 12),
                     Expanded(child: _FormField(label: 'People to Feed', placeholder: '0', keyboardType: TextInputType.number)),
                   ]),

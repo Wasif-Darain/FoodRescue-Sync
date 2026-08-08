@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/user_badge.dart';
+import '../../widgets/ui/countdown_timer.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
@@ -29,16 +30,16 @@ class _DonorMarketplaceState extends State<DonorMarketplace> {
     final user = context.watch<AuthProvider>().user!;
     final listings = context.watch<DonorProvider>().listings;
 
+    final now = DateTime.now();
     final filtered = listings.where((l) {
       final catMatch = _selectedCategory == 'All' || l.category == _selectedCategory;
       final typeMatch = _filter == 'All' ||
           (_filter == 'Free' && l.listingType == ListingType.donation) ||
           (_filter == 'Sale' && l.listingType == ListingType.flashSale);
-      final consumer = _consumerFor(l.id);
       final availMatch = _availabilityFilter == 'All' ||
-          (_availabilityFilter == 'Available' && consumer.isAvailable) ||
-          (_availabilityFilter == 'Unavailable' && !consumer.isAvailable);
-      return catMatch && typeMatch && availMatch;
+          (_availabilityFilter == 'Available' && _consumerFor(l.id).isAvailable) ||
+          (_availabilityFilter == 'Unavailable' && !_consumerFor(l.id).isAvailable);
+      return catMatch && typeMatch && availMatch && l.pickupEnd.isAfter(now);
     }).toList();
 
     return AppLayout(
@@ -259,7 +260,7 @@ class _DonorMarketplaceState extends State<DonorMarketplace> {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 320,
-                mainAxisExtent: 360,
+                mainAxisExtent: 380,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
@@ -429,11 +430,18 @@ class _ListingCard extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: CountdownTimer(expiry: listing.pickupEnd),
+                    ),
                     const Spacer(),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: listing.pickupEnd.isBefore(DateTime.now())
+                            ? null
+                            : () {
                           if (isAvailable) {
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                               content: Text('${listing.title} donated to ${consumer.name}'),
@@ -463,10 +471,14 @@ class _ListingCard extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(isAvailable ? Icons.volunteer_activism_outlined : Icons.notifications_active_outlined, size: 14),
+                            Icon(listing.pickupEnd.isBefore(DateTime.now())
+                                ? Icons.timer_off_outlined
+                                : (isAvailable ? Icons.volunteer_activism_outlined : Icons.notifications_active_outlined), size: 14),
                             const SizedBox(width: 6),
                             Text(
-                              isAvailable ? 'Donate' : 'Notify When Available',
+                              listing.pickupEnd.isBefore(DateTime.now())
+                                  ? 'Expired'
+                                  : (isAvailable ? 'Donate' : 'Notify When Available'),
                               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                             ),
                           ],

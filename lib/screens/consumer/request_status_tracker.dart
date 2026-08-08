@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/rating_stars.dart';
+import '../../widgets/ui/countdown_timer.dart';
 import '../../data/mock_data.dart';
 import '../../models/models.dart';
 
@@ -104,6 +105,17 @@ class _RequestRow extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text('${request.donorName} · ×${request.quantity} · $date', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+          if (request.status == RequestStatus.pending || request.status == RequestStatus.accepted) ...[
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Builder(builder: (context) {
+                final matches = mockListings.where((l) => l.id == request.listingId);
+                if (matches.isEmpty) return const SizedBox.shrink();
+                return CountdownTimer(expiry: matches.first.pickupEnd, fontSize: 9);
+              }),
+            ),
+          ],
           if (request.status == RequestStatus.completed) ...[
             const SizedBox(height: 12),
             RatingStars(reviewLabel: 'Rate ${request.donorName}'),
