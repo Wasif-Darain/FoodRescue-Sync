@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
+import '../../widgets/ui/user_badge.dart';
+import '../../data/mock_data.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
@@ -66,7 +68,19 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(width: 8),
+                          Builder(builder: (context) {
+                            final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
+                            final label = consumerTierLabel(consumerTierFor(account));
+                            return UserBadge(label: label, isLegend: label == 'Legend', fontSize: 9);
+                          }),
+                        ],
+                      ),
                       const SizedBox(height: 6),
                       Text(
                         '${listings.length} surplus listing${listings.length == 1 ? '' : 's'} near you right now.',
@@ -242,7 +256,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 320,
-              mainAxisExtent: 296,
+              mainAxisExtent: 320,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
             ),
@@ -378,7 +392,21 @@ class _ListingCard extends StatelessWidget {
                   children: [
                     Text(listing.title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 2, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
-                    Text(listing.donorName, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(listing.donorName, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Builder(builder: (context) {
+                          final matches = mockAccounts.where((a) => a.mode == UserMode.donor && a.name == listing.donorName);
+                          if (matches.isEmpty) return const SizedBox.shrink();
+                          final label = donorTierLabel(donorTierFor(matches.first));
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 3),
+                            child: UserBadge(label: label, isLegend: label == 'Legend', fontSize: 8),
+                          );
+                        }),
+                      ],
+                    ),
                     const SizedBox(height: 2),
                     Row(
                       children: [

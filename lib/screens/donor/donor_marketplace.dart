@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
+import '../../widgets/ui/user_badge.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
@@ -18,6 +19,7 @@ class DonorMarketplace extends StatefulWidget {
 class _DonorMarketplaceState extends State<DonorMarketplace> {
   String _selectedCategory = 'All';
   String _filter = 'All';
+  String _availabilityFilter = 'All';
   final _categories = ['All', 'Cooked Meals', 'Bakery', 'Dairy', 'Produce', 'Grains'];
   final String _dummyLocation = 'Gulshan, Dhaka';
 
@@ -32,7 +34,11 @@ class _DonorMarketplaceState extends State<DonorMarketplace> {
       final typeMatch = _filter == 'All' ||
           (_filter == 'Free' && l.listingType == ListingType.donation) ||
           (_filter == 'Sale' && l.listingType == ListingType.flashSale);
-      return catMatch && typeMatch;
+      final consumer = _consumerFor(l.id);
+      final availMatch = _availabilityFilter == 'All' ||
+          (_availabilityFilter == 'Available' && consumer.isAvailable) ||
+          (_availabilityFilter == 'Unavailable' && !consumer.isAvailable);
+      return catMatch && typeMatch && availMatch;
     }).toList();
 
     return AppLayout(
@@ -56,7 +62,19 @@ class _DonorMarketplaceState extends State<DonorMarketplace> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(width: 8),
+                          Builder(builder: (context) {
+                            final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
+                            final label = donorTierLabel(donorTierFor(account));
+                            return UserBadge(label: label, isLegend: label == 'Legend', fontSize: 9);
+                          }),
+                        ],
+                      ),
                       const SizedBox(height: 6),
                       Text(
                         '${listings.length} active listing${listings.length == 1 ? '' : 's'} ready to share.',
@@ -180,6 +198,41 @@ class _DonorMarketplaceState extends State<DonorMarketplace> {
               }).toList(),
             ),
           ),
+          const SizedBox(height: 14),
+
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: ['All', 'Available', 'Unavailable'].map((avail) {
+                final isSelected = _availabilityFilter == avail;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _HoverScale(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _availabilityFilter = avail),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+                        ),
+                        child: Row(children: [
+                          Icon(
+                            avail == 'Available' ? Icons.check_circle_outline : (avail == 'Unavailable' ? Icons.cancel_outlined : Icons.filter_list),
+                            size: 13,
+                            color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(avail, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
+                        ]),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
           const SizedBox(height: 20),
 
           if (filtered.isEmpty)
@@ -206,7 +259,7 @@ class _DonorMarketplaceState extends State<DonorMarketplace> {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 320,
-                mainAxisExtent: 340,
+                mainAxisExtent: 360,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
@@ -348,18 +401,29 @@ class _ListingCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(consumer.name, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isAvailable ? (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7)) : (isDark ? const Color(0xFF2A1A0A) : const Color(0xFFFFE3CC)),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: isAvailable ? const Color(0xFF16A34A) : const Color(0xFFEA580C)),
-                            ),
-                            child: Text(
-                              isAvailable ? 'Available' : 'Unavailable',
-                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: isAvailable ? const Color(0xFF16A34A) : const Color(0xFFEA580C)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(consumer.name, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                const SizedBox(height: 3),
+                                Builder(builder: (context) {
+                                  final label = consumerTierLabel(consumerTierFor(consumer));
+                                  return UserBadge(label: label, isLegend: label == 'Legend', fontSize: 8);
+                                }),
+                                const SizedBox(height: 3),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isAvailable ? (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7)) : (isDark ? const Color(0xFF2A1A0A) : const Color(0xFFFFE3CC)),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: isAvailable ? const Color(0xFF16A34A) : const Color(0xFFEA580C)),
+                                  ),
+                                  child: Text(
+                                    isAvailable ? 'Available' : 'Unavailable',
+                                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: isAvailable ? const Color(0xFF16A34A) : const Color(0xFFEA580C)),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],

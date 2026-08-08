@@ -5,8 +5,10 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../models/models.dart';
+import '../../data/mock_data.dart';
 import '../ui/animated_tap.dart';
 import '../ui/glass.dart';
+import '../ui/user_badge.dart';
 
 class _NavItem {
   final String route;
@@ -204,31 +206,33 @@ class BottomNavBar extends StatelessWidget {
         children: [
           Expanded(
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 for (final item in left)
-                  _NavIconButton(
-                    icon: item.icon,
-                    label: item.label,
-                    isActive: _isActive(currentRoute, item.route),
-                    isDark: isDark,
-                    onTap: () => context.go(item.route),
+                  Expanded(
+                    child: _NavIconButton(
+                      icon: item.icon,
+                      label: item.label,
+                      isActive: _isActive(currentRoute, item.route),
+                      isDark: isDark,
+                      onTap: () => context.go(item.route),
+                    ),
                   ),
               ],
             ),
           ),
-          const SizedBox(width: 80),
+          const SizedBox(width: 56),
           Expanded(
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 for (final item in right)
-                  _NavIconButton(
-                    icon: item.icon,
-                    label: item.label,
-                    isActive: _isActive(currentRoute, item.route),
-                    isDark: isDark,
-                    onTap: () => context.go(item.route),
+                  Expanded(
+                    child: _NavIconButton(
+                      icon: item.icon,
+                      label: item.label,
+                      isActive: _isActive(currentRoute, item.route),
+                      isDark: isDark,
+                      onTap: () => context.go(item.route),
+                    ),
                   ),
               ],
             ),
@@ -265,26 +269,26 @@ class _NavIconButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedScale(
-                scale: isActive ? 1.15 : 1.0,
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOut,
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(height: 2),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 200),
-                style: TextStyle(fontSize: 9, color: color, fontWeight: isActive ? FontWeight.w600 : FontWeight.normal),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
+          padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 4),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedScale(
+                  scale: isActive ? 1.15 : 1.0,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  child: Icon(icon, color: color, size: 18),
+                ),
+                const SizedBox(height: 2),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
+                  style: TextStyle(fontSize: 9, color: color, fontWeight: isActive ? FontWeight.w600 : FontWeight.normal),
                   child: Text(label),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -335,7 +339,23 @@ void showNavMenuSheet(BuildContext context) {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(user.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: theme.isDark ? Colors.white : const Color(0xFF121212))),
-                        Text(isAdmin ? 'Administrator' : (_accountTypeLabel[user.accountType] ?? ''), style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
+                        if (isAdmin)
+                          Text('Administrator', style: const TextStyle(fontSize: 12, color: Color(0xFF757575)))
+                        else ...[
+                          Text(_accountTypeLabel[user.accountType] ?? '', style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
+                          const SizedBox(height: 4),
+                          Builder(builder: (context) {
+                            final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
+                            final isDonorMode = user.mode == UserMode.donor;
+                            String label;
+                            if (isDonorMode) {
+                              label = donorTierLabel(donorTierFor(account));
+                            } else {
+                              label = consumerTierLabel(consumerTierFor(account));
+                            }
+                            return UserBadge(label: label, isLegend: label == 'Legend', fontSize: 9);
+                          }),
+                        ],
                       ],
                     ),
                   ),
@@ -457,7 +477,7 @@ class _GlassBottomBar extends StatelessWidget {
       padding: EdgeInsets.zero,
       height: 64,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         child: GlassContainer(
           height: 56,
           borderRadius: BorderRadius.circular(28),

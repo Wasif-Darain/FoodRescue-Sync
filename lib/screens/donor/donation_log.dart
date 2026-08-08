@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
+import '../../widgets/ui/rating_stars.dart';
+import '../../widgets/ui/user_badge.dart';
 import '../../data/mock_data.dart';
+import '../../models/models.dart';
 
 class DonationLogScreen extends StatelessWidget {
   const DonationLogScreen({super.key});
@@ -89,7 +92,22 @@ class _LogRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text('${log.recipientOrg} · $date', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Row(
+            children: [
+              Flexible(
+                child: Text('${log.recipientOrg} · $date', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+              const SizedBox(width: 6),
+              Builder(builder: (context) {
+                final matches = mockAccounts.where((a) => a.mode == UserMode.consumer && a.name == log.recipientOrg);
+                if (matches.isEmpty) return const SizedBox.shrink();
+                final label = consumerTierLabel(consumerTierFor(matches.first));
+                return UserBadge(label: label, isLegend: label == 'Legend', fontSize: 8);
+              }),
+            ],
+          ),
+          const SizedBox(height: 12),
+          RatingStars(reviewLabel: 'Rate ${log.recipientOrg}'),
         ],
       ),
     );

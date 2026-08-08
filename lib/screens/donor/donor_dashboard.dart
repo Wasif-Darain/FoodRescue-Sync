@@ -5,6 +5,7 @@ import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/stat_card.dart';
 import '../../widgets/ui/responsive_grid.dart';
 import '../../widgets/ui/app_badge.dart';
+import '../../widgets/ui/user_badge.dart';
 import '../../data/mock_data.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
@@ -51,7 +52,19 @@ class DonorDashboard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(width: 8),
+                          Builder(builder: (context) {
+                            final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
+                            final label = donorTierLabel(donorTierFor(account));
+                            return UserBadge(label: label, isLegend: label == 'Legend', fontSize: 9);
+                          }),
+                        ],
+                      ),
                       const SizedBox(height: 6),
                       Text(
                         surplusItems.isEmpty

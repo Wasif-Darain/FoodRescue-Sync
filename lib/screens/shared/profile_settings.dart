@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
+import '../../widgets/ui/user_badge.dart';
+import '../../data/mock_data.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/models.dart';
 
@@ -113,6 +115,45 @@ class ProfileSettings extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (user.mode != UserMode.admin) ...[
+                        const SizedBox(height: 10),
+                        Builder(builder: (context) {
+                          final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
+                          final isDonor = user.mode == UserMode.donor;
+                          String label;
+                          if (isDonor) {
+                            label = donorTierLabel(donorTierFor(account));
+                          } else {
+                            label = consumerTierLabel(consumerTierFor(account));
+                          }
+                          return Column(
+                            children: [
+                              UserBadge(label: label, isLegend: label == 'Legend'),
+                              const SizedBox(height: 10),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _StatChip(
+                                    icon: Icons.percent,
+                                    label: isDonor ? 'Fulfillment' : 'On-time Pickup',
+                                    value: '${(isDonor ? account.fulfillmentRate : account.onTimePickupRate).toStringAsFixed(0)}%',
+                                  ),
+                                  _StatChip(
+                                    icon: Icons.star_outline,
+                                    label: 'Rating',
+                                    value: account.rating > 0 ? account.rating.toStringAsFixed(1) : '—',
+                                  ),
+                                  _StatChip(
+                                    icon: Icons.reviews_outlined,
+                                    label: 'Reviews',
+                                    value: '${account.reviewCount}',
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        }),
+                      ],
                     ],
                   ),
                 ),
@@ -186,6 +227,27 @@ class ProfileSettings extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _StatChip({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      children: [
+        Icon(icon, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+        const SizedBox(height: 2),
+        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
+        const SizedBox(height: 1),
+        Text(label, style: TextStyle(fontSize: 9, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+      ],
     );
   }
 }
