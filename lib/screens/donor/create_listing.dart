@@ -20,8 +20,8 @@ class _CreateListingState extends State<CreateListing> {
   String _listingType = 'donation';
   String _category = 'Cooked Meals';
   Uint8List? _imageBytes;
-  DateTime? _pickupStart;
-  DateTime? _pickupEnd;
+  DateTime _pickupStart = DateTime.now();
+  DateTime _pickupEnd = DateTime.now().add(const Duration(hours: 3));
 
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
@@ -47,13 +47,12 @@ class _CreateListingState extends State<CreateListing> {
   }
 
   Future<void> _pickPickupEnd() async {
-    final picked = await pickDateTime(context, initial: _pickupEnd ?? _pickupStart, defaultTime: const TimeOfDay(hour: 21, minute: 0));
+    final picked = await pickDateTime(context, initial: _pickupEnd, defaultTime: const TimeOfDay(hour: 21, minute: 0));
     if (picked != null) setState(() => _pickupEnd = picked);
   }
 
   void _submit() {
     if (_titleCtrl.text.trim().isEmpty) return;
-    final now = DateTime.now();
 
     context.read<DonorProvider>().addListing(
       title: _titleCtrl.text.trim(),
@@ -62,8 +61,8 @@ class _CreateListingState extends State<CreateListing> {
       quantity: int.tryParse(_quantityCtrl.text.trim()) ?? 1,
       listingType: _listingType == 'donation' ? ListingType.donation : ListingType.flashSale,
       price: _listingType == 'flash_sale' ? (double.tryParse(_priceCtrl.text.trim()) ?? 0) : 0,
-      pickupStart: _pickupStart ?? now,
-      pickupEnd: _pickupEnd ?? now.add(const Duration(hours: 3)),
+      pickupStart: _pickupStart,
+      pickupEnd: _pickupEnd,
       imageBytes: _imageBytes,
     );
 

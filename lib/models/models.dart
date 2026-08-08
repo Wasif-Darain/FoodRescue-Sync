@@ -16,6 +16,10 @@ enum PickupStatus { scheduled, enRoute, completed }
 
 enum NotificationType { listing, request, pickup, system }
 
+enum DonorTier { novice, contributor, provider, patron, master, legend }
+
+enum ConsumerTier { novice, scout, saver, rescuer, master, legend }
+
 class AppUser {
   final int id;
   final String name;
@@ -168,6 +172,13 @@ class RegisteredAccount {
   final AccountStatus status;
   final DateTime joinedAt;
   final bool isAvailable;
+  final int listingsCreated;
+  final double kgSaved;
+  final int mealsRescued;
+  final double fulfillmentRate;
+  final double onTimePickupRate;
+  final double rating;
+  final int reviewCount;
 
   RegisteredAccount({
     required this.id,
@@ -178,6 +189,13 @@ class RegisteredAccount {
     required this.status,
     required this.joinedAt,
     this.isAvailable = true,
+    this.listingsCreated = 0,
+    this.kgSaved = 0,
+    this.mealsRescued = 0,
+    this.fulfillmentRate = 0,
+    this.onTimePickupRate = 0,
+    this.rating = 0,
+    this.reviewCount = 0,
   });
 
   RegisteredAccount copyWith({AccountStatus? status, bool? isAvailable}) => RegisteredAccount(
@@ -189,6 +207,13 @@ class RegisteredAccount {
     status: status ?? this.status,
     joinedAt: joinedAt,
     isAvailable: isAvailable ?? this.isAvailable,
+    listingsCreated: listingsCreated,
+    kgSaved: kgSaved,
+    mealsRescued: mealsRescued,
+    fulfillmentRate: fulfillmentRate,
+    onTimePickupRate: onTimePickupRate,
+    rating: rating,
+    reviewCount: reviewCount,
   );
 }
 

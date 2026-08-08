@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
+import '../../widgets/ui/rating_stars.dart';
+import '../../widgets/ui/countdown_timer.dart';
 import '../../data/mock_data.dart';
 import '../../models/models.dart';
 
@@ -120,6 +122,17 @@ class _PickupCard extends StatelessWidget {
           decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE2E2E2), borderRadius: BorderRadius.circular(16)),
           child: Text(item, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252))),
         )).toList()),
+        if (pickup.status == PickupStatus.scheduled || pickup.status == PickupStatus.enRoute) ...[
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: CountdownTimer(expiry: pickup.scheduledTime, fontSize: 9, expiredLabel: 'Overdue'),
+          ),
+        ],
+        if (pickup.status == PickupStatus.completed) ...[
+          const SizedBox(height: 14),
+          RatingStars(reviewLabel: 'Rate ${pickup.donorName}'),
+        ],
       ]),
     );
   }
