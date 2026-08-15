@@ -1,8 +1,9 @@
-import 'dart:typed_data';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:latlong2/latlong.dart';
+import '../../services/listing_image_manager.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_button.dart';
 import '../../widgets/ui/date_time_field.dart';
@@ -21,7 +22,7 @@ class CreateListing extends StatefulWidget {
 class _CreateListingState extends State<CreateListing> {
   String _listingType = 'donation';
   String _category = 'Cooked Meals';
-  Uint8List? _imageBytes;
+  File? _imageFile;
   DateTime _pickupStart = DateTime.now();
   DateTime _pickupEnd = DateTime.now().add(const Duration(hours: 3));
 
@@ -69,10 +70,11 @@ class _CreateListingState extends State<CreateListing> {
     if (picked != null) setState(() => _pickupEnd = picked);
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_titleCtrl.text.trim().isEmpty) return;
 
-    context.read<DonorProvider>().addListing(
+    final donor = context.read<DonorProvider>();
+    final listingId = await donor.createListing(
       title: _titleCtrl.text.trim(),
       description: _descCtrl.text.trim().isEmpty ? 'No additional details provided.' : _descCtrl.text.trim(),
       category: _category,
@@ -81,12 +83,18 @@ class _CreateListingState extends State<CreateListing> {
       price: _listingType == 'flash_sale' ? (double.tryParse(_priceCtrl.text.trim()) ?? 0) : 0,
       pickupStart: _pickupStart,
       pickupEnd: _pickupEnd,
-      imageBytes: _imageBytes,
       latitude: _pickupLat,
       longitude: _pickupLng,
       address: _pickupAddress,
     );
 
+    if (listingId != null && _imageFile != null) {
+      final imageManager = ListingImageManager();
+      final imageUrl = await imageManager.uploadListingImage(_imageFile!);
+      await donor.updateListingPhotoUrls(listingId, [imageUrl]);
+    }
+
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Listing created successfully!'), backgroundColor: Color(0xFF16A34A)),
     );
@@ -127,7 +135,19 @@ class _CreateListingState extends State<CreateListing> {
               const SizedBox(height: 16),
               _Label('Photo (optional)'),
               const SizedBox(height: 6),
-              PhotoPickerRow(imageBytes: _imageBytes, onChanged: (bytes) => setState(() => _imageBytes = bytes)),
+              PhotoPickerRow(
+                imageBytes: _imageFile == null ? null : _imageFile!.readAsBytesSync(),
+                onChanged: (bytes) {
+                  if (bytes != null) {
+                    final tempDir = Directory.systemTemp;
+                    final tempFile = File('${tempDir.path}/listing_${DateTime.now().millisecondsSinceEpoch}.jpg');
+                    tempFile.writeAsBytesSync(bytes);
+                    setState(() => _imageFile = tempFile);
+                  } else {
+                    setState(() => _imageFile = null);
+                  }
+                },
+              ),
               const SizedBox(height: 4),
               Text('Shown on this listing in the consumer marketplace.', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
               const SizedBox(height: 16),

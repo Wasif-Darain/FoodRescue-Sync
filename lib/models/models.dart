@@ -43,6 +43,7 @@ class AppUser {
 
 class InventoryItem {
   final int id;
+  final String? docId;
   final String name;
   final String? barcode;
   final int quantity;
@@ -54,6 +55,7 @@ class InventoryItem {
 
   InventoryItem({
     required this.id,
+    this.docId,
     required this.name,
     this.barcode,
     required this.quantity,
@@ -67,6 +69,7 @@ class InventoryItem {
 
 class Listing {
   final int id;
+  final String? docId;
   final int donorId;
   final String donorName;
   final String title;
@@ -87,6 +90,7 @@ class Listing {
 
   Listing({
     required this.id,
+    this.docId,
     required this.donorId,
     required this.donorName,
     required this.title,
@@ -108,6 +112,7 @@ class Listing {
 
   Listing copyWith({ListingStatus? status}) => Listing(
     id: id,
+    docId: docId,
     donorId: donorId,
     donorName: donorName,
     title: title,

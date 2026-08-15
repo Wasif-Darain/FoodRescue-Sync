@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -16,56 +15,30 @@ class PasswordRecoveryScreen extends StatefulWidget {
 
 class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
   final _emailCtrl = TextEditingController();
-  final _otpCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  final _confirmPasswordCtrl = TextEditingController();
-  var _step = 0;
-  var _showPassword = false;
-  var _showConfirmPassword = false;
+  var _isSending = false;
 
   @override
   void dispose() {
     _emailCtrl.dispose();
-    _otpCtrl.dispose();
-    _passwordCtrl.dispose();
-    _confirmPasswordCtrl.dispose();
     super.dispose();
   }
 
-  void _sendCode() {
+  Future<void> _sendResetEmail() async {
     final email = _emailCtrl.text.trim();
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
       _message('Enter a valid email address.');
       return;
     }
-    final code = context.read<AuthProvider>().requestPasswordReset(email);
-    setState(() => _step = 1);
-    _message(
-      kDebugMode
-          ? 'Recovery code created. Demo code: $code'
-          : 'A verification code was sent to $email.',
-    );
-  }
-
-  void _verifyCode() {
-    if (context.read<AuthProvider>().verifyPasswordResetOtp(_otpCtrl.text)) {
-      setState(() => _step = 2);
-    } else {
-      _message(
-        'That code is invalid or has expired. Request a new code and try again.',
-      );
+    setState(() => _isSending = true);
+    final auth = context.read<AuthProvider>();
+    await auth.sendPasswordResetEmail(email);
+    setState(() => _isSending = false);
+    if (auth.errorMessage != null) {
+      _message(auth.errorMessage!);
+      return;
     }
-  }
-
-  void _resetPassword() {
-    if (_passwordCtrl.text.length < 8) {
-      _message('Use at least 8 characters for your password.');
-    } else if (_passwordCtrl.text != _confirmPasswordCtrl.text) {
-      _message('The passwords do not match.');
-    } else if (context.read<AuthProvider>().resetPassword(_passwordCtrl.text)) {
-      _message('Password reset successfully. You can now sign in.');
-      context.go('/login');
-    }
+    _message('A password reset link was sent to $email.');
+    context.go('/login');
   }
 
   void _message(String value) => ScaffoldMessenger.of(
@@ -75,8 +48,6 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
   @override
   Widget build(BuildContext context) {
     const green = Color(0xFF16A34A);
-    final email =
-        context.watch<AuthProvider>().resetEmail ?? _emailCtrl.text.trim();
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -149,93 +120,42 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(
-                                      _step == 2
-                                          ? Icons.lock_reset
-                                          : Icons.mark_email_read_outlined,
+                                    const Icon(
+                                      Icons.mark_email_read_outlined,
                                       color: green,
                                       size: 32,
                                     ),
                                     const SizedBox(height: 16),
-                                    Text(
-                                      _step == 0
-                                          ? 'Forgot your password?'
-                                          : _step == 1
-                                          ? 'Check your email'
-                                          : 'Create a new password',
-                                      style: const TextStyle(
+                                    const Text(
+                                      'Forgot your password?',
+                                      style: TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.w800,
                                         color: Color(0xFF171717),
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    Text(
-                                      _step == 0
-                                          ? 'Enter your account email and we’ll send a six-digit verification code.'
-                                          : _step == 1
-                                          ? 'Enter the six-digit code sent to $email. It expires in 10 minutes.'
-                                          : 'Choose a strong password with at least 8 characters.',
-                                      style: const TextStyle(
+                                    const Text(
+                                      'Enter your account email and we’ll send you a link to reset your password.',
+                                      style: TextStyle(
                                         color: Color(0xFF525252),
                                         height: 1.4,
                                       ),
                                     ),
                                     const SizedBox(height: 24),
-                                    if (_step == 0) ...[
-                                      _input(
-                                        controller: _emailCtrl,
-                                        label: 'Email address',
-                                        hint: 'you@example.com',
-                                        keyboardType:
-                                            TextInputType.emailAddress,
-                                      ),
-                                      const SizedBox(height: 20),
-                                      _button(
-                                        'Send verification code',
-                                        _sendCode,
-                                      ),
-                                    ] else if (_step == 1) ...[
-                                      _input(
-                                        controller: _otpCtrl,
-                                        label: 'Verification code',
-                                        hint: '000000',
-                                        keyboardType: TextInputType.number,
-                                        maxLength: 6,
-                                      ),
-                                      const SizedBox(height: 20),
-                                      _button('Verify code', _verifyCode),
-                                      Center(
-                                        child: TextButton(
-                                          onPressed: _sendCode,
-                                          style: TextButton.styleFrom(
-                                            foregroundColor: green,
-                                          ),
-                                          child: const Text('Resend code'),
-                                        ),
-                                      ),
-                                    ] else ...[
-                                      _passwordInput(
-                                        _passwordCtrl,
-                                        'New password',
-                                        _showPassword,
-                                        () => setState(
-                                          () => _showPassword = !_showPassword,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 14),
-                                      _passwordInput(
-                                        _confirmPasswordCtrl,
-                                        'Confirm new password',
-                                        _showConfirmPassword,
-                                        () => setState(
-                                          () => _showConfirmPassword =
-                                              !_showConfirmPassword,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      _button('Reset password', _resetPassword),
-                                    ],
+                                    _input(
+                                      controller: _emailCtrl,
+                                      label: 'Email address',
+                                      hint: 'you@example.com',
+                                      keyboardType: TextInputType.emailAddress,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    _button(
+                                      _isSending
+                                          ? 'Sending…'
+                                          : 'Send reset link',
+                                      _isSending ? null : _sendResetEmail,
+                                    ),
                                     const SizedBox(height: 12),
                                     Center(
                                       child: TextButton(
@@ -264,7 +184,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
     );
   }
 
-  Widget _button(String label, VoidCallback onPressed) => SizedBox(
+  Widget _button(String label, VoidCallback? onPressed) => SizedBox(
     width: double.infinity,
     child: ElevatedButton(
       onPressed: onPressed,
@@ -283,7 +203,6 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
     required String label,
     required String hint,
     TextInputType? keyboardType,
-    int? maxLength,
   }) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -298,62 +217,27 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
       TextField(
         controller: controller,
         keyboardType: keyboardType,
-        maxLength: maxLength,
-        decoration: _fieldDecoration(hint),
-      ),
-    ],
-  );
-
-  Widget _passwordInput(
-    TextEditingController controller,
-    String label,
-    bool show,
-    VoidCallback toggle,
-  ) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF2D2D2D),
-        ),
-      ),
-      const SizedBox(height: 6),
-      TextField(
-        controller: controller,
-        obscureText: !show,
-        decoration: _fieldDecoration('Enter ${label.toLowerCase()}').copyWith(
-          suffixIcon: IconButton(
-            onPressed: toggle,
-            icon: Icon(
-              show ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-              color: const Color(0xFF525252),
-            ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+          counterText: '',
+          filled: true,
+          fillColor: Colors.white.withValues(alpha: 0.75),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2),
           ),
         ),
       ),
     ],
-  );
-
-  InputDecoration _fieldDecoration(String hint) => InputDecoration(
-    hintText: hint,
-    hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
-    counterText: '',
-    filled: true,
-    fillColor: Colors.white.withValues(alpha: 0.75),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: Color(0xFF16A34A), width: 2),
-    ),
   );
 }
