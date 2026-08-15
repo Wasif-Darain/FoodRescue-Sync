@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/admin_provider.dart';
 import 'providers/donor_provider.dart';
+import 'providers/consumer_provider.dart';
 import 'providers/theme_provider.dart';
 import 'router.dart';
 
@@ -21,6 +22,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
   late final AuthProvider _auth;
   late final AdminProvider _admin;
   late final DonorProvider _donor;
+  late final ConsumerProvider _consumer;
   late final ThemeProvider _theme;
 
   @override
@@ -29,6 +31,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
     _auth = AuthProvider();
     _admin = AdminProvider();
     _donor = DonorProvider();
+    _consumer = ConsumerProvider();
     _theme = ThemeProvider();
   }
 
@@ -39,6 +42,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
         ChangeNotifierProvider.value(value: _auth),
         ChangeNotifierProvider.value(value: _admin),
         ChangeNotifierProvider.value(value: _donor),
+        ChangeNotifierProvider.value(value: _consumer),
         ChangeNotifierProvider.value(value: _theme),
       ],
       child: Builder(

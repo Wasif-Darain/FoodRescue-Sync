@@ -10,6 +10,7 @@ import '../../data/mock_data.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
+import '../../providers/consumer_provider.dart';
 
 // Main marketplace screen shown to consumers, letting them browse
 // nearby surplus food listings (donations and flash sales).
@@ -45,7 +46,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
       final typeMatch = _filter == 'All' ||
           (_filter == 'Free' && l.listingType == ListingType.donation) ||
           (_filter == 'Sale' && l.listingType == ListingType.flashSale);
-      return catMatch && typeMatch && l.pickupEnd.isAfter(now);
+      return catMatch && typeMatch && l.pickupEnd.isAfter(now) && l.status == ListingStatus.active;
     }).toList();
 
     return AppLayout(
@@ -371,6 +372,7 @@ class _ListingCard extends StatelessWidget {
                   onPressed: () async {
                     final picked = await pickDateTime(sheetContext, initial: DateTime.now().add(const Duration(hours: 1)));
                     if (picked == null) return;
+                    if (!context.mounted) return;
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text('Scheduled pickup for ${listing.title}'),
@@ -537,7 +539,7 @@ class _ListingCard extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: listing.pickupEnd.isBefore(DateTime.now())
                             ? null
-                            : () => _showClaimSheet(context),
+                            : () => isDonation ? _showClaimSheet(context) : _showCheckoutSheet(context, listing: listing),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: isDonation ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
                           foregroundColor: Colors.white,
@@ -557,6 +559,223 @@ class _ListingCard extends StatelessWidget {
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _paymentMethodLabel(PaymentMethod m) => switch (m) {
+  PaymentMethod.cashOnDelivery => 'Cash on Delivery',
+  PaymentMethod.bkash => 'bKash',
+  PaymentMethod.nagad => 'Nagad',
+  PaymentMethod.card => 'Card',
+};
+
+IconData _paymentMethodIcon(PaymentMethod m) => switch (m) {
+  PaymentMethod.cashOnDelivery => Icons.payments_outlined,
+  PaymentMethod.bkash => Icons.account_balance_wallet_outlined,
+  PaymentMethod.nagad => Icons.account_balance_wallet_outlined,
+  PaymentMethod.card => Icons.credit_card_outlined,
+};
+
+/// Foodpanda-style checkout for a paid (flash sale) listing: payment
+/// method, delivery option (self/management/rider — defaults from the
+/// consumer's own profile preference), and delivery location, all
+/// required before the purchase is placed.
+void _showCheckoutSheet(BuildContext context, {required Listing listing}) {
+  final user = context.read<AuthProvider>().user!;
+  final consumerAccounts = mockAccounts.where((a) => a.mode == UserMode.consumer).toList();
+  final consumer = consumerAccounts.firstWhere(
+    (a) => a.name == user.name,
+    orElse: () => consumerAccounts.first,
+  );
+
+  var selectedPayment = PaymentMethod.cashOnDelivery;
+  var selectedDelivery = consumer.pickupPreference;
+  final locationCtrl = TextEditingController();
+  String? error;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (sheetContext) => StatefulBuilder(
+      builder: (sheetContext, setSheetState) {
+        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+        final total = listing.price * listing.quantity;
+        Widget label(String text) => Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)));
+
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(sheetContext).viewInsets.bottom),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Expanded(child: Text('Checkout', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212)))),
+                      IconButton(
+                        icon: Icon(Icons.close, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                        onPressed: () => Navigator.pop(sheetContext),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      ),
+                    ]),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(listing.title, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                          const SizedBox(height: 4),
+                          Row(children: [
+                            AppBadge(label: '৳${listing.price.toInt()}', variant: BadgeVariant.orange),
+                            const SizedBox(width: 8),
+                            AppBadge(label: 'Qty: ${listing.quantity}', variant: BadgeVariant.blue),
+                          ]),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Total', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                              Text('৳${total.toInt()}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF16A34A))),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    label('Payment Method'),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: PaymentMethod.values.map((m) => _OptionCard(
+                            label: _paymentMethodLabel(m),
+                            icon: _paymentMethodIcon(m),
+                            selected: selectedPayment == m,
+                            onTap: () => setSheetState(() => selectedPayment = m),
+                          )).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    label('Delivery Option'),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: PickupPreference.values.map((p) => _OptionCard(
+                            label: pickupPreferenceLabel(p),
+                            icon: pickupPreferenceIcon(p),
+                            selected: selectedDelivery == p,
+                            onTap: () => setSheetState(() => selectedDelivery = p),
+                          )).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    label('Delivery Location'),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: locationCtrl,
+                      style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: 'e.g. House 12, Road 5, Gulshan',
+                        hintStyle: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+                      ),
+                    ),
+                    if (error != null) ...[
+                      const SizedBox(height: 10),
+                      Text(error!, style: const TextStyle(fontSize: 12, color: Color(0xFFDC2626))),
+                    ],
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final location = locationCtrl.text.trim();
+                          if (location.isEmpty) {
+                            setSheetState(() => error = 'Please enter a delivery location.');
+                            return;
+                          }
+                          context.read<ConsumerProvider>().placeOrder(
+                                listing: listing,
+                                consumerId: consumer.id,
+                                consumerName: consumer.name,
+                                paymentMethod: selectedPayment,
+                                deliveryOption: selectedDelivery,
+                                deliveryLocation: location,
+                              );
+                          context.read<DonorProvider>().markListingClaimed(listing.id);
+                          Navigator.pop(sheetContext);
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('Order placed — ৳${total.toInt()} via ${_paymentMethodLabel(selectedPayment)}'),
+                            backgroundColor: const Color(0xFF16A34A),
+                          ));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF16A34A),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text('Place Order — ৳${total.toInt()}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
+
+class _OptionCard extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  const _OptionCard({required this.label, required this.icon, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const color = Color(0xFF2563EB);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.08) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0)),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: selected ? color : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)), width: selected ? 2 : 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: selected ? color : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: selected ? color : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)))),
           ],
         ),
       ),
@@ -600,21 +819,17 @@ class _SectionCard extends StatelessWidget {
   final String title;
   final IconData? icon;
   final Widget child;
-  final Widget? action;
-  final Color? titleColor;
 
   const _SectionCard({
     required this.title,
     required this.child,
     this.icon,
-    this.action,
-    this.titleColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = titleColor ?? (isDark ? Colors.white : const Color(0xFF121212));
+    final color = isDark ? Colors.white : const Color(0xFF121212);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -632,21 +847,15 @@ class _SectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  if (icon != null) ...[
-                    Icon(icon, size: 16, color: color),
-                    const SizedBox(width: 6),
-                  ],
-                  Text(
-                    title,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: color),
-                  ),
-                ],
+              if (icon != null) ...[
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                title,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: color),
               ),
-              if (action != null) action!,
             ],
           ),
           const SizedBox(height: 12),
