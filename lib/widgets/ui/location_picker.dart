@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -56,6 +57,8 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
   bool _resolvingAddress = false;
   bool _searching = false;
   List<_SearchResult> _results = [];
+  Timer? _debounce;
+  int _searchToken = 0;
 
   @override
   void initState() {
@@ -66,20 +69,36 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }
 
+  /// Live, debounced search-as-you-type — fires ~500ms after the user
+  /// stops typing (and only once at least 3 characters are entered) so we
+  /// don't hammer Nominatim's free tier on every keystroke.
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    if (value.trim().length < 3) {
+      setState(() => _results = []);
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 500), () => _search(value));
+  }
+
   Future<void> _search(String query) async {
     if (query.trim().isEmpty) return;
+    final token = ++_searchToken;
     setState(() {
       _searching = true;
       _results = [];
     });
     try {
-      final uri = Uri.parse('https://nominatim.openstreetmap.org/search?q=${Uri.encodeQueryComponent(query)}&format=json&limit=5');
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?q=${Uri.encodeQueryComponent(query)}&format=json&limit=5&accept-language=en',
+      );
       final response = await http.get(uri, headers: {'User-Agent': _nominatimUserAgent});
-      if (!mounted) return;
+      if (!mounted || token != _searchToken) return;
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as List;
         setState(() {
@@ -104,7 +123,9 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
   Future<void> _reverseGeocode(LatLng point) async {
     setState(() => _resolvingAddress = true);
     try {
-      final uri = Uri.parse('https://nominatim.openstreetmap.org/reverse?lat=${point.latitude}&lon=${point.longitude}&format=json');
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?lat=${point.latitude}&lon=${point.longitude}&format=json&accept-language=en',
+      );
       final response = await http.get(uri, headers: {'User-Agent': _nominatimUserAgent});
       if (!mounted) return;
       if (response.statusCode == 200) {
@@ -123,6 +144,7 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
   String _fallbackLabel(LatLng point) => 'Pinned location (${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)})';
 
   void _selectResult(_SearchResult result) {
+    _debounce?.cancel();
     final point = LatLng(result.lat, result.lng);
     setState(() {
       _picked = point;
@@ -159,9 +181,10 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
             child: TextField(
               controller: _searchCtrl,
               textInputAction: TextInputAction.search,
+              onChanged: _onSearchChanged,
               onSubmitted: _search,
               decoration: InputDecoration(
-                hintText: 'Search an address...',
+                hintText: 'Search an English address...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searching
                     ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)))

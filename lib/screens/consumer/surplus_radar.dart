@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/countdown_timer.dart';
@@ -28,6 +30,60 @@ class _SurplusRadarState extends State<SurplusRadar> {
   // Tapping a marker sets this; tapping the info card's close button, or
   // tapping the same marker again, clears it.
   Listing? _selectedListing;
+
+  // Real, road-following route from the consumer to the selected listing
+  // (fetched from OSRM's free public routing API — no key required).
+  List<LatLng>? _routePoints;
+  double? _routeDistanceKm;
+  double? _routeDurationMin;
+  bool _routeLoading = false;
+  int _routeToken = 0;
+
+  void _selectListing(Listing? listing, LatLng from) {
+    setState(() {
+      _selectedListing = listing;
+      _routePoints = null;
+      _routeDistanceKm = null;
+      _routeDurationMin = null;
+    });
+    if (listing != null) {
+      _fetchRoute(from, LatLng(listing.latitude, listing.longitude));
+    }
+  }
+
+  Future<void> _fetchRoute(LatLng from, LatLng to) async {
+    final token = ++_routeToken;
+    setState(() => _routeLoading = true);
+    try {
+      final uri = Uri.parse(
+        'https://router.project-osrm.org/route/v1/driving/'
+        '${from.longitude},${from.latitude};${to.longitude},${to.latitude}'
+        '?overview=full&geometries=geojson',
+      );
+      final response = await http.get(uri);
+      if (!mounted || token != _routeToken) return;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final routes = data['routes'] as List?;
+        if (routes != null && routes.isNotEmpty) {
+          final route = routes.first as Map<String, dynamic>;
+          final coords = (route['geometry']['coordinates'] as List)
+              .map((c) => LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble()))
+              .toList();
+          setState(() {
+            _routePoints = coords;
+            _routeDistanceKm = (route['distance'] as num) / 1000;
+            _routeDurationMin = (route['duration'] as num) / 60;
+          });
+        }
+      }
+    } catch (_) {
+      // No network / OSRM unreachable — silently fall back to markers-only
+      // with the straight-line distance already shown via distanceFor().
+    } finally {
+      if (mounted && token == _routeToken) setState(() => _routeLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +135,10 @@ class _SurplusRadarState extends State<SurplusRadar> {
                     RichAttributionWidget(
                       attributions: [TextSourceAttribution('OpenStreetMap contributors')],
                     ),
+                    if (_routePoints != null)
+                      PolylineLayer(polylines: [
+                        Polyline(points: _routePoints!, strokeWidth: 4, color: const Color(0xFF1D4ED8)),
+                      ]),
                     MarkerLayer(markers: [
                       Marker(point: youPoint, width: 60, height: 46, child: const _LocationMarker(label: 'You')),
                       ...sorted.map((listing) {
@@ -90,11 +150,9 @@ class _SurplusRadarState extends State<SurplusRadar> {
                           height: 46,
                           child: GestureDetector(
                             // Tapping a marker selects it (showing the info card
-                            // below) and tapping the already-selected marker
-                            // deselects it.
-                            onTap: () => setState(() {
-                              _selectedListing = isSelected ? null : listing;
-                            }),
+                            // below, plus a routed line from "You") and tapping
+                            // the already-selected marker deselects it.
+                            onTap: () => _selectListing(isSelected ? null : listing, youPoint),
                             child: Column(mainAxisSize: MainAxisSize.min, children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -146,7 +204,10 @@ class _SurplusRadarState extends State<SurplusRadar> {
                   child: _RestaurantInfoCard(
                     listing: _selectedListing!,
                     distanceKm: distanceFor(_selectedListing!),
-                    onClose: () => setState(() => _selectedListing = null),
+                    routeDistanceKm: _routeDistanceKm,
+                    routeDurationMin: _routeDurationMin,
+                    routeLoading: _routeLoading,
+                    onClose: () => _selectListing(null, youPoint),
                   ),
                 ),
             ],
@@ -176,9 +237,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: _HoverScale(
                     child: GestureDetector(
-                      onTap: () => setState(() {
-                        _selectedListing = isSelected ? null : l;
-                      }),
+                      onTap: () => _selectListing(isSelected ? null : l, youPoint),
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
@@ -242,8 +301,18 @@ class _SurplusRadarState extends State<SurplusRadar> {
 class _RestaurantInfoCard extends StatelessWidget {
   final Listing listing;
   final double distanceKm;
+  final double? routeDistanceKm;
+  final double? routeDurationMin;
+  final bool routeLoading;
   final VoidCallback onClose;
-  const _RestaurantInfoCard({required this.listing, required this.distanceKm, required this.onClose});
+  const _RestaurantInfoCard({
+    required this.listing,
+    required this.distanceKm,
+    this.routeDistanceKm,
+    this.routeDurationMin,
+    this.routeLoading = false,
+    required this.onClose,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -279,9 +348,16 @@ class _RestaurantInfoCard extends StatelessWidget {
                 Text(listing.donorName, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                 const SizedBox(height: 2),
                 Row(children: [
-                  const Icon(Icons.location_on, size: 11, color: Color(0xFF757575)),
+                  Icon(routeDurationMin != null ? Icons.directions : Icons.location_on, size: 11, color: const Color(0xFF757575)),
                   const SizedBox(width: 3),
-                  Text('${distanceKm.toStringAsFixed(1)} km away', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                  Text(
+                    routeLoading
+                        ? 'Finding route...'
+                        : routeDurationMin != null
+                            ? '${routeDistanceKm!.toStringAsFixed(1)} km · ${routeDurationMin!.round()} min drive'
+                            : '${distanceKm.toStringAsFixed(1)} km away',
+                    style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                  ),
                 ]),
                 const SizedBox(height: 4),
                 CountdownTimer(expiry: listing.pickupEnd, fontSize: 9),
