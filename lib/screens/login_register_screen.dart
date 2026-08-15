@@ -40,21 +40,40 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final auth = context.read<AuthProvider>();
-    if (_isLogin &&
-        auth.isMockAdminCredential(_emailCtrl.text, _passCtrl.text)) {
-      auth.loginAsAdmin();
-      context.go('/admin');
+    if (_isLogin) {
+      await auth.signIn(_emailCtrl.text, _passCtrl.text);
+      if (auth.errorMessage != null) {
+        _showAuthError(auth.errorMessage!);
+        return;
+      }
+      if (auth.user != null) {
+        context.go(auth.user!.mode == UserMode.admin ? '/admin' : '/donor');
+      }
       return;
     }
-    auth.login(
-      _emailCtrl.text,
-      _passCtrl.text,
-      _accountType,
-      _nameCtrl.text.isEmpty ? 'User' : _nameCtrl.text,
+    await auth.signUp(
+      name: _nameCtrl.text.isEmpty ? 'User' : _nameCtrl.text,
+      email: _emailCtrl.text,
+      password: _passCtrl.text,
+      phone: _phoneCtrl.text,
+      address: _addressCtrl.text,
+      accountType: _accountType,
     );
-    context.go('/donor');
+    if (auth.errorMessage != null) {
+      _showAuthError(auth.errorMessage!);
+      return;
+    }
+    if (auth.user != null) {
+      context.go(auth.user!.mode == UserMode.admin ? '/admin' : '/donor');
+    }
+  }
+
+  void _showAuthError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   void _switchMode(bool toLogin) => setState(() {

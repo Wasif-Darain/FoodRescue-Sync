@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "760318724519",
+    "project_id": "foodrescue-sync",
+    "storage_bucket": "foodrescue-sync.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:760318724519:android:8db6d0cb524f57c6b14e82",
+        "android_client_info": {
+          "package_name": "com.foodrescue.foodrescue_sync"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCro9ANL5v4ToLHid4jMCkiGFAm1onUV2M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
