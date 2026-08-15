@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import '../data/mock_data.dart';
 import '../models/models.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -85,6 +86,21 @@ class AuthProvider extends ChangeNotifier {
 
   void logout() {
     _user = null;
+    notifyListeners();
+  }
+
+  /// Updates the current user's own RegisteredAccount location in place, so
+  /// every screen reading the shared `mockAccounts` list (not just this
+  /// provider's watchers) picks up the change on its next rebuild.
+  void updateOwnLocation({
+    required double lat,
+    required double lng,
+    required String address,
+  }) {
+    if (_user == null) return;
+    final i = mockAccounts.indexWhere((a) => a.name == _user!.name);
+    if (i == -1) return;
+    mockAccounts[i] = mockAccounts[i].copyWith(latitude: lat, longitude: lng, address: address);
     notifyListeners();
   }
 

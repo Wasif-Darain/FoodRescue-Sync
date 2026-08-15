@@ -2,10 +2,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:latlong2/latlong.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_button.dart';
 import '../../widgets/ui/date_time_field.dart';
 import '../../widgets/ui/photo_picker_row.dart';
+import '../../widgets/ui/location_picker.dart';
 import '../../models/models.dart';
 import '../../providers/donor_provider.dart';
 
@@ -27,7 +29,10 @@ class _CreateListingState extends State<CreateListing> {
   final _descCtrl = TextEditingController();
   final _quantityCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
-  final _addressCtrl = TextEditingController();
+
+  double? _pickupLat;
+  double? _pickupLng;
+  String? _pickupAddress;
 
   final _categories = ['Cooked Meals', 'Bakery', 'Dairy', 'Produce', 'Grains', 'Pulses', 'Other'];
 
@@ -37,8 +42,21 @@ class _CreateListingState extends State<CreateListing> {
     _descCtrl.dispose();
     _quantityCtrl.dispose();
     _priceCtrl.dispose();
-    _addressCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPickupLocation() async {
+    final picked = await pickLocation(
+      context,
+      initial: _pickupLat != null && _pickupLng != null ? LatLng(_pickupLat!, _pickupLng!) : null,
+      initialAddress: _pickupAddress,
+    );
+    if (picked == null) return;
+    setState(() {
+      _pickupLat = picked.lat;
+      _pickupLng = picked.lng;
+      _pickupAddress = picked.address;
+    });
   }
 
   Future<void> _pickPickupStart() async {
@@ -64,6 +82,9 @@ class _CreateListingState extends State<CreateListing> {
       pickupStart: _pickupStart,
       pickupEnd: _pickupEnd,
       imageBytes: _imageBytes,
+      latitude: _pickupLat,
+      longitude: _pickupLng,
+      address: _pickupAddress,
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -148,7 +169,32 @@ class _CreateListingState extends State<CreateListing> {
                 Expanded(child: DateTimeField(label: 'Pickup End', value: _pickupEnd, onTap: _pickPickupEnd)),
               ]),
               const SizedBox(height: 16),
-              _FormField(label: 'Pickup Address', placeholder: 'House/Road/Area, City', controller: _addressCtrl),
+              _Label('Pickup Location'),
+              const SizedBox(height: 6),
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: _pickPickupLocation,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+                  ),
+                  child: Row(children: [
+                    Icon(Icons.location_on_outlined, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _pickupAddress ?? 'Not set — tap to pick on map',
+                        style: TextStyle(fontSize: 13, color: _pickupAddress == null ? const Color(0xFFBFBFBF) : (isDark ? Colors.white : const Color(0xFF121212))),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(Icons.edit_outlined, size: 15, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                  ]),
+                ),
+              ),
               const SizedBox(height: 28),
               Row(children: [
                 AppButton(label: 'Cancel', outlined: true, onPressed: () => context.go('/donor')),

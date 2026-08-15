@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/countdown_timer.dart';
+import '../../widgets/ui/location_picker.dart';
 import '../../models/models.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
+import '../../data/mock_data.dart';
 
-// Map-style screen showing nearby surplus food listings as pins on a
-// stylised Dhaka map, plus a sortable list alongside it.
+// Map-style screen showing nearby surplus food listings as pins on a real
+// OpenStreetMap map (via flutter_map), plus a sortable list alongside it.
 //
 // Converted from StatelessWidget -> StatefulWidget so we can track which
 // marker/restaurant the user has tapped and show its details.
@@ -29,9 +34,24 @@ class _SurplusRadarState extends State<SurplusRadar> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final now = DateTime.now();
     final listings = context.watch<DonorProvider>().listings.where((l) => l.pickupEnd.isAfter(now)).toList();
-    // Sort listings by distance so the closest surplus food appears first
-    // in the side list (falls back to 99 km if distance is missing).
-    final sorted = [...listings]..sort((a, b) => (a.distance ?? 99).compareTo(b.distance ?? 99));
+
+    // Resolve the current consumer's own account so the "You" marker and
+    // live distances are based on a real position when one has been set
+    // (Profile > Edit Profile > Location), falling back to the old Dhaka
+    // reference point otherwise.
+    final user = context.watch<AuthProvider>().user!;
+    final consumerAccounts = mockAccounts.where((a) => a.mode == UserMode.consumer).toList();
+    final account = consumerAccounts.firstWhere((a) => a.name == user.name, orElse: () => consumerAccounts.first);
+    final youLat = account.latitude ?? 23.81;
+    final youLng = account.longitude ?? 90.41;
+    final youPoint = LatLng(youLat, youLng);
+
+    double distanceFor(Listing l) =>
+        account.latitude != null && account.longitude != null ? haversineKm(youLat, youLng, l.latitude, l.longitude) : (l.distance ?? 99);
+
+    // Sort listings by (live, when available) distance so the closest
+    // surplus food appears first in the side list.
+    final sorted = [...listings]..sort((a, b) => distanceFor(a).compareTo(distanceFor(b)));
 
     return AppLayout(
       title: 'Surplus Radar',
@@ -42,24 +62,63 @@ class _SurplusRadarState extends State<SurplusRadar> {
         // otherwise show them side by side.
         final isNarrow = constraints.maxWidth < 700;
 
-        // Only the first 5 nearest listings get a pin on the map, to avoid
-        // clutter; the full list is still shown in the sidebar.
-        final mapListings = sorted.take(5).toList();
-
-        // Fixed pin positions on the map canvas. Each of the up to 5 map
-        // listings gets placed at one of these spots (cycled via modulo).
-        const positions = [Offset(110, 220), Offset(220, 310), Offset(170, 140), Offset(260, 200), Offset(90, 320)];
-
         final map = Container(
           height: 500,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFF1C3252), Color(0xFF24406B)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-            borderRadius: BorderRadius.circular(16),
-          ),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
           child: Stack(
             children: [
-              // Stylised background map (roads, blocks, "Dhaka" label).
-              Positioned.fill(child: CustomPaint(painter: _DhakaMapPainter())),
+              Positioned.fill(
+                child: FlutterMap(
+                  options: MapOptions(initialCenter: youPoint, initialZoom: 13),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.foodrescue.sync',
+                    ),
+                    RichAttributionWidget(
+                      attributions: [TextSourceAttribution('OpenStreetMap contributors')],
+                    ),
+                    MarkerLayer(markers: [
+                      Marker(point: youPoint, width: 60, height: 46, child: const _LocationMarker(label: 'You')),
+                      ...sorted.map((listing) {
+                        final isDonation = listing.listingType == ListingType.donation;
+                        final isSelected = _selectedListing?.id == listing.id;
+                        return Marker(
+                          point: LatLng(listing.latitude, listing.longitude),
+                          width: 72,
+                          height: 46,
+                          child: GestureDetector(
+                            // Tapping a marker selects it (showing the info card
+                            // below) and tapping the already-selected marker
+                            // deselects it.
+                            onTap: () => setState(() {
+                              _selectedListing = isSelected ? null : listing;
+                            }),
+                            child: Column(mainAxisSize: MainAxisSize.min, children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isDonation ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
+                                  borderRadius: BorderRadius.circular(6),
+                                  // Selected markers get a white ring so they
+                                  // stand out from the rest while their info
+                                  // card is shown.
+                                  border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
+                                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))],
+                                ),
+                                child: Text(isDonation ? 'FREE' : '৳${listing.price.toInt()}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                              ),
+                              Container(width: 2, height: 6, color: isDonation ? const Color(0xFF16A34A) : const Color(0xFFEA580C)),
+                              Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+                            ]),
+                          ),
+                        );
+                      }),
+                    ]),
+                  ],
+                ),
+              ),
 
               // "Live Radar" pill badge, top-left.
               Positioned(
@@ -76,50 +135,6 @@ class _SurplusRadarState extends State<SurplusRadar> {
                 ),
               ),
 
-              // Marker representing the current user's own position.
-              Positioned(
-                top: 140,
-                left: 120,
-                child: _LocationMarker(label: 'You'),
-              ),
-
-              // One tappable marker per nearby listing.
-              ...mapListings.asMap().entries.map((e) {
-                final index = e.key;
-                final listing = e.value;
-                final position = positions[index % positions.length];
-                final isDonation = listing.listingType == ListingType.donation;
-                final isSelected = _selectedListing?.id == listing.id;
-
-                return Positioned(
-                  left: position.dx,
-                  top: position.dy,
-                  child: GestureDetector(
-                    // Tapping a marker selects it (showing the info card below)
-                    // and tapping the already-selected marker deselects it.
-                    onTap: () => setState(() {
-                      _selectedListing = isSelected ? null : listing;
-                    }),
-                    child: Column(children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isDonation ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
-                          borderRadius: BorderRadius.circular(6),
-                          // Selected markers get a white ring so they stand
-                          // out from the rest while their info card is shown.
-                          border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
-                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))],
-                        ),
-                        child: Text(isDonation ? 'FREE' : '৳${listing.price.toInt()}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                      ),
-                      Container(width: 2, height: 8, color: isDonation ? const Color(0xFF16A34A) : const Color(0xFFEA580C)),
-                      Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
-                    ]),
-                  ),
-                );
-              }),
-
               // Info card for whichever restaurant/listing is currently
               // selected — this is what lets the user "find" the restaurant
               // after tapping its marker.
@@ -130,6 +145,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
                   bottom: 16,
                   child: _RestaurantInfoCard(
                     listing: _selectedListing!,
+                    distanceKm: distanceFor(_selectedListing!),
                     onClose: () => setState(() => _selectedListing = null),
                   ),
                 ),
@@ -183,7 +199,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
                           Row(children: [
                             const Icon(Icons.location_on, size: 12, color: Color(0xFF757575)),
                             const SizedBox(width: 4),
-                            Text('${l.distance} km away', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                            Text('${distanceFor(l).toStringAsFixed(1)} km away', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                           ]),
                           const SizedBox(height: 6),
                           Align(
@@ -225,8 +241,9 @@ class _SurplusRadarState extends State<SurplusRadar> {
 // the radar screen.
 class _RestaurantInfoCard extends StatelessWidget {
   final Listing listing;
+  final double distanceKm;
   final VoidCallback onClose;
-  const _RestaurantInfoCard({required this.listing, required this.onClose});
+  const _RestaurantInfoCard({required this.listing, required this.distanceKm, required this.onClose});
 
   @override
   Widget build(BuildContext context) {
@@ -264,7 +281,7 @@ class _RestaurantInfoCard extends StatelessWidget {
                 Row(children: [
                   const Icon(Icons.location_on, size: 11, color: Color(0xFF757575)),
                   const SizedBox(width: 3),
-                  Text('${listing.distance} km away', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                  Text('${distanceKm.toStringAsFixed(1)} km away', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                 ]),
                 const SizedBox(height: 4),
                 CountdownTimer(expiry: listing.pickupEnd, fontSize: 9),
@@ -294,7 +311,7 @@ class _LocationMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
+    return Column(mainAxisSize: MainAxisSize.min, children: [
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(color: const Color(0xFF1D4ED8), borderRadius: BorderRadius.circular(999)),
@@ -304,47 +321,6 @@ class _LocationMarker extends StatelessWidget {
       Container(width: 12, height: 12, decoration: const BoxDecoration(color: Color(0xFF1D4ED8), shape: BoxShape.circle)),
     ]);
   }
-}
-
-// Hand-drawn stylised map background: a light blue canvas with a few roads,
-// building blocks, and a "Dhaka" label. Purely decorative — no real geodata.
-class _DhakaMapPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Base background color.
-    final bg = Paint()..color = const Color(0xFFE0F2FE);
-    canvas.drawRect(Offset.zero & size, bg);
-
-    // A handful of straight lines standing in for roads.
-    final roadPaint = Paint()
-      ..color = const Color(0xFF93C5FD)
-      ..strokeWidth = 5
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(const Offset(40, 80), Offset(size.width - 50, 80), roadPaint);
-    canvas.drawLine(const Offset(80, 40), Offset(80, size.height - 60), roadPaint);
-    canvas.drawLine(const Offset(150, 140), Offset(size.width - 70, 140), roadPaint);
-    canvas.drawLine(const Offset(220, 70), Offset(220, size.height - 90), roadPaint);
-    canvas.drawLine(const Offset(50, 260), Offset(size.width - 90, 260), roadPaint);
-
-    // Semi-transparent rectangles standing in for city blocks/buildings.
-    final blockPaint = Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: 0.45)..style = PaintingStyle.fill;
-    final blocks = [Rect.fromLTWH(40, 100, 70, 70), Rect.fromLTWH(140, 180, 80, 70), Rect.fromLTWH(240, 100, 70, 80), Rect.fromLTWH(120, 300, 90, 60)];
-    for (final block in blocks) {
-      canvas.drawRect(block, blockPaint);
-    }
-
-    // "Dhaka" label in the top-left corner of the map.
-    final textPainter = TextPainter(
-      text: TextSpan(text: 'Dhaka', style: TextStyle(color: const Color(0xFF1E3A8A), fontSize: 26, fontWeight: FontWeight.bold)),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    textPainter.paint(canvas, const Offset(24, 24));
-  }
-
-  // Static painting, so there's never a need to repaint.
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // Wraps a child widget with a subtle scale-up animation on hover (desktop/web)
