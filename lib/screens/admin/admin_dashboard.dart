@@ -13,7 +13,6 @@ class AdminDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final accounts = context.watch<AdminProvider>().accounts;
     final pending = accounts.where((a) => a.status == AccountStatus.pending).length;
     final totalDonated = mockDonationLogs.fold<int>(0, (s, l) => s + l.quantity);

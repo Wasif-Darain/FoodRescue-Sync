@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../widgets/ui/glass.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -476,99 +475,6 @@ class _ModeCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ModeImageTile extends StatelessWidget {
-  final String imageUrl;
-  final String label;
-  final IconData icon;
-  final Color accentColor;
-  final Color bgColor;
-  final VoidCallback? onTap;
-
-  const _ModeImageTile({
-    required this.imageUrl,
-    required this.label,
-    required this.icon,
-    required this.accentColor,
-    required this.bgColor,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final tile = Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: 0.18),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(
-              imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: bgColor,
-                child: Center(child: Icon(icon, size: 48, color: accentColor)),
-              ),
-            ),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.black.withValues(alpha: 0.15),
-                    Colors.black.withValues(alpha: 0.55),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-            Positioned(
-              left: 16,
-              bottom: 16,
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(icon, color: accentColor, size: 22),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (onTap == null) return tile;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(onTap: onTap, child: tile),
     );
   }
 }

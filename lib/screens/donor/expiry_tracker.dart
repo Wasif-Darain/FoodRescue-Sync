@@ -11,7 +11,6 @@ class ExpiryTracker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final inventory = context.watch<DonorProvider>().inventory;
     final now = DateTime.now();
     final expired = inventory.where((i) => i.expiryDate.isBefore(now)).toList();
