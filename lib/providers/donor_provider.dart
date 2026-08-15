@@ -1,26 +1,221 @@
+import 'dart:async';
 import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../data/mock_data.dart';
 import '../models/models.dart';
 
-/// Owns the donor's mutable inventory + the listings derived from it.
-/// Adding a surplus-tagged inventory item automatically creates a matching
-/// donation listing, so it shows up (with its photo) on the consumer
-/// marketplace immediately.
 class DonorProvider extends ChangeNotifier {
-  final List<InventoryItem> _inventory = List.of(mockInventory);
-  final List<Listing> _listings = List.of(mockListings);
-  int _nextInventoryId = mockInventory.length + 1;
-  int _nextListingId = mockListings.length + 1;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  StreamSubscription<QuerySnapshot>? _inventorySub;
+  StreamSubscription<QuerySnapshot>? _listingsSub;
+
+  List<InventoryItem> _inventory = [];
+  List<Listing> _listings = [];
+  bool _isLoading = true;
 
   List<InventoryItem> get inventory => List.unmodifiable(_inventory);
   List<Listing> get listings => List.unmodifiable(_listings);
+  bool get isLoading => _isLoading;
 
-  void markListingClaimed(int listingId) {
-    final i = _listings.indexWhere((l) => l.id == listingId);
-    if (i == -1) return;
-    _listings[i] = _listings[i].copyWith(status: ListingStatus.claimed);
-    notifyListeners();
+  Stream<List<InventoryItem>> get inventoryStream {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return Stream.value([]);
+    return _firestore
+        .collection('inventory_items')
+        .where('donorId', isEqualTo: uid)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => _inventoryItemFromDoc(doc))
+            .toList());
+  }
+
+  Stream<List<Listing>> get listingsStream {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return Stream.value([]);
+    return _firestore
+        .collection('listings')
+        .where('donorId', isEqualTo: uid)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => _listingFromDoc(doc))
+            .toList());
+  }
+
+  DonorProvider() {
+    _subscribe();
+  }
+
+  void _subscribe() {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    _inventorySub = _firestore
+        .collection('inventory_items')
+        .where('donorId', isEqualTo: uid)
+        .snapshots()
+        .listen((snapshot) {
+      _inventory = snapshot.docs
+          .map((doc) => _inventoryItemFromDoc(doc))
+          .toList();
+      _isLoading = false;
+      notifyListeners();
+    });
+    _listingsSub = _firestore
+        .collection('listings')
+        .where('donorId', isEqualTo: uid)
+        .snapshots()
+        .listen((snapshot) {
+      _listings = snapshot.docs
+          .map((doc) => _listingFromDoc(doc))
+          .toList();
+      notifyListeners();
+    });
+  }
+
+  InventoryItem _inventoryItemFromDoc(QueryDocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final exp = data['expiryDate'];
+    return InventoryItem(
+      id: int.tryParse(doc.id) ?? 0,
+      docId: doc.id,
+      name: data['name'] as String? ?? '',
+      barcode: data['barcode'] as String?,
+      quantity: (data['quantity'] as num?)?.toInt() ?? 0,
+      expiryDate: exp is Timestamp ? exp.toDate() : DateTime.now(),
+      isSurplus: data['isSurplus'] as bool? ?? false,
+      category: data['category'] as String? ?? '',
+      imageUrl: data['imageUrl'] as String?,
+    );
+  }
+
+  Listing _listingFromDoc(QueryDocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final start = data['pickupStart'];
+    final end = data['pickupEnd'];
+    return Listing(
+      id: int.tryParse(doc.id) ?? 0,
+      docId: doc.id,
+      donorId: 0,
+      donorName: data['donorName'] as String? ?? '',
+      title: data['title'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      price: (data['price'] as num?)?.toDouble() ?? 0,
+      quantity: (data['quantity'] as num?)?.toInt() ?? 0,
+      listingType: data['listingType'] == 'flashSale'
+          ? ListingType.flashSale
+          : ListingType.donation,
+      pickupStart: start is Timestamp ? start.toDate() : DateTime.now(),
+      pickupEnd: end is Timestamp ? end.toDate() : DateTime.now(),
+      latitude: (data['latitude'] as num?)?.toDouble() ?? 0,
+      longitude: (data['longitude'] as num?)?.toDouble() ?? 0,
+      status: ListingStatus.values.firstWhere(
+        (e) => e.name == (data['status'] as String? ?? 'active'),
+        orElse: () => ListingStatus.active,
+      ),
+      category: data['category'] as String? ?? '',
+      imageUrl: (data['photoUrls'] as List?)?.isNotEmpty == true
+          ? (data['photoUrls'] as List).first as String?
+          : null,
+      address: data['address'] as String?,
+    );
+  }
+
+  Future<void> addInventoryItem({
+    required String name,
+    String? barcode,
+    required int quantity,
+    required DateTime expiryDate,
+    required bool isSurplus,
+    required String category,
+    Uint8List? imageBytes,
+    String donorName = 'You',
+  }) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    await _firestore.collection('inventory_items').add({
+      'donorId': uid,
+      'name': name,
+      'barcode': barcode,
+      'quantity': quantity,
+      'expiryDate': Timestamp.fromDate(expiryDate),
+      'isSurplus': isSurplus,
+      'category': category,
+      'imageUrl': null,
+    });
+  }
+
+  Future<void> updateInventoryItem(
+    String docId, {
+    String? name,
+    String? barcode,
+    int? quantity,
+    DateTime? expiryDate,
+    bool? isSurplus,
+    String? category,
+  }) async {
+    final data = <String, dynamic>{};
+    if (name != null) data['name'] = name;
+    if (barcode != null) data['barcode'] = barcode;
+    if (quantity != null) data['quantity'] = quantity;
+    if (expiryDate != null) data['expiryDate'] = Timestamp.fromDate(expiryDate);
+    if (isSurplus != null) data['isSurplus'] = isSurplus;
+    if (category != null) data['category'] = category;
+    await _firestore.collection('inventory_items').doc(docId).update(data);
+  }
+
+  Future<void> deleteInventoryItem(String docId) async {
+    await _firestore.collection('inventory_items').doc(docId).delete();
+  }
+
+  Future<String?> createListing({
+    required String title,
+    required String description,
+    required String category,
+    required int quantity,
+    required ListingType listingType,
+    double price = 0,
+    required DateTime pickupStart,
+    required DateTime pickupEnd,
+    List<String>? photoUrls,
+    String donorName = 'You',
+    double? latitude,
+    double? longitude,
+    String? address,
+  }) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return null;
+    final docRef = await _firestore.collection('listings').add({
+      'donorId': uid,
+      'donorName': donorName,
+      'title': title,
+      'description': description,
+      'price': price,
+      'quantity': quantity,
+      'listingType': listingType.name,
+      'pickupStart': Timestamp.fromDate(pickupStart),
+      'pickupEnd': Timestamp.fromDate(pickupEnd),
+      'latitude': latitude ?? 23.81,
+      'longitude': longitude ?? 90.41,
+      'status': ListingStatus.active.name,
+      'category': category,
+      'photoUrls': photoUrls ?? [],
+      'address': address,
+    });
+    return docRef.id;
+  }
+
+  Future<void> updateListingPhotoUrls(String listingId, List<String> photoUrls) async {
+    await _firestore.collection('listings').doc(listingId).update({
+      'photoUrls': photoUrls,
+    });
+  }
+
+  Future<void> markListingClaimed(String listingId) async {
+    await _firestore.collection('listings').doc(listingId).update({
+      'status': ListingStatus.claimed.name,
+    });
   }
 
   TimeOfDay _preferredPickupTime = const TimeOfDay(hour: 18, minute: 0);
@@ -38,10 +233,6 @@ class DonorProvider extends ChangeNotifier {
   List<ScheduledDonation> get scheduledDonations =>
       List.unmodifiable(_scheduledDonations);
 
-  /// Total times this donor has donated (or has an active pending donation)
-  /// to [consumerName] — the sole source for card sort order and the
-  /// "reception streak" badge. A simple running count; the app has no
-  /// concept of broken/gap streaks elsewhere so none is modeled here.
   int donationCountFor(String consumerName) =>
       mockDonationLogs.where((l) => l.recipientOrg == consumerName).length +
       _scheduledDonations
@@ -96,7 +287,6 @@ class DonorProvider extends ChangeNotifier {
     );
   }
 
-  /// Returns null on success, or a user-facing error string if blocked.
   String? rescheduleDonation(int id, DateTime newTime, String newLocation) {
     final i = _scheduledDonations.indexWhere((d) => d.id == id);
     if (i == -1) return 'Donation not found.';
@@ -121,7 +311,6 @@ class DonorProvider extends ChangeNotifier {
     return null;
   }
 
-  /// Returns null on success, or a user-facing error string if blocked.
   String? cancelDonation(int id) {
     final i = _scheduledDonations.indexWhere((d) => d.id == id);
     if (i == -1) return 'Donation not found.';
@@ -144,10 +333,6 @@ class DonorProvider extends ChangeNotifier {
     return null;
   }
 
-  /// Toggles the donor's global availability. Going unavailable cancels
-  /// every scheduled donation that still has >=12 hours remaining
-  /// (notifying each recipient); donations inside the 12-hour window are
-  /// left untouched. Returns a summary string for the caller to display.
   String setAvailability(bool available) {
     _isAvailable = available;
     if (!available) {
@@ -186,91 +371,10 @@ class DonorProvider extends ChangeNotifier {
     return 'You are now marked as available.';
   }
 
-  void addInventoryItem({
-    required String name,
-    String? barcode,
-    required int quantity,
-    required DateTime expiryDate,
-    required bool isSurplus,
-    required String category,
-    Uint8List? imageBytes,
-    String donorName = 'You',
-  }) {
-    final item = InventoryItem(
-      id: _nextInventoryId++,
-      name: name,
-      barcode: barcode,
-      quantity: quantity,
-      expiryDate: expiryDate,
-      isSurplus: isSurplus,
-      category: category,
-      imageBytes: imageBytes,
-    );
-    _inventory.insert(0, item);
-
-    if (isSurplus) {
-      _listings.insert(
-        0,
-        Listing(
-          id: _nextListingId++,
-          donorId: 0,
-          donorName: donorName,
-          title: name,
-          description: 'Surplus $category from inventory, ready for pickup.',
-          price: 0,
-          quantity: quantity,
-          listingType: ListingType.donation,
-          pickupStart: DateTime.now(),
-          pickupEnd: DateTime.now().add(const Duration(hours: 6)),
-          latitude: 23.81,
-          longitude: 90.41,
-          status: ListingStatus.active,
-          category: category,
-          distance: 0.1,
-          imageBytes: imageBytes,
-        ),
-      );
-    }
-    notifyListeners();
-  }
-
-  void addListing({
-    required String title,
-    required String description,
-    required String category,
-    required int quantity,
-    required ListingType listingType,
-    double price = 0,
-    required DateTime pickupStart,
-    required DateTime pickupEnd,
-    Uint8List? imageBytes,
-    String donorName = 'You',
-    double? latitude,
-    double? longitude,
-    String? address,
-  }) {
-    _listings.insert(
-      0,
-      Listing(
-        id: _nextListingId++,
-        donorId: 0,
-        donorName: donorName,
-        title: title,
-        description: description,
-        price: price,
-        quantity: quantity,
-        listingType: listingType,
-        pickupStart: pickupStart,
-        pickupEnd: pickupEnd,
-        latitude: latitude ?? 23.81,
-        longitude: longitude ?? 90.41,
-        status: ListingStatus.active,
-        category: category,
-        distance: 0.1,
-        imageBytes: imageBytes,
-        address: address,
-      ),
-    );
-    notifyListeners();
+  @override
+  void dispose() {
+    _inventorySub?.cancel();
+    _listingsSub?.cancel();
+    super.dispose();
   }
 }

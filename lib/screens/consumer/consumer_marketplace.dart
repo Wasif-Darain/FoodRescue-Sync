@@ -722,7 +722,7 @@ void _showCheckoutSheet(BuildContext context, {required Listing listing}) {
                                 deliveryOption: selectedDelivery,
                                 deliveryLocation: location,
                               );
-                          context.read<DonorProvider>().markListingClaimed(listing.id);
+                          context.read<DonorProvider>().markListingClaimed(listing.docId ?? '');
                           Navigator.pop(sheetContext);
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                             content: Text('Order placed — ৳${total.toInt()} via ${_paymentMethodLabel(selectedPayment)}'),

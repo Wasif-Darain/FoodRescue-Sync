@@ -20,206 +20,222 @@ class DonorDashboard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
     final donor = context.watch<DonorProvider>();
-    final surplusItems = donor.inventory.where((i) => i.isSurplus).toList();
-    final now = DateTime.now();
-    final expiringToday = donor.inventory.where((i) {
-      final diff = i.expiryDate.difference(now);
-      return diff.inSeconds > 0 && diff.inHours < 24;
-    }).toList();
-    final activeListings = donor.listings
-        .where((l) => l.status == ListingStatus.active)
-        .take(3)
-        .toList();
 
-    return AppLayout(
-      title: 'Donor Dashboard',
-      subtitle: 'Manage your inventory, listings, and track donations',
-      currentRoute: '/donor',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Welcome banner
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
-                          ),
-                          const SizedBox(width: 8),
-                          Builder(builder: (context) {
-                            final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
-                            final label = donorTierLabel(donorTierFor(account));
-                            return UserBadge(label: label, isLegend: label == 'Legend', fontSize: 9);
-                          }),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        surplusItems.isEmpty
-                            ? 'Your inventory is in great shape today.'
-                            : '${surplusItems.length} item${surplusItems.length == 1 ? '' : 's'} ready to redistribute today.',
-                        style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.all(Radius.circular(14))),
-                  child: const Icon(Icons.eco_outlined, color: Color(0xFF16A34A), size: 26),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Stat cards
-          ResponsiveGrid(
-            children: [
-              StatCard(
-                label: 'Total Items',
-                value: donor.inventory.length,
-                icon: const Icon(Icons.inventory_2_outlined),
-                color: 'blue',
-              ),
-              StatCard(
-                label: 'Surplus Tagged',
-                value: surplusItems.length,
-                icon: const Icon(Icons.warning_amber_outlined),
-                color: 'orange',
-                subtitle: 'Need redistribution',
-              ),
-              StatCard(
-                label: 'Active Listings',
-                value: activeListings.length,
-                icon: const Icon(Icons.trending_up),
-                color: 'green',
-              ),
-              StatCard(
-                label: 'Total Donated',
-                value: mockDonationLogs.length,
-                icon: const Icon(Icons.favorite_outlined),
-                color: 'red',
-                subtitle: 'This month',
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          LayoutBuilder(builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 700;
+    return StreamBuilder<List<InventoryItem>>(
+      stream: donor.inventoryStream,
+      builder: (context, inventorySnapshot) {
+        final inventory = inventorySnapshot.data ?? donor.inventory;
+        final surplusItems = inventory.where((i) => i.isSurplus).toList();
+        final now = DateTime.now();
+        final expiringToday = inventory.where((i) {
+          final diff = i.expiryDate.difference(now);
+          return diff.inSeconds > 0 && diff.inHours < 24;
+        }).toList();
 
-            final leftColumn = Column(
-              children: [
-                if (expiringToday.isNotEmpty) ...[
-                  _SectionCard(
-                    title: 'Expiring Today',
-                    icon: Icons.timer_outlined,
-                    titleColor: const Color(0xFFEF4444),
-                    action: TextButton(
-                      onPressed: () => context.go('/donor/expiry'),
-                      child: const Text('View all'),
+        return StreamBuilder<List<Listing>>(
+          stream: donor.listingsStream,
+          builder: (context, listingsSnapshot) {
+            final listings = listingsSnapshot.data ?? donor.listings;
+            final activeListings = listings
+                .where((l) => l.status == ListingStatus.active)
+                .take(3)
+                .toList();
+            final totalDonatedKg = inventory.fold<double>(
+              0,
+              (sum, item) => sum + item.quantity * 0.5,
+            );
+
+            return AppLayout(
+              title: 'Donor Dashboard',
+              subtitle: 'Manage your inventory, listings, and track donations',
+              currentRoute: '/donor',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
                     ),
-                    child: Column(
-                      children: expiringToday
-                          .map((item) => _InventoryRow(item: item))
-                          .toList(),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Builder(builder: (context) {
+                                    final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
+                                    final label = donorTierLabel(donorTierFor(account));
+                                    return UserBadge(label: label, isLegend: label == 'Legend', fontSize: 9);
+                                  }),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                surplusItems.isEmpty
+                                    ? 'Your inventory is in great shape today.'
+                                    : '${surplusItems.length} item${surplusItems.length == 1 ? '' : 's'} ready to redistribute today.',
+                                style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.all(Radius.circular(14))),
+                          child: const Icon(Icons.eco_outlined, color: Color(0xFF16A34A), size: 26),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
-                ],
-                _SectionCard(
-                  title: 'Active Listings',
-                  icon: Icons.storefront_outlined,
-                  action: TextButton(
-                    onPressed: () => context.go('/donor/create-listing'),
-                    child: const Text('Create new'),
-                  ),
-                  child: Column(
-                    children: activeListings
-                        .map((l) => _ListingRow(listing: l))
-                        .toList(),
-                  ),
-                ),
-              ],
-            );
-
-            final rightColumn = Column(
-              children: [
-                _SectionCard(
-                  title: 'Quick Actions',
-                  icon: Icons.bolt_outlined,
-                  child: Column(
+                  ResponsiveGrid(
                     children: [
-                      _QuickAction(
-                        icon: Icons.timer_outlined,
-                        label: 'Check Expiry',
-                        color: const Color(0xFFEA580C),
-                        onTap: () => context.go('/donor/expiry'),
+                      StatCard(
+                        label: 'Total Items',
+                        value: inventory.length,
+                        icon: const Icon(Icons.inventory_2_outlined),
+                        color: 'blue',
                       ),
-                                            _QuickAction(
-                        icon: Icons.receipt_long_outlined,
-                        label: 'Donation Log',
-                        color: const Color(0xFF16A34A),
-                        onTap: () => context.go('/donor/donation-log'),
+                      StatCard(
+                        label: 'Surplus Tagged',
+                        value: surplusItems.length,
+                        icon: const Icon(Icons.warning_amber_outlined),
+                        color: 'orange',
+                        subtitle: 'Need redistribution',
                       ),
-                      _QuickAction(
-                        icon: Icons.emoji_events_outlined,
-                        label: 'Rewards',
-                        color: const Color(0xFFF59E0B),
-                        onTap: () => context.go('/rewards'),
+                      StatCard(
+                        label: 'Active Listings',
+                        value: listings.where((l) => l.status == ListingStatus.active).length,
+                        icon: const Icon(Icons.trending_up),
+                        color: 'green',
                       ),
-                      _QuickAction(
-                        icon: Icons.leaderboard_outlined,
-                        label: 'Leaderboard',
-                        color: const Color(0xFF6B7280),
-                        onTap: () => context.go('/leaderboard'),
+                      StatCard(
+                        label: 'Food Saved (kg)',
+                        value: totalDonatedKg.toStringAsFixed(1),
+                        icon: const Icon(Icons.favorite_outlined),
+                        color: 'red',
+                        subtitle: 'Estimated',
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 20),
-                _SectionCard(
-                  title: 'Recent Donations',
-                  icon: Icons.volunteer_activism_outlined,
-                  child: Column(
-                    children: mockDonationLogs
-                        .take(3)
-                        .map((log) => _DonationRow(log: log))
-                        .toList(),
-                  ),
-                ),
-              ],
-            );
+                  const SizedBox(height: 24),
+                  LayoutBuilder(builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 700;
 
-            if (isNarrow) {
-              return Column(
-                children: [leftColumn, const SizedBox(height: 20), rightColumn],
-              );
-            }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 2, child: leftColumn),
-                const SizedBox(width: 20),
-                Expanded(child: rightColumn),
-              ],
+                    final leftColumn = Column(
+                      children: [
+                        if (expiringToday.isNotEmpty) ...[
+                          _SectionCard(
+                            title: 'Expiring Today',
+                            icon: Icons.timer_outlined,
+                            titleColor: const Color(0xFFEF4444),
+                            action: TextButton(
+                              onPressed: () => context.go('/donor/expiry'),
+                              child: const Text('View all'),
+                            ),
+                            child: Column(
+                              children: expiringToday
+                                  .map((item) => _InventoryRow(item: item))
+                                  .toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                        _SectionCard(
+                          title: 'Active Listings',
+                          icon: Icons.storefront_outlined,
+                          action: TextButton(
+                            onPressed: () => context.go('/donor/create-listing'),
+                            child: const Text('Create new'),
+                          ),
+                          child: Column(
+                            children: activeListings
+                                .map((l) => _ListingRow(listing: l))
+                                .toList(),
+                          ),
+                        ),
+                      ],
+                    );
+
+                    final rightColumn = Column(
+                      children: [
+                        _SectionCard(
+                          title: 'Quick Actions',
+                          icon: Icons.bolt_outlined,
+                          child: Column(
+                            children: [
+                              _QuickAction(
+                                icon: Icons.timer_outlined,
+                                label: 'Check Expiry',
+                                color: const Color(0xFFEA580C),
+                                onTap: () => context.go('/donor/expiry'),
+                              ),
+                              _QuickAction(
+                                icon: Icons.receipt_long_outlined,
+                                label: 'Donation Log',
+                                color: const Color(0xFF16A34A),
+                                onTap: () => context.go('/donor/donation-log'),
+                              ),
+                              _QuickAction(
+                                icon: Icons.emoji_events_outlined,
+                                label: 'Rewards',
+                                color: const Color(0xFFF59E0B),
+                                onTap: () => context.go('/rewards'),
+                              ),
+                              _QuickAction(
+                                icon: Icons.leaderboard_outlined,
+                                label: 'Leaderboard',
+                                color: const Color(0xFF6B7280),
+                                onTap: () => context.go('/leaderboard'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _SectionCard(
+                          title: 'Recent Donations',
+                          icon: Icons.volunteer_activism_outlined,
+                          child: Column(
+                            children: mockDonationLogs
+                                .take(3)
+                                .map((log) => _DonationRow(log: log))
+                                .toList(),
+                          ),
+                        ),
+                      ],
+                    );
+
+                    if (isNarrow) {
+                      return Column(
+                        children: [leftColumn, const SizedBox(height: 20), rightColumn],
+                      );
+                    }
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 2, child: leftColumn),
+                        const SizedBox(width: 20),
+                        Expanded(child: rightColumn),
+                      ],
+                    );
+                  }),
+                ],
+              ),
             );
-          }),
-        ],
-      ),
+          },
+        );
+      },
     );
   }
 }

@@ -11,42 +11,48 @@ class ExpiryTracker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inventory = context.watch<DonorProvider>().inventory;
-    final now = DateTime.now();
-    final expired = inventory.where((i) => i.expiryDate.isBefore(now)).toList();
-    final today = inventory.where((i) {
-      final d = i.expiryDate.difference(now);
-      return d.inSeconds > 0 && d.inHours < 24;
-    }).toList();
-    final thisWeek = inventory.where((i) {
-      final d = i.expiryDate.difference(now);
-      return d.inHours >= 24 && d.inDays <= 7;
-    }).toList();
-    final safe = inventory.where((i) => i.expiryDate.difference(now).inDays > 7).toList();
+    final donor = context.watch<DonorProvider>();
+    return StreamBuilder<List<InventoryItem>>(
+      stream: donor.inventoryStream,
+      builder: (context, snapshot) {
+        final inventory = snapshot.data ?? donor.inventory;
+        final now = DateTime.now();
+        final expired = inventory.where((i) => i.expiryDate.isBefore(now)).toList();
+        final today = inventory.where((i) {
+          final d = i.expiryDate.difference(now);
+          return d.inSeconds > 0 && d.inHours < 24;
+        }).toList();
+        final thisWeek = inventory.where((i) {
+          final d = i.expiryDate.difference(now);
+          return d.inHours >= 24 && d.inDays <= 7;
+        }).toList();
+        final safe = inventory.where((i) => i.expiryDate.difference(now).inDays > 7).toList();
 
-    return AppLayout(
-      title: 'Expiry Tracker',
-      subtitle: 'Monitor your inventory expiration dates',
-      currentRoute: '/donor/expiry',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ResponsiveGrid(
-            spacing: 12,
+        return AppLayout(
+          title: 'Expiry Tracker',
+          subtitle: 'Monitor your inventory expiration dates',
+          currentRoute: '/donor/expiry',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ExpiryStatCard(count: expired.length, label: 'Expired', color: const Color(0xFFEF4444)),
-              _ExpiryStatCard(count: today.length, label: 'Expires Today', color: const Color(0xFFEA580C)),
-              _ExpiryStatCard(count: thisWeek.length, label: 'This Week', color: const Color(0xFFD97706)),
-              _ExpiryStatCard(count: safe.length, label: 'Safe', color: const Color(0xFF16A34A)),
+              ResponsiveGrid(
+                spacing: 12,
+                children: [
+                  _ExpiryStatCard(count: expired.length, label: 'Expired', color: const Color(0xFFEF4444)),
+                  _ExpiryStatCard(count: today.length, label: 'Expires Today', color: const Color(0xFFEA580C)),
+                  _ExpiryStatCard(count: thisWeek.length, label: 'This Week', color: const Color(0xFFD97706)),
+                  _ExpiryStatCard(count: safe.length, label: 'Safe', color: const Color(0xFF16A34A)),
+                ],
+              ),
+              const SizedBox(height: 24),
+              if (expired.isNotEmpty) _ExpirySection(title: 'Expired', items: expired),
+              if (today.isNotEmpty) _ExpirySection(title: 'Expires Today', items: today),
+              if (thisWeek.isNotEmpty) _ExpirySection(title: 'Expires This Week', items: thisWeek),
+              if (safe.isNotEmpty) _ExpirySection(title: 'Safe Items', items: safe),
             ],
           ),
-          const SizedBox(height: 24),
-          if (expired.isNotEmpty) _ExpirySection(title: 'Expired', items: expired),
-          if (today.isNotEmpty) _ExpirySection(title: 'Expires Today', items: today),
-          if (thisWeek.isNotEmpty) _ExpirySection(title: 'Expires This Week', items: thisWeek),
-          if (safe.isNotEmpty) _ExpirySection(title: 'Safe Items', items: safe),
-        ],
-      ),
+        );
+      },
     );
   }
 }
