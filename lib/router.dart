@@ -3,9 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'providers/auth_provider.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/login_register_screen.dart';
+import 'screens/password_recovery_screen.dart';
 import 'screens/donor/donor_dashboard.dart';
-import 'screens/donor/donor_marketplace.dart';
-import 'screens/donor/add_inventory.dart';
+import 'screens/donor/donor_consumers.dart';
 import 'screens/donor/expiry_tracker.dart';
 import 'screens/donor/create_listing.dart';
 import 'screens/donor/listing_image_manager.dart';
@@ -37,11 +37,17 @@ CustomTransitionPage<void> _fadeThrough(GoRouterState state, Widget child) {
     transitionDuration: const Duration(milliseconds: 280),
     reverseTransitionDuration: const Duration(milliseconds: 220),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      );
       return FadeTransition(
         opacity: curved,
         child: SlideTransition(
-          position: Tween<Offset>(begin: const Offset(0, 0.04), end: Offset.zero).animate(curved),
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.04),
+            end: Offset.zero,
+          ).animate(curved),
           child: child,
         ),
       );
@@ -54,7 +60,10 @@ GoRouter buildRouter(AuthProvider auth) => GoRouter(
   initialLocation: '/',
   redirect: (context, state) {
     final isAuth = auth.isAuthenticated;
-    final isPublic = state.matchedLocation == '/' || state.matchedLocation == '/login';
+    final isPublic =
+        state.matchedLocation == '/' ||
+        state.matchedLocation == '/login' ||
+        state.matchedLocation == '/forgot-password';
     if (!isAuth && !isPublic) return '/login';
     if (isAuth && isPublic) {
       return switch (auth.user!.mode) {
@@ -66,35 +75,119 @@ GoRouter buildRouter(AuthProvider auth) => GoRouter(
     return null;
   },
   routes: [
-    GoRoute(path: '/',      pageBuilder: (_, state) => _fadeThrough(state, const WelcomeScreen())),
-    GoRoute(path: '/login', pageBuilder: (_, state) => _fadeThrough(state, const LoginRegisterScreen())),
+    GoRoute(
+      path: '/',
+      pageBuilder: (_, state) => _fadeThrough(state, const WelcomeScreen()),
+    ),
+    GoRoute(
+      path: '/login',
+      pageBuilder: (_, state) =>
+          _fadeThrough(state, const LoginRegisterScreen()),
+    ),
+    GoRoute(
+      path: '/forgot-password',
+      pageBuilder: (_, state) =>
+          _fadeThrough(state, const PasswordRecoveryScreen()),
+    ),
     // Donor
-    GoRoute(path: '/donor',                pageBuilder: (_, state) => _fadeThrough(state, const DonorDashboard())),
-    GoRoute(path: '/donor/marketplace',    pageBuilder: (_, state) => _fadeThrough(state, const DonorMarketplace())),
-    GoRoute(path: '/donor/inventory',      pageBuilder: (_, state) => _fadeThrough(state, const AddInventory())),
-    GoRoute(path: '/donor/expiry',         pageBuilder: (_, state) => _fadeThrough(state, const ExpiryTracker())),
-    GoRoute(path: '/donor/create-listing', pageBuilder: (_, state) => _fadeThrough(state, const CreateListing())),
-    GoRoute(path: '/donor/images',         pageBuilder: (_, state) => _fadeThrough(state, const ListingImageManager())),
-    GoRoute(path: '/donor/donation-log',   pageBuilder: (_, state) => _fadeThrough(state, const DonationLogScreen())),
+    GoRoute(
+      path: '/donor',
+      pageBuilder: (_, state) => _fadeThrough(state, const DonorDashboard()),
+    ),
+    GoRoute(
+      path: '/donor/consumers',
+      pageBuilder: (_, state) => _fadeThrough(state, const DonorConsumers()),
+    ),
+    GoRoute(
+      path: '/donor/expiry',
+      pageBuilder: (_, state) => _fadeThrough(state, const ExpiryTracker()),
+    ),
+    GoRoute(
+      path: '/donor/create-listing',
+      pageBuilder: (_, state) => _fadeThrough(state, const CreateListing()),
+    ),
+    GoRoute(
+      path: '/donor/images',
+      pageBuilder: (_, state) =>
+          _fadeThrough(state, const ListingImageManager()),
+    ),
+    GoRoute(
+      path: '/donor/donation-log',
+      pageBuilder: (_, state) => _fadeThrough(state, const DonationLogScreen()),
+    ),
     // Consumer
-    GoRoute(path: '/consumer',              pageBuilder: (_, state) => _fadeThrough(state, const ConsumerMarketplace())),
-    GoRoute(path: '/consumer/radar',        pageBuilder: (_, state) => _fadeThrough(state, const SurplusRadar())),
-    GoRoute(path: '/consumer/bulk-request', pageBuilder: (_, state) => _fadeThrough(state, const BulkRequest())),
-    GoRoute(path: '/consumer/requests',     pageBuilder: (_, state) => _fadeThrough(state, const RequestStatusTracker())),
-    GoRoute(path: '/consumer/pickups',      pageBuilder: (_, state) => _fadeThrough(state, const PickupCoordination())),
+    GoRoute(
+      path: '/consumer',
+      pageBuilder: (_, state) =>
+          _fadeThrough(state, const ConsumerMarketplace()),
+    ),
+    GoRoute(
+      path: '/consumer/radar',
+      pageBuilder: (_, state) => _fadeThrough(state, const SurplusRadar()),
+    ),
+    GoRoute(
+      path: '/consumer/bulk-request',
+      pageBuilder: (_, state) => _fadeThrough(state, const BulkRequest()),
+    ),
+    GoRoute(
+      path: '/consumer/requests',
+      pageBuilder: (_, state) =>
+          _fadeThrough(state, const RequestStatusTracker()),
+    ),
+    GoRoute(
+      path: '/consumer/pickups',
+      pageBuilder: (_, state) =>
+          _fadeThrough(state, const PickupCoordination()),
+    ),
     // Shared
-    GoRoute(path: '/notifications', pageBuilder: (_, state) => _fadeThrough(state, const NotificationCenter())),
-    GoRoute(path: '/profile',       pageBuilder: (_, state) => _fadeThrough(state, const ProfileSettings())),
-    GoRoute(path: '/profile/edit',              pageBuilder: (_, state) => _fadeThrough(state, const EditProfile())),
-    GoRoute(path: '/profile/notifications',     pageBuilder: (_, state) => _fadeThrough(state, const NotificationPreferences())),
-    GoRoute(path: '/profile/privacy-security',  pageBuilder: (_, state) => _fadeThrough(state, const PrivacySecurity())),
-    GoRoute(path: '/profile/language-region',   pageBuilder: (_, state) => _fadeThrough(state, const LanguageRegion())),
-    GoRoute(path: '/profile/help-support',      pageBuilder: (_, state) => _fadeThrough(state, const HelpSupport())),
-    GoRoute(path: '/rewards',       pageBuilder: (_, state) => _fadeThrough(state, const RewardsScreen())),
-    GoRoute(path: '/leaderboard',   pageBuilder: (_, state) => _fadeThrough(state, const LeaderboardScreen())),
+    GoRoute(
+      path: '/notifications',
+      pageBuilder: (_, state) =>
+          _fadeThrough(state, const NotificationCenter()),
+    ),
+    GoRoute(
+      path: '/profile',
+      pageBuilder: (_, state) => _fadeThrough(state, const ProfileSettings()),
+    ),
+    GoRoute(
+      path: '/profile/edit',
+      pageBuilder: (_, state) => _fadeThrough(state, const EditProfile()),
+    ),
+    GoRoute(
+      path: '/profile/notifications',
+      pageBuilder: (_, state) =>
+          _fadeThrough(state, const NotificationPreferences()),
+    ),
+    GoRoute(
+      path: '/profile/privacy-security',
+      pageBuilder: (_, state) => _fadeThrough(state, const PrivacySecurity()),
+    ),
+    GoRoute(
+      path: '/profile/language-region',
+      pageBuilder: (_, state) => _fadeThrough(state, const LanguageRegion()),
+    ),
+    GoRoute(
+      path: '/profile/help-support',
+      pageBuilder: (_, state) => _fadeThrough(state, const HelpSupport()),
+    ),
+    GoRoute(
+      path: '/rewards',
+      pageBuilder: (_, state) => _fadeThrough(state, const RewardsScreen()),
+    ),
+    GoRoute(
+      path: '/leaderboard',
+      pageBuilder: (_, state) =>
+          _fadeThrough(state, const LeaderboardScreen()),
+    ),
     // Admin
-    GoRoute(path: '/admin',          pageBuilder: (_, state) => _fadeThrough(state, const AdminDashboard())),
-    GoRoute(path: '/admin/accounts', pageBuilder: (_, state) => _fadeThrough(state, const AccountManagement())),
+    GoRoute(
+      path: '/admin',
+      pageBuilder: (_, state) => _fadeThrough(state, const AdminDashboard()),
+    ),
+    GoRoute(
+      path: '/admin/accounts',
+      pageBuilder: (_, state) => _fadeThrough(state, const AccountManagement()),
+    ),
   ],
 );
 

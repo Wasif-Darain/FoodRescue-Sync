@@ -164,12 +164,6 @@ class DonorDashboard extends StatelessWidget {
                   child: Column(
                     children: [
                       _QuickAction(
-                        icon: Icons.add_circle_outline,
-                        label: 'Add Inventory',
-                        color: const Color(0xFF2563EB),
-                        onTap: () => context.go('/donor/inventory'),
-                      ),
-                      _QuickAction(
                         icon: Icons.timer_outlined,
                         label: 'Check Expiry',
                         color: const Color(0xFFEA580C),

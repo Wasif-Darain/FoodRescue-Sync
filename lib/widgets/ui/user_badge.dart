@@ -38,6 +38,18 @@ DonorTier donorTierFor(RegisteredAccount a) {
   return DonorTier.novice;
 }
 
+String pickupPreferenceLabel(PickupPreference p) => switch (p) {
+  PickupPreference.self => 'Self Pickup',
+  PickupPreference.management => 'Management Pickup',
+  PickupPreference.rider => 'Rider Delivery',
+};
+
+IconData pickupPreferenceIcon(PickupPreference p) => switch (p) {
+  PickupPreference.self => Icons.person_outline,
+  PickupPreference.management => Icons.apartment_outlined,
+  PickupPreference.rider => Icons.moped_outlined,
+};
+
 ConsumerTier consumerTierFor(RegisteredAccount a) {
   if (a.mealsRescued >= 100) {
     if (a.onTimePickupRate >= 98 && a.rating >= 4.7) return ConsumerTier.legend;
