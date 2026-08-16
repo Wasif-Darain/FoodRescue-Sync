@@ -179,7 +179,7 @@ class AuthProvider extends ChangeNotifier {
       case 'invalid-email':
         return 'Please enter a valid email address.';
       case 'weak-password':
-        return 'Password should be at least 6 characters.';
+        return 'Password should be at least 8 characters and include a mix of uppercase, lowercase, numbers, and special characters.';
       case 'user-disabled':
         return 'This account has been disabled.';
       case 'too-many-requests':

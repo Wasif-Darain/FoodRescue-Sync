@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/ui/glass.dart';
+import '../utils/password_validator.dart';
 
 const _brandGreen = Color(0xFF16A34A);
 
@@ -51,6 +52,15 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
       if (auth.user != null) {
         context.go(auth.user!.mode == UserMode.admin ? '/admin' : '/donor');
       }
+      return;
+    }
+    // Validate password strength before creating the account.
+    final passwordResult = PasswordValidationResult.validate(_passCtrl.text);
+    if (!passwordResult.isValid) {
+      _showAuthError(
+        'Password is not strong enough. It must be at least $kMinPasswordLength '
+        'characters and include uppercase, lowercase, number, and special character.',
+      );
       return;
     }
     await auth.signUp(
@@ -149,7 +159,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
       const SizedBox(height: 18),
       _Field(icon: Icons.location_on_outlined, label: 'Address', ctrl: _addressCtrl, placeholder: 'Business / organization address'),
       const SizedBox(height: 18),
-      _PasswordField(ctrl: _passCtrl, show: _showPassword, onToggle: () => setState(() => _showPassword = !_showPassword)),
+      _PasswordField(ctrl: _passCtrl, show: _showPassword, onToggle: () => setState(() => _showPassword = !_showPassword), showValidation: true),
       const SizedBox(height: 22),
       _PrimaryButton(label: 'Create Account', onPressed: _submit),
     ],
@@ -400,37 +410,160 @@ class _Field extends StatelessWidget {
   );
 }
 
-class _PasswordField extends StatelessWidget {
+class _PasswordField extends StatefulWidget {
   final TextEditingController ctrl;
   final bool show;
   final VoidCallback onToggle;
-  const _PasswordField({required this.ctrl, required this.show, required this.onToggle});
+  final bool showValidation;
+
+  const _PasswordField({
+    required this.ctrl,
+    required this.show,
+    required this.onToggle,
+    this.showValidation = false,
+  });
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text('Password', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF757575))),
-      const SizedBox(height: 4),
-      TextField(
-        controller: ctrl,
-        obscureText: !show,
-        decoration: InputDecoration(
-          hintText: 'Enter your password',
-          hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontSize: 13.5),
-          prefixIcon: const Icon(Icons.lock_outline, size: 19, color: Color(0xFF9CA3AF)),
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-          border: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFE2E2E2))),
-          enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFE2E2E2))),
-          focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: _brandGreen, width: 2)),
-          suffixIcon: IconButton(
-            icon: Icon(show ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: const Color(0xFF9CA3AF)),
-            onPressed: onToggle,
+  State<_PasswordField> createState() => _PasswordFieldState();
+}
+
+class _PasswordFieldState extends State<_PasswordField> {
+  PasswordValidationResult _result = PasswordValidationResult.validate('');
+
+  @override
+  void initState() {
+    super.initState();
+    widget.ctrl.addListener(_onChanged);
+    _onChanged();
+  }
+
+  void _onChanged() {
+    final result = PasswordValidationResult.validate(widget.ctrl.text);
+    if (result.score != _result.score || result.strength != _result.strength) {
+      setState(() => _result = result);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.ctrl.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showFeedback = widget.showValidation && widget.ctrl.text.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Password', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF757575))),
+        const SizedBox(height: 4),
+        TextField(
+          controller: widget.ctrl,
+          obscureText: !widget.show,
+          decoration: InputDecoration(
+            hintText: 'Enter your password',
+            hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontSize: 13.5),
+            prefixIcon: const Icon(Icons.lock_outline, size: 19, color: Color(0xFF9CA3AF)),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            border: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFE2E2E2))),
+            enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFE2E2E2))),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: _brandGreen, width: 2)),
+            suffixIcon: IconButton(
+              icon: Icon(widget.show ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: const Color(0xFF9CA3AF)),
+              onPressed: widget.onToggle,
+            ),
+          ),
+          style: const TextStyle(fontSize: 14, color: Color(0xFF121212)),
+        ),
+        if (showFeedback) ...[
+          const SizedBox(height: 14),
+          _PasswordStrengthBar(result: _result),
+          const SizedBox(height: 10),
+          _PasswordCriteriaList(result: _result),
+        ],
+      ],
+    );
+  }
+}
+
+class _PasswordStrengthBar extends StatelessWidget {
+  final PasswordValidationResult result;
+  const _PasswordStrengthBar({required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = result.score / kPasswordCriteria.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Strength: ${result.strength.label}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: result.strength.color,
+              ),
+            ),
+            Text(
+              '${result.score}/${kPasswordCriteria.length}',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: SizedBox(
+            height: 6,
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: const Color(0xFFE5E7EB),
+              color: result.strength.color,
+            ),
           ),
         ),
-        style: const TextStyle(fontSize: 14, color: Color(0xFF121212)),
-      ),
-    ],
-  );
+      ],
+    );
+  }
+}
+
+class _PasswordCriteriaList extends StatelessWidget {
+  final PasswordValidationResult result;
+  const _PasswordCriteriaList({required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: kPasswordCriteria.map((criterion) {
+        final isMet = !result.unmet.contains(criterion);
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Row(
+            children: [
+              Icon(
+                isMet ? Icons.check_circle : Icons.radio_button_unchecked,
+                size: 16,
+                color: isMet ? const Color(0xFF16A34A) : const Color(0xFF9CA3AF),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                criterion.label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isMet ? const Color(0xFF16A34A) : const Color(0xFF757575),
+                  fontWeight: isMet ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
 }
