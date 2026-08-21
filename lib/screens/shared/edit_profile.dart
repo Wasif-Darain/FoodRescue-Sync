@@ -7,7 +7,6 @@ import '../../widgets/ui/form_field.dart';
 import '../../widgets/ui/location_picker.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/models.dart';
-import '../../data/mock_data.dart';
 
 const _accountTypeLabel = {
   AccountType.restaurant: 'Restaurant',
@@ -26,7 +25,6 @@ class EditProfile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
-    final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
 
     return AppLayout(
       title: 'Edit Profile',
@@ -75,11 +73,7 @@ class EditProfile extends StatelessWidget {
             InkWell(
               borderRadius: BorderRadius.circular(8),
               onTap: () async {
-                final picked = await pickLocation(
-                  context,
-                  initial: account.latitude != null && account.longitude != null ? LatLng(account.latitude!, account.longitude!) : null,
-                  initialAddress: account.address,
-                );
+                final picked = await pickLocation(context);
                 if (picked == null || !context.mounted) return;
                 context.read<AuthProvider>().updateOwnLocation(lat: picked.lat, lng: picked.lng, address: picked.address);
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -97,10 +91,10 @@ class EditProfile extends StatelessWidget {
                 child: Row(children: [
                   Icon(Icons.location_on_outlined, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                   const SizedBox(width: 8),
-                  Expanded(
+                  const Expanded(
                     child: Text(
-                      account.address ?? 'Not set — tap to pick on map',
-                      style: TextStyle(fontSize: 13, color: account.address == null ? const Color(0xFFBFBFBF) : (isDark ? Colors.white : const Color(0xFF121212))),
+                      'Not set — tap to pick on map',
+                      style: TextStyle(fontSize: 13, color: Color(0xFFBFBFBF)),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

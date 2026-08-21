@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/stat_card.dart';
 import '../../widgets/ui/responsive_grid.dart';
-import '../../data/mock_data.dart';
 import '../../models/models.dart';
 import '../../providers/admin_provider.dart';
 
@@ -13,84 +12,43 @@ class AdminDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accounts = context.watch<AdminProvider>().accounts;
-    final pending = accounts.where((a) => a.status == AccountStatus.pending).length;
-    final totalDonated = mockDonationLogs.fold<int>(0, (s, l) => s + l.quantity);
-    final totalConsumed = mockRequests
-        .where((r) => r.status == RequestStatus.completed)
-        .fold<int>(0, (s, r) => s + r.quantity);
+    final admin = context.watch<AdminProvider>();
+    return StreamBuilder<List<RegisteredAccount>>(
+      stream: admin.accountsStream,
+      builder: (context, snapshot) {
+        final accounts = snapshot.data ?? [];
+        final pending = accounts.where((a) => a.status == AccountStatus.pending).length;
 
-    return AppLayout(
-      title: 'Admin Overview',
-      subtitle: 'Platform-wide donations, consumption & accounts',
-      currentRoute: '/admin',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ResponsiveGrid(
+        return AppLayout(
+          title: 'Admin Overview',
+          subtitle: 'Platform-wide donations, consumption & accounts',
+          currentRoute: '/admin',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              StatCard(
-                label: 'Items Donated',
-                value: totalDonated,
-                icon: const Icon(Icons.volunteer_activism_outlined),
-                color: 'green',
-                subtitle: '${mockDonationLogs.length} donations logged',
+              ResponsiveGrid(
+                children: [
+                  StatCard(
+                    label: 'Registered Accounts',
+                    value: accounts.length,
+                    icon: const Icon(Icons.groups_outlined),
+                    color: 'red',
+                  ),
+                  StatCard(
+                    label: 'Pending Approvals',
+                    value: pending,
+                    icon: const Icon(Icons.pending_actions_outlined),
+                    color: 'orange',
+                    subtitle: pending > 0 ? 'Needs review' : 'All caught up',
+                  ),
+                ],
               ),
-              StatCard(
-                label: 'Items Consumed',
-                value: totalConsumed,
-                icon: const Icon(Icons.restaurant_outlined),
-                color: 'blue',
-                subtitle: 'From completed requests',
-              ),
-              StatCard(
-                label: 'Registered Accounts',
-                value: accounts.length,
-                icon: const Icon(Icons.groups_outlined),
-                color: 'red',
-              ),
-              StatCard(
-                label: 'Pending Approvals',
-                value: pending,
-                icon: const Icon(Icons.pending_actions_outlined),
-                color: 'orange',
-                subtitle: pending > 0 ? 'Needs review' : 'All caught up',
-              ),
+              const SizedBox(height: 20),
+              _ManageAccountsCard(pending: pending),
             ],
           ),
-          const SizedBox(height: 20),
-          _ManageAccountsCard(pending: pending),
-          const SizedBox(height: 20),
-          _SectionCard(
-            title: 'Recent Donations',
-            icon: Icons.receipt_long_outlined,
-            child: Column(
-              children: mockDonationLogs
-                  .take(5)
-                  .map((log) => _ActivityRow(
-                        title: '${log.itemName} ×${log.quantity}',
-                        subtitle: '${log.recipientOrg} · ${_formatDate(log.loggedAt)}',
-                      ))
-                  .toList(),
-            ),
-          ),
-          const SizedBox(height: 20),
-          _SectionCard(
-            title: 'Recent Requests',
-            icon: Icons.assignment_outlined,
-            child: Column(
-              children: mockRequests
-                  .take(5)
-                  .map((r) => _ActivityRow(
-                        title: r.listingTitle,
-                        subtitle: '${r.donorName} · ×${r.quantity} · ${_formatDate(r.createdAt)}',
-                        trailing: r.status.name,
-                      ))
-                  .toList(),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

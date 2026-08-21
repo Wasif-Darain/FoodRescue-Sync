@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_button.dart';
 import '../../widgets/ui/date_time_field.dart';
+import '../../providers/consumer_provider.dart';
 
 class BulkRequest extends StatefulWidget {
   const BulkRequest({super.key});
@@ -12,12 +14,92 @@ class BulkRequest extends StatefulWidget {
 }
 
 class _BulkRequestState extends State<BulkRequest> {
+  final _orgCtrl = TextEditingController();
+  final _contactCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
+  final _peopleCtrl = TextEditingController();
+  final _notesCtrl = TextEditingController();
   final _items = <_RequestItem>[_RequestItem()];
   DateTime _requiredDate = DateTime.now();
+  bool _submitting = false;
+
+  @override
+  void dispose() {
+    _orgCtrl.dispose();
+    _contactCtrl.dispose();
+    _phoneCtrl.dispose();
+    _addressCtrl.dispose();
+    _peopleCtrl.dispose();
+    _notesCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickRequiredDate() async {
     final picked = await pickDateTime(context, initial: _requiredDate);
     if (picked != null) setState(() => _requiredDate = picked);
+  }
+
+  Future<void> _submit() async {
+    final org = _orgCtrl.text.trim();
+    final contact = _contactCtrl.text.trim();
+    final phone = _phoneCtrl.text.trim();
+    final address = _addressCtrl.text.trim();
+    final people = int.tryParse(_peopleCtrl.text.trim()) ?? 0;
+
+    if (org.isEmpty || contact.isEmpty || phone.isEmpty || address.isEmpty || people <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Please fill in all required fields.'),
+        backgroundColor: Color(0xFFDC2626),
+      ));
+      return;
+    }
+
+    final items = _items
+        .where((i) => i.nameCtrl.text.trim().isNotEmpty)
+        .map((i) => {
+              'name': i.nameCtrl.text.trim(),
+              'quantity': i.qtyCtrl.text.trim(),
+              'unit': i.unitCtrl.text.trim(),
+            })
+        .toList();
+
+    if (items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Add at least one food item.'),
+        backgroundColor: Color(0xFFDC2626),
+      ));
+      return;
+    }
+
+    setState(() => _submitting = true);
+    final consumer = context.read<ConsumerProvider>();
+    final error = await consumer.submitBulkRequest(
+      orgName: org,
+      contactPerson: contact,
+      phone: phone,
+      address: address,
+      requiredDate: _requiredDate,
+      peopleToFeed: people,
+      items: items,
+      notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+    );
+    if (!mounted) return;
+    setState(() => _submitting = false);
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(error),
+        backgroundColor: const Color(0xFFDC2626),
+      ));
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Bulk request submitted successfully!'),
+      backgroundColor: Color(0xFF16A34A),
+    ));
+    context.go('/consumer/requests');
   }
 
   @override
@@ -39,20 +121,20 @@ class _BulkRequestState extends State<BulkRequest> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Organization Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
                   const SizedBox(height: 16),
-                  _FormField(label: 'Organization Name', placeholder: 'Your NGO or food bank name'),
+                  _FormField(label: 'Organization Name', placeholder: 'Your NGO or food bank name', controller: _orgCtrl),
                   const SizedBox(height: 12),
                   Row(children: [
-                    Expanded(child: _FormField(label: 'Contact Person', placeholder: 'Full name')),
+                    Expanded(child: _FormField(label: 'Contact Person', placeholder: 'Full name', controller: _contactCtrl)),
                     const SizedBox(width: 12),
-                    Expanded(child: _FormField(label: 'Phone', placeholder: '+880 XXXX XXXXXX', keyboardType: TextInputType.phone)),
+                    Expanded(child: _FormField(label: 'Phone', placeholder: '+880 XXXX XXXXXX', keyboardType: TextInputType.phone, controller: _phoneCtrl)),
                   ]),
                   const SizedBox(height: 12),
-                  _FormField(label: 'Delivery / Pickup Address', placeholder: 'Full address'),
+                  _FormField(label: 'Delivery / Pickup Address', placeholder: 'Full address', controller: _addressCtrl),
                   const SizedBox(height: 12),
                   Row(children: [
                     Expanded(child: DateTimeField(label: 'Required Date & Time', value: _requiredDate, onTap: _pickRequiredDate)),
                     const SizedBox(width: 12),
-                    Expanded(child: _FormField(label: 'People to Feed', placeholder: '0', keyboardType: TextInputType.number)),
+                    Expanded(child: _FormField(label: 'People to Feed', placeholder: '0', keyboardType: TextInputType.number, controller: _peopleCtrl)),
                   ]),
                 ]),
               ),
@@ -77,15 +159,18 @@ class _BulkRequestState extends State<BulkRequest> {
                   ..._items.asMap().entries.map((e) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Row(children: [
-                      Expanded(flex: 3, child: _FormField(label: '', placeholder: 'Food item name')),
+                      Expanded(flex: 3, child: _FormField(label: '', placeholder: 'Food item name', controller: e.value.nameCtrl)),
                       const SizedBox(width: 10),
-                      Expanded(child: _FormField(label: '', placeholder: 'Qty', keyboardType: TextInputType.number)),
+                      Expanded(child: _FormField(label: '', placeholder: 'Qty', keyboardType: TextInputType.number, controller: e.value.qtyCtrl)),
                       const SizedBox(width: 10),
-                      Expanded(child: _FormField(label: '', placeholder: 'Unit (kg/pcs)')),
+                      Expanded(child: _FormField(label: '', placeholder: 'Unit (kg/pcs)', controller: e.value.unitCtrl)),
                       if (_items.length > 1) ...[
                         const SizedBox(width: 8),
                         IconButton(
-                          onPressed: () => setState(() => _items.removeAt(e.key)),
+                          onPressed: () {
+                            e.value.dispose();
+                            setState(() => _items.removeAt(e.key));
+                          },
                           icon: const Icon(Icons.remove_circle_outline, color: Color(0xFFEF4444), size: 18),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -104,7 +189,7 @@ class _BulkRequestState extends State<BulkRequest> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Additional Notes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
                   const SizedBox(height: 12),
-                  _FormField(label: '', placeholder: 'Any dietary restrictions, special requirements, or notes...', maxLines: 4),
+                  _FormField(label: '', placeholder: 'Any dietary restrictions, special requirements, or notes...', maxLines: 4, controller: _notesCtrl),
                 ]),
               ),
             ),
@@ -114,15 +199,9 @@ class _BulkRequestState extends State<BulkRequest> {
               const SizedBox(width: 12),
               _HoverScale(
                 child: AppButton(
-                  label: 'Submit Request',
+                  label: _submitting ? 'Submitting...' : 'Submit Request',
                   icon: const Icon(Icons.send, size: 16),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Bulk request submitted successfully!'),
-                      backgroundColor: Color(0xFF16A34A),
-                    ));
-                    context.go('/consumer/requests');
-                  },
+                  onPressed: _submitting ? null : _submit,
                 ),
               ),
             ]),
@@ -133,14 +212,25 @@ class _BulkRequestState extends State<BulkRequest> {
   }
 }
 
-class _RequestItem {}
+class _RequestItem {
+  final nameCtrl = TextEditingController();
+  final qtyCtrl = TextEditingController();
+  final unitCtrl = TextEditingController();
+
+  void dispose() {
+    nameCtrl.dispose();
+    qtyCtrl.dispose();
+    unitCtrl.dispose();
+  }
+}
 
 class _FormField extends StatelessWidget {
   final String label;
   final String placeholder;
   final int maxLines;
   final TextInputType? keyboardType;
-  const _FormField({required this.label, required this.placeholder, this.maxLines = 1, this.keyboardType});
+  final TextEditingController? controller;
+  const _FormField({required this.label, required this.placeholder, this.maxLines = 1, this.keyboardType, this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -153,6 +243,7 @@ class _FormField extends StatelessWidget {
           const SizedBox(height: 4),
         ],
         TextField(
+          controller: controller,
           maxLines: maxLines,
           keyboardType: keyboardType,
           decoration: InputDecoration(

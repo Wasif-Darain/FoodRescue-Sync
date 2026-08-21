@@ -28,8 +28,12 @@ class _AccountManagementState extends State<AccountManagement> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accounts = context.watch<AdminProvider>().accounts;
-    final filtered = _filter == null ? accounts : accounts.where((a) => a.status == _filter).toList();
+    final admin = context.watch<AdminProvider>();
+    return StreamBuilder<List<RegisteredAccount>>(
+      stream: admin.accountsStream,
+      builder: (context, snapshot) {
+        final accounts = snapshot.data ?? [];
+        final filtered = _filter == null ? accounts : accounts.where((a) => a.status == _filter).toList();
 
     return AppLayout(
       title: 'Accounts',
@@ -79,6 +83,8 @@ class _AccountManagementState extends State<AccountManagement> {
             ),
         ],
       ),
+    );
+      },
     );
   }
 }
@@ -180,7 +186,7 @@ class _AccountCard extends StatelessWidget {
                   child: _ActionButton(
                     label: 'Approve',
                     color: const Color(0xFF16A34A),
-                    onTap: () => admin.setStatus(account.id, AccountStatus.approved),
+                    onTap: () => admin.setStatus(account.email, AccountStatus.approved),
                   ),
                 ),
               if (account.status == AccountStatus.approved)
@@ -188,7 +194,7 @@ class _AccountCard extends StatelessWidget {
                   child: _ActionButton(
                     label: 'Suspend',
                     color: const Color(0xFFD97706),
-                    onTap: () => admin.setStatus(account.id, AccountStatus.suspended),
+                    onTap: () => admin.setStatus(account.email, AccountStatus.suspended),
                   ),
                 ),
               const SizedBox(width: 8),
@@ -218,7 +224,7 @@ class _AccountCard extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
-              admin.removeAccount(account.id);
+              admin.removeAccount(account.email);
               Navigator.pop(dialogContext);
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), foregroundColor: Colors.white, elevation: 0),

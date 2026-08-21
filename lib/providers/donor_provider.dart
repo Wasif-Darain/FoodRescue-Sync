@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../data/mock_data.dart';
 import '../models/models.dart';
 
 class DonorProvider extends ChangeNotifier {
@@ -233,15 +232,13 @@ class DonorProvider extends ChangeNotifier {
   List<ScheduledDonation> get scheduledDonations =>
       List.unmodifiable(_scheduledDonations);
 
-  int donationCountFor(String consumerName) =>
-      mockDonationLogs.where((l) => l.recipientOrg == consumerName).length +
-      _scheduledDonations
-          .where(
-            (d) =>
-                d.consumerName == consumerName &&
-                d.status != DonationScheduleStatus.cancelled,
-          )
-          .length;
+  int donationCountFor(String consumerName) => _scheduledDonations
+      .where(
+        (d) =>
+            d.consumerName == consumerName &&
+            d.status != DonationScheduleStatus.cancelled,
+      )
+      .length;
 
   void donateToConsumer({
     required int consumerId,
@@ -274,17 +271,15 @@ class DonorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _notifyConsumer(String message) {
-    mockNotifications.insert(
-      0,
-      AppNotification(
-        id: mockNotifications.length + 1,
-        message: message,
-        isRead: false,
-        createdAt: DateTime.now(),
-        type: NotificationType.pickup,
-      ),
-    );
+  Future<void> _notifyConsumer(String message) async {
+    final consumerRef = _auth.currentUser?.uid;
+    await _firestore.collection('notifications').add({
+      'recipientUid': consumerRef,
+      'payloadType': 'pickup',
+      'message': message,
+      'isRead': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 
   String? rescheduleDonation(int id, DateTime newTime, String newLocation) {

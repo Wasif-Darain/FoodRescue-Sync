@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/rating_stars.dart';
 import '../../widgets/ui/countdown_timer.dart';
-import '../../data/mock_data.dart';
-import '../../models/models.dart';
+import '../../models/pickup.dart';
 
 class PickupCoordination extends StatelessWidget {
   const PickupCoordination({super.key});
@@ -12,41 +13,77 @@ class PickupCoordination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return AppLayout(
-      title: 'Pickups',
-      subtitle: 'Coordinate and track your food pickups',
-      currentRoute: '/consumer/pickups',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          IntrinsicHeight(
-            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            for (final s in [PickupStatus.scheduled, PickupStatus.enRoute, PickupStatus.completed]) ...[
-              if (s != PickupStatus.scheduled) const SizedBox(width: 12),
-              Expanded(child: _HoverScale(
-                child: _PickupStat(
-                  status: s,
-                  count: mockPickups.where((p) => p.status == s).length,
-                ),
-              )),
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    final stream = uid == null
+        ? Stream<List<PickupModel>>.value([])
+        : FirebaseFirestore.instance
+            .collection('pickups')
+            .where('consumerId', isEqualTo: uid)
+            .snapshots()
+            .map((snap) => snap.docs
+                .map((doc) => PickupModel.fromFirestore(doc))
+                .toList());
+
+    return StreamBuilder<List<PickupModel>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        final pickups = snapshot.data ?? [];
+
+        return AppLayout(
+          title: 'Pickups',
+          subtitle: 'Coordinate and track your food pickups',
+          currentRoute: '/consumer/pickups',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IntrinsicHeight(
+                child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  for (final s in [PickupStatusModel.scheduled, PickupStatusModel.enRoute, PickupStatusModel.completed]) ...[
+                    if (s != PickupStatusModel.scheduled) const SizedBox(width: 12),
+                    Expanded(child: _HoverScale(
+                      child: _PickupStat(
+                        status: s,
+                        count: pickups.where((p) => p.status == s).length,
+                      ),
+                    )),
+                  ],
+                ]),
+              ),
+              const SizedBox(height: 20),
+              Text('Active Pickups', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+              const SizedBox(height: 12),
+              if (pickups.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.local_shipping_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
+                      const SizedBox(height: 12),
+                      Text('No pickups scheduled', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                    ],
+                  ),
+                )
+              else
+                ...pickups.map((p) => Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: _HoverScale(child: _PickupCard(pickup: p)),
+                )),
             ],
-          ]),
           ),
-          const SizedBox(height: 20),
-          Text('Active Pickups', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
-          const SizedBox(height: 12),
-          ...mockPickups.map((p) => Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: _HoverScale(child: _PickupCard(pickup: p)),
-          )),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 class _PickupStat extends StatelessWidget {
-  final PickupStatus status;
+  final PickupStatusModel status;
   final int count;
   const _PickupStat({required this.status, required this.count});
 
@@ -54,9 +91,9 @@ class _PickupStat extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final (label, icon, color) = switch (status) {
-      PickupStatus.scheduled => ('Scheduled', Icons.schedule, const Color(0xFF2563EB)),
-      PickupStatus.enRoute   => ('En Route',  Icons.directions_car, const Color(0xFFEA580C)),
-      PickupStatus.completed => ('Completed', Icons.check_circle_outline, const Color(0xFF16A34A)),
+      PickupStatusModel.scheduled => ('Scheduled', Icons.schedule, const Color(0xFF2563EB)),
+      PickupStatusModel.enRoute   => ('En Route',  Icons.directions_car, const Color(0xFFEA580C)),
+      PickupStatusModel.completed => ('Completed', Icons.check_circle_outline, const Color(0xFF16A34A)),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
@@ -87,16 +124,16 @@ class _PickupStat extends StatelessWidget {
 }
 
 class _PickupCard extends StatelessWidget {
-  final Pickup pickup;
+  final PickupModel pickup;
   const _PickupCard({required this.pickup});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final (label, variant, statusColor) = switch (pickup.status) {
-      PickupStatus.scheduled => ('Scheduled', BadgeVariant.blue,   const Color(0xFF2563EB)),
-      PickupStatus.enRoute   => ('En Route',  BadgeVariant.orange, const Color(0xFFEA580C)),
-      PickupStatus.completed => ('Completed', BadgeVariant.green,  const Color(0xFF16A34A)),
+      PickupStatusModel.scheduled => ('Scheduled', BadgeVariant.blue,   const Color(0xFF2563EB)),
+      PickupStatusModel.enRoute   => ('En Route',  BadgeVariant.orange, const Color(0xFFEA580C)),
+      PickupStatusModel.completed => ('Completed', BadgeVariant.green,  const Color(0xFF16A34A)),
     };
 
     return Container(
@@ -108,30 +145,28 @@ class _PickupCard extends StatelessWidget {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(pickup.donorName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+          Text('Pickup #${pickup.id}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
           AppBadge(label: label, variant: variant),
         ]),
         const SizedBox(height: 12),
-        _InfoRow(icon: Icons.location_on_outlined, label: pickup.address),
-        const SizedBox(height: 6),
-        _InfoRow(icon: Icons.access_time, label:
-          '${pickup.scheduledTime.hour.toString().padLeft(2, '0')}:${pickup.scheduledTime.minute.toString().padLeft(2, '0')} — ${pickup.scheduledTime.day}/${pickup.scheduledTime.month}/${pickup.scheduledTime.year}'),
-        const SizedBox(height: 10),
-        Wrap(spacing: 6, children: pickup.items.map((item) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE2E2E2), borderRadius: BorderRadius.circular(16)),
-          child: Text(item, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252))),
-        )).toList()),
-        if (pickup.status == PickupStatus.scheduled || pickup.status == PickupStatus.enRoute) ...[
+        _InfoRow(icon: Icons.location_on_outlined, label: pickup.address ?? 'No address'),
+        if (pickup.scheduledTime != null) ...[
+          const SizedBox(height: 6),
+          _InfoRow(icon: Icons.access_time, label:
+            '${pickup.scheduledTime!.hour.toString().padLeft(2, '0')}:${pickup.scheduledTime!.minute.toString().padLeft(2, '0')} — ${pickup.scheduledTime!.day}/${pickup.scheduledTime!.month}/${pickup.scheduledTime!.year}'),
+        ],
+        if (pickup.status == PickupStatusModel.scheduled || pickup.status == PickupStatusModel.enRoute) ...[
           const SizedBox(height: 10),
           Align(
             alignment: Alignment.centerLeft,
-            child: CountdownTimer(expiry: pickup.scheduledTime, fontSize: 9, expiredLabel: 'Overdue'),
+            child: pickup.scheduledTime != null
+                ? CountdownTimer(expiry: pickup.scheduledTime!, fontSize: 9, expiredLabel: 'Overdue')
+                : const SizedBox.shrink(),
           ),
         ],
-        if (pickup.status == PickupStatus.completed) ...[
+        if (pickup.status == PickupStatusModel.completed) ...[
           const SizedBox(height: 14),
-          RatingStars(reviewLabel: 'Rate ${pickup.donorName}'),
+          RatingStars(reviewLabel: 'Rate this pickup'),
         ],
       ]),
     );

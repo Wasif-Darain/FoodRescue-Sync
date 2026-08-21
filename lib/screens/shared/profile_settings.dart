@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/user_badge.dart';
-import '../../data/mock_data.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/models.dart';
 
@@ -117,42 +116,7 @@ class ProfileSettings extends StatelessWidget {
                       ),
                       if (user.mode != UserMode.admin) ...[
                         const SizedBox(height: 10),
-                        Builder(builder: (context) {
-                          final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
-                          final isDonor = user.mode == UserMode.donor;
-                          String label;
-                          if (isDonor) {
-                            label = donorTierLabel(donorTierFor(account));
-                          } else {
-                            label = consumerTierLabel(consumerTierFor(account));
-                          }
-                          return Column(
-                            children: [
-                              UserBadge(label: label, isLegend: label == 'Legend'),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _StatChip(
-                                    icon: Icons.percent,
-                                    label: isDonor ? 'Fulfillment' : 'On-time Pickup',
-                                    value: '${(isDonor ? account.fulfillmentRate : account.onTimePickupRate).toStringAsFixed(0)}%',
-                                  ),
-                                  _StatChip(
-                                    icon: Icons.star_outline,
-                                    label: 'Rating',
-                                    value: account.rating > 0 ? account.rating.toStringAsFixed(1) : '—',
-                                  ),
-                                  _StatChip(
-                                    icon: Icons.reviews_outlined,
-                                    label: 'Reviews',
-                                    value: '${account.reviewCount}',
-                                  ),
-                                ],
-                              ),
-                            ],
-                          );
-                        }),
+                        const UserBadge(label: 'Member', isLegend: false),
                       ],
                     ],
                   ),
