@@ -18,6 +18,60 @@ const _accountTypeLabel = {
   AccountType.individual: 'Individual',
 };
 
+class _SettingSlider extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String hint;
+  final String displayValue;
+  final double value;
+  final double min;
+  final double max;
+  final int divisions;
+  final String sliderLabel;
+  final ValueChanged<double> onChanged;
+  const _SettingSlider({
+    required this.icon,
+    required this.label,
+    required this.hint,
+    required this.displayValue,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.sliderLabel,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+            ),
+            Text(displayValue, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF16A34A))),
+          ],
+        ),
+        Text(hint, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+        Slider(
+          value: value,
+          min: min,
+          max: max,
+          divisions: divisions,
+          label: sliderLabel,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}
+
 class EditProfile extends StatelessWidget {
   const EditProfile({super.key});
 
@@ -25,6 +79,7 @@ class EditProfile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
+    final auth = context.watch<AuthProvider>();
 
     return AppLayout(
       title: 'Edit Profile',
@@ -88,19 +143,46 @@ class EditProfile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
                 ),
-                child: Row(children: [
+                  child: Row(children: [
                   Icon(Icons.location_on_outlined, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                   const SizedBox(width: 8),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Not set — tap to pick on map',
-                      style: TextStyle(fontSize: 13, color: Color(0xFFBFBFBF)),
+                      auth.address ?? 'Not set — tap to pick on map',
+                      style: TextStyle(fontSize: 13, color: auth.address == null ? const Color(0xFFBFBFBF) : (isDark ? Colors.white : const Color(0xFF121212))),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Icon(Icons.edit_outlined, size: 15, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                 ]),
               ),
+            ),
+            const SizedBox(height: 18),
+            Text('Radar & Notifications', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252))),
+            const SizedBox(height: 4),
+            _SettingSlider(
+              icon: Icons.radar_outlined,
+              label: 'Surplus Radar Radius',
+              hint: 'Listings within this radius appear on the Radar map and trigger nearby notifications.',
+              displayValue: '${auth.maxRadiusKm.toStringAsFixed(0)} km',
+              value: auth.maxRadiusKm.clamp(1, 50).toDouble(),
+              min: 1,
+              max: 50,
+              divisions: 49,
+              sliderLabel: '${auth.maxRadiusKm.toStringAsFixed(0)} km',
+              onChanged: (v) => auth.updateMaxRadiusKm(v),
+            ),
+            _SettingSlider(
+              icon: Icons.schedule_outlined,
+              label: 'Unattended Listing Alert',
+              hint: 'Listings outside your radius that remain unclaimed for longer than this will still notify you.',
+              displayValue: '${auth.unattendedAfterHours} h',
+              value: auth.unattendedAfterHours.clamp(6, 72).toDouble(),
+              min: 6,
+              max: 72,
+              divisions: 66,
+              sliderLabel: '${auth.unattendedAfterHours} h',
+              onChanged: (v) => auth.updateUnattendedAfterHours(v.round()),
             ),
             const SizedBox(height: 22),
             Divider(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFF262626)),

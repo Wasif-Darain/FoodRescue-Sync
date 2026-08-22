@@ -37,7 +37,14 @@ class AppLayout extends StatelessWidget {
             .snapshots()
             .map((snap) => snap.docs.length);
 
-    return Scaffold(
+    const rootRoutes = ['/', '/welcome', '/login'];
+    final isRoot = rootRoutes.contains(currentRoute);
+    return PopScope(
+      canPop: isRoot,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && !isRoot) context.go('/');
+      },
+      child: Scaffold(
       backgroundColor: isDark ? const Color(0xFF0B1410) : const Color(0xFFF4F7F5),
       extendBody: true,
       floatingActionButton: NavFab(currentRoute: currentRoute),
@@ -114,6 +121,7 @@ class AppLayout extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

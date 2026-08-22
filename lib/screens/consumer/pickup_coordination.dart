@@ -5,6 +5,7 @@ import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/rating_stars.dart';
 import '../../widgets/ui/countdown_timer.dart';
+import '../../widgets/ui/detail_sheet.dart';
 import '../../models/pickup.dart';
 
 class PickupCoordination extends StatelessWidget {
@@ -54,7 +55,8 @@ class PickupCoordination extends StatelessWidget {
               Text('Active Pickups', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
               const SizedBox(height: 12),
               if (pickups.isEmpty)
-                Container(
+                Center(
+                  child: Container(
                   padding: const EdgeInsets.all(40),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
@@ -68,6 +70,7 @@ class PickupCoordination extends StatelessWidget {
                       Text('No pickups scheduled', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
                     ],
                   ),
+                ),
                 )
               else
                 ...pickups.map((p) => Padding(
@@ -136,7 +139,22 @@ class _PickupCard extends StatelessWidget {
       PickupStatusModel.completed => ('Completed', BadgeVariant.green,  const Color(0xFF16A34A)),
     };
 
-    return Container(
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => showDetailSheet(
+        context,
+        title: 'Pickup #${pickup.id}',
+        subtitle: 'Pickup details',
+        rows: [
+          DetailRow(Icons.local_shipping_outlined, 'Status', label),
+          if (pickup.scheduledTime != null)
+            DetailRow(Icons.access_time, 'Scheduled', '${pickup.scheduledTime!.day}/${pickup.scheduledTime!.month}/${pickup.scheduledTime!.year} at ${pickup.scheduledTime!.hour.toString().padLeft(2, '0')}:${pickup.scheduledTime!.minute.toString().padLeft(2, '0')}'),
+          if (pickup.completedAt != null)
+            DetailRow(Icons.check_circle_outline, 'Completed', '${pickup.completedAt!.day}/${pickup.completedAt!.month}/${pickup.completedAt!.year}'),
+          if (pickup.address != null) DetailRow(Icons.location_on_outlined, 'Address', pickup.address!),
+        ],
+      ),
+      child: Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
@@ -169,6 +187,7 @@ class _PickupCard extends StatelessWidget {
           RatingStars(reviewLabel: 'Rate this pickup'),
         ],
       ]),
+      ),
     );
   }
 }

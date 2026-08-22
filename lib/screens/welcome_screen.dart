@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -167,11 +168,29 @@ class _HeroVisual extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    _StatPill(icon: '🍲', value: '500+', label: 'Meals/day'),
+                    _LiveStatPill(
+                      icon: '🍲',
+                      label: 'Meals/day',
+                      stream: FirebaseFirestore.instance.collection('donation_logs').snapshots(),
+                      reduce: (docs) {
+                        final total = docs.fold<double>(0, (sum, d) => sum + ((d.data()['totalWeight'] as num?)?.toDouble() ?? 0));
+                        return '${total.round()}+';
+                      },
+                    ),
                     const SizedBox(width: 8),
-                    _StatPill(icon: '🤝', value: '120+', label: 'Donors'),
+                    _LiveStatPill(
+                      icon: '🤝',
+                      label: 'Donors',
+                      stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'donor').snapshots(),
+                      reduce: (docs) => '${docs.length}+',
+                    ),
                     const SizedBox(width: 8),
-                    _StatPill(icon: '❤️', value: '45+', label: 'Partners'),
+                    _LiveStatPill(
+                      icon: '❤️',
+                      label: 'Partners',
+                      stream: FirebaseFirestore.instance.collection('organization_profiles').snapshots(),
+                      reduce: (docs) => '${docs.length}+',
+                    ),
                   ],
                 ),
                 const Spacer(),
@@ -234,6 +253,30 @@ class _HighlightWord extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _LiveStatPill extends StatelessWidget {
+  final String icon;
+  final String label;
+  final Stream<QuerySnapshot<Map<String, dynamic>>> stream;
+  final String Function(List<QueryDocumentSnapshot<Map<String, dynamic>>>) reduce;
+  const _LiveStatPill({
+    required this.icon,
+    required this.label,
+    required this.stream,
+    required this.reduce,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        final value = snapshot.hasData ? reduce(snapshot.data!.docs) : '…';
+        return _StatPill(icon: icon, value: value, label: label);
+      },
+    );
+  }
 }
 
 class _StatPill extends StatelessWidget {

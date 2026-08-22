@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
+import '../../widgets/ui/detail_sheet.dart';
 import '../../models/models.dart';
 import '../../providers/admin_provider.dart';
 
@@ -127,7 +128,21 @@ class _AccountCard extends StatelessWidget {
     };
     final admin = context.read<AdminProvider>();
 
-    return Container(
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => showDetailSheet(
+        context,
+        title: account.name,
+        subtitle: 'Account details',
+        email: account.email,
+        rows: [
+          DetailRow(Icons.badge_outlined, 'Role', account.mode == UserMode.donor ? 'Donor' : 'Consumer'),
+          DetailRow(Icons.category_outlined, 'Account Type', _accountTypeLabel[account.accountType] ?? ''),
+          DetailRow(Icons.calendar_today_outlined, 'Joined', '${account.joinedAt.day}/${account.joinedAt.month}/${account.joinedAt.year}'),
+          DetailRow(Icons.verified_outlined, 'Status', label),
+        ],
+      ),
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
@@ -209,6 +224,7 @@ class _AccountCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }
