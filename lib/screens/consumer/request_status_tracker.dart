@@ -110,6 +110,7 @@ class _RequestRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final kindLabel = request.isBulk ? 'Bulk Request' : 'Request';
     final (label, variant) = switch (request.status) {
       RequestStatusModel.pending   => ('Pending',   BadgeVariant.orange),
       RequestStatusModel.accepted  => ('Accepted',  BadgeVariant.green),
@@ -120,8 +121,8 @@ class _RequestRow extends StatelessWidget {
     return InkWell(
       onTap: () => showDetailSheet(
         context,
-        title: 'Request #${request.id}',
-        subtitle: 'Bulk request details',
+        title: '$kindLabel #${request.id}',
+        subtitle: '$kindLabel details',
         rows: [
           DetailRow(Icons.local_shipping_outlined, 'Status', label),
           DetailRow(Icons.inventory_2_outlined, 'Requested Quantity', '${request.requestedQuantity} ${request.unit}'),
@@ -139,10 +140,10 @@ class _RequestRow extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('Request #${request.id}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
-              ),
-              const SizedBox(width: 8),
-              AppBadge(label: label, variant: variant),
+                child: Text('$kindLabel #${request.id}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
+                const SizedBox(width: 8),
+                AppBadge(label: label, variant: variant),
             ],
           ),
           const SizedBox(height: 4),

@@ -153,23 +153,38 @@ class ConsumerProvider extends ChangeNotifier {
     try {
       late final double lat;
       late final double lng;
+      late final Map<String, dynamic> listingData;
       await _firestore.runTransaction((transaction) async {
         final listingRef = _firestore.collection('listings').doc(listingId);
         final snapshot = await transaction.get(listingRef);
         if (!snapshot.exists) return;
-        final data = snapshot.data() as Map<String, dynamic>;
-        final currentQty = (data['quantity'] as num?)?.toDouble() ?? 0;
+        listingData = snapshot.data() as Map<String, dynamic>;
+        final currentQty = (listingData['quantity'] as num?)?.toDouble() ?? 0;
         final remaining = currentQty - claimQuantity;
-        lat = (data['latitude'] as num?)?.toDouble() ?? 0;
-        lng = (data['longitude'] as num?)?.toDouble() ?? 0;
+        lat = (listingData['latitude'] as num?)?.toDouble() ?? 0;
+        lng = (listingData['longitude'] as num?)?.toDouble() ?? 0;
         transaction.update(listingRef, {
           'quantity': remaining,
           if (remaining <= 0) 'status': ListingStatusModel.claimed.name,
         });
       });
+      // Record the claim as an ordinary (non-bulk) request so it shows up in
+      // the consumer's request tracker and the donor's logs.
+      final requestRef = await _firestore.collection('requests').add({
+        'consumerId': uid,
+        'listingId': listingId,
+        'requestedQuantity': claimQuantity.toDouble(),
+        'unit': listingData['unit'] as String? ?? 'kg',
+        'isBulk': false,
+        'status': RequestStatusModel.accepted.name,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
       await _firestore.collection('pickups').add({
         'consumerId': uid,
-        'requestId': listingId,
+        'requestId': requestRef.id,
+        'listingId': listingId,
+        'isBulk': false,
         'status': PickupStatusModel.scheduled.name,
         'scheduledTime': scheduledTime == null ? null : Timestamp.fromDate(scheduledTime),
         'latitude': lat,
@@ -177,6 +192,18 @@ class ConsumerProvider extends ChangeNotifier {
         'address': deliveryAddress,
         'createdAt': FieldValue.serverTimestamp(),
       });
+      // Notify the donor that their listing was claimed.
+      final donorId = listingData['donorId'] as String?;
+      if (donorId != null && donorId.isNotEmpty) {
+        await _firestore.collection('notifications').add({
+          'recipientUid': donorId,
+          'payloadType': 'request',
+          'message':
+              'Your listing "${listingData['title'] ?? 'a listing'}" was claimed by a consumer.',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
       return true;
     } catch (_) {
       return false;
@@ -197,6 +224,7 @@ class ConsumerProvider extends ChangeNotifier {
     if (uid == null) return 'Not signed in.';
     try {
       await _firestore.collection('requests').add({
+        'isBulk': true,
         'consumerId': uid,
         'orgName': orgName,
         'contactPerson': contactPerson,

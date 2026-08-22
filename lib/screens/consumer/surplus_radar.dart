@@ -152,7 +152,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
                       Marker(point: youPoint, width: 60, height: 46, child: const _LocationMarker(label: 'You')),
                       ...sorted.map((listing) {
                         final isDonation = listing.listingType == ListingType.donation;
-                        final isSelected = _selectedListing?.id == listing.id;
+                        final isSelected = _selectedListing?.docId == listing.docId;
                         return Marker(
                           point: LatLng(listing.latitude, listing.longitude),
                           width: 72,
@@ -241,7 +241,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
               // One card per listing; tapping it also selects it on the map,
               // so the list and the radar stay in sync either direction.
               ...sorted.map((l) {
-                final isSelected = _selectedListing?.id == l.id;
+                final isSelected = _selectedListing?.docId == l.docId;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: _HoverScale(

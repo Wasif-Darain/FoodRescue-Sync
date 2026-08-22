@@ -198,6 +198,7 @@ async function seed() {
       listingId: '',
       requestedQuantity: 10 + i * 5,
       unit: 'kg',
+      isBulk: true,
       orgName: consumers[i % 2].org,
       contactPerson: consumers[i % 2].name,
       phone: consumers[i % 2].phone,
@@ -220,6 +221,8 @@ async function seed() {
     await db.collection('pickups').add({
       consumerId,
       requestId: '',
+      listingId: '',
+      isBulk: false,
       volunteerDriverId: null,
       status: pickupStatuses[i % pickupStatuses.length],
       scheduledTime: hoursFromNow(i % 3 === 2 ? -(24 + i) : 6 + i * 8),

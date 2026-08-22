@@ -8,6 +8,7 @@ import 'providers/donor_provider.dart';
 import 'providers/consumer_provider.dart';
 import 'providers/theme_provider.dart';
 import 'router.dart';
+import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
   late final DonorProvider _donor;
   late final ConsumerProvider _consumer;
   late final ThemeProvider _theme;
+  late final NotificationService _notifications;
 
   @override
   void initState() {
@@ -39,6 +41,16 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
     _donor = DonorProvider();
     _consumer = ConsumerProvider();
     _theme = ThemeProvider();
+    // Set up FCM push notifications (permission, token registration,
+    // foreground/background message handling).
+    _notifications = NotificationService();
+    _notifications.initialize();
+  }
+
+  @override
+  void dispose() {
+    _notifications.dispose();
+    super.dispose();
   }
 
   @override
