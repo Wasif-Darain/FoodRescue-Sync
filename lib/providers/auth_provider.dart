@@ -159,7 +159,11 @@ class AuthProvider extends ChangeNotifier {
         });
       });
     } on FirebaseAuthException catch (e) {
+      debugPrint('signUp FirebaseAuthException: code=${e.code} message=${e.message}');
       _errorMessage = _authExceptionMessage(e);
+    } catch (e) {
+      debugPrint('signUp error: $e');
+      _errorMessage = 'Something went wrong. Please try again.';
     } finally {
       _isLoading = false;
       notifyListeners();
