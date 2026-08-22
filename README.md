@@ -21,69 +21,57 @@ While the project relies primarily on Firebase, here is the current state of the
 
 ## Prerequisites
 
-Before running the project locally, ensure the following are installed:
+Before running the project locally, ensure you have:
 
 1. Flutter SDK (3.12 or higher)
 2. Dart SDK (bundled with Flutter)
 3. Android Studio or Xcode (for Android/iOS respectively)
 4. A code editor (VS Code recommended)
-5. A **Firebase project** (Authentication + Firestore) — **required**; the app cannot run without it.
-6. A **Cloudinary account** — **optional**, only if you want to upload listing images. Without it, the app still works; you just can't attach photos to new listings.
+5. Access to the team's shared **Firebase project**
 
-## Installation & Setup (for cloning from GitHub)
+## Installation & Setup
 
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/Wasif-Darain/FoodRescue-Sync.git
+   git clone [https://github.com/Wasif-Darain/FoodRescue-Sync.git](https://github.com/Wasif-Darain/FoodRescue-Sync.git)
    cd FoodRescue-Sync
    ```
 
 2. **Install Dart dependencies**:
-
    ```bash
    flutter pub get
    ```
 
-3. **Configure Firebase** — this is required before the app will run, because `lib/firebase_options.dart` holds your Firebase project credentials:
-
+3. **Link to the shared Firebase project**:
    ```bash
    flutterfire configure
    ```
-
-   > **Note:** `lib/firebase_options.dart` is not committed to the repo and must be generated for your own Firebase project via `flutterfire`. If `flutterfire` is not installed, run `dart pub global activate flutterfire_cli` first.
+   
+> **Note:** Select the shared team project when prompted to generate your local `lib/firebase_options.dart` file. If `flutterfire` is not installed, run `dart pub global activate flutterfire_cli` first.
 
 4. **Verify the Flutter environment**:
-
    ```bash
    flutter doctor
    ```
 
-5. **Set up Firestore collections & rules** in the [Firebase Console](https://console.firebase.google.com):
 
-   - Enable the **Email/Password** sign-in provider under **Authentication → Sign-in method**.
-   - Create a **Firestore Database** in test mode initially.
-
-6. **Cloudinary setup** *(optional — for listing photos only)*:
-
-   1. Create a Cloudinary account at [cloudinary.com](https://cloudinary.com).
-   2. Note your **cloud name** (default `lobecgxv`).
-   3. Create an **unsigned upload preset** named `foodrescue_preset` (Settings → Upload → Upload presets).
-   4. Update the constants in `lib/services/listing_image_manager.dart` if your cloud name or preset differs.
 
 ## Running the Project
 
-Once the above is configured, run:
+Once configured, run:
 
 ```bash
 flutter run -d chrome        # for web
 flutter run -d <device-id>   # for Android / iOS
+
 ```
 
 For hot reload:
 
 ```bash
 flutter run -d chrome --continuous
+
 ```
 
 To build a release:
@@ -92,6 +80,7 @@ To build a release:
 flutter build apk   # Android
 flutter build ios   # iOS
 flutter build web   # Web
+
 ```
 
 ## Firestore Collection Schema
@@ -99,88 +88,96 @@ flutter build web   # Web
 The app reads and writes the following Firestore collections. Each document's fields are what the Dart models expect.
 
 ### `users`
-- `uid` (string) — Firebase Auth UID
-- `email` (string)
-- `role` (string) — `donor`, `consumer`, or `admin`
-- `name` (string)
-- `profileRef` (DocumentReference) — points to `organization_profiles/{orgId}`
-- `createdAt` (Timestamp)
-- `latitude` (number, optional)
-- `longitude` (number, optional)
-- `address` (string, optional)
+
+* `uid` (string) — Firebase Auth UID
+* `email` (string)
+* `role` (string) — `donor`, `consumer`, or `admin`
+* `name` (string)
+* `profileRef` (DocumentReference) — points to `organization_profiles/{orgId}`
+* `createdAt` (Timestamp)
+* `latitude` (number, optional)
+* `longitude` (number, optional)
+* `address` (string, optional)
 
 ### `organization_profiles`
-- `orgName` (string)
-- `address` (string)
-- `contactEmail` (string)
-- `contactPhone` (string)
-- `isVerified` (bool)
-- `latitude` (number, optional)
-- `longitude` (number, optional)
+
+* `orgName` (string)
+* `address` (string)
+* `contactEmail` (string)
+* `contactPhone` (string)
+* `isVerified` (bool)
+* `latitude` (number, optional)
+* `longitude` (number, optional)
 
 ### `inventory_items`
-- `donorId` (string) — user UID
-- `name` (string)
-- `barcode` (string, optional)
-- `quantity` (number)
-- `expiryDate` (Timestamp)
-- `isSurplus` (bool)
-- `category` (string) — e.g. `Cooked Meals`, `Bakery`, `Produce`
-- `imageUrl` (string, optional)
+
+* `donorId` (string) — user UID
+* `name` (string)
+* `barcode` (string, optional)
+* `quantity` (number)
+* `expiryDate` (Timestamp)
+* `isSurplus` (bool)
+* `category` (string) — e.g. `Cooked Meals`, `Bakery`, `Produce`
+* `imageUrl` (string, optional)
 
 ### `listings`
-- `donorId` (string)
-- `donorName` (string)
-- `title` (string)
-- `description` (string)
-- `category` (string)
-- `price` (number)
-- `quantity` (number)
-- `unit` (string)
-- `photoUrls` (List<string>)
-- `pickupStart` (Timestamp)
-- `pickupEnd` (Timestamp)
-- `latitude` (number)
-- `longitude` (number)
-- `address` (string, optional)
-- `status` (string) — `active`, `claimed`, `expired`
-- `claimDeadline` (Timestamp, optional)
+
+* `donorId` (string)
+* `donorName` (string)
+* `title` (string)
+* `description` (string)
+* `category` (string)
+* `price` (number)
+* `quantity` (number)
+* `unit` (string)
+* `photoUrls` (List)
+* `pickupStart` (Timestamp)
+* `pickupEnd` (Timestamp)
+* `latitude` (number)
+* `longitude` (number)
+* `address` (string, optional)
+* `status` (string) — `active`, `claimed`, `expired`
+* `claimDeadline` (Timestamp, optional)
 
 ### `requests`
-- `consumerId` (string)
-- `listingId` (string)
-- `requestedQuantity` (number)
-- `unit` (string)
-- `status` (string) — `pending`, `accepted`, `rejected`, `completed`
-- `createdAt` (Timestamp)
-- `updatedAt` (Timestamp, optional)
-- For bulk requests: `orgName`, `contactPerson`, `phone`, `address`, `requiredDate`, `peopleToFeed`, `items` (list of maps), `notes`
+
+* `consumerId` (string)
+* `listingId` (string)
+* `requestedQuantity` (number)
+* `unit` (string)
+* `status` (string) — `pending`, `accepted`, `rejected`, `completed`
+* `createdAt` (Timestamp)
+* `updatedAt` (Timestamp, optional)
+* For bulk requests: `orgName`, `contactPerson`, `phone`, `address`, `requiredDate`, `peopleToFeed`, `items` (list of maps), `notes`
 
 ### `pickups`
-- `requestId` (string)
-- `consumerId` (string) — for consumer pickups
-- `volunteerDriverId` (string, optional)
-- `scheduledTime` (Timestamp, optional)
-- `completedAt` (Timestamp, optional)
-- `status` (string) — `scheduled`, `enRoute`, `completed`
-- `latitude` (number)
-- `longitude` (number)
-- `address` (string, optional)
+
+* `requestId` (string)
+* `consumerId` (string) — for consumer pickups
+* `volunteerDriverId` (string, optional)
+* `scheduledTime` (Timestamp, optional)
+* `completedAt` (Timestamp, optional)
+* `status` (string) — `scheduled`, `enRoute`, `completed`
+* `latitude` (number)
+* `longitude` (number)
+* `address` (string, optional)
 
 ### `donation_logs`
-- `donorId` (string)
-- `recipientId` (string)
-- `listingId` (string)
-- `totalWeight` (number)
-- `itemSummary` (Map<string, number>)
-- `completedAt` (Timestamp)
+
+* `donorId` (string)
+* `recipientId` (string)
+* `listingId` (string)
+* `totalWeight` (number)
+* `itemSummary` (Map<string, number>)
+* `completedAt` (Timestamp)
 
 ### `notifications`
-- `recipientUid` (string)
-- `payloadType` (string) — e.g. `listing`, `request`, `pickup`, `system`
-- `message` (string)
-- `isRead` (bool)
-- `createdAt` (Timestamp)
+
+* `recipientUid` (string)
+* `payloadType` (string) — e.g. `listing`, `request`, `pickup`, `system`
+* `message` (string)
+* `isRead` (bool)
+* `createdAt` (Timestamp)
 
 ## Project Structure
 
@@ -211,6 +208,7 @@ FoodRescue-Sync/
 |-- functions/ (Cloud Functions — future)
 |-- pubspec.yaml
 |-- README.md
+
 ```
 
 ## Key Features
@@ -229,7 +227,7 @@ FoodRescue-Sync/
 
 ## Deployment Notes
 
-The app targets Android, iOS, and Web. After configuring Firebase and Cloudinary, build with the `flutter build` commands above. On web, Firestore + Cloudinary handle the backend and storage respectively.
+The app targets Android, iOS, and Web. After linking Firebase with `flutterfire configure`, build with the `flutter build` commands above. On web, Firestore + Cloudinary handle the backend and storage respectively.
 
 ## Support
 
