@@ -17,7 +17,9 @@ class AdminDashboard extends StatelessWidget {
       stream: admin.accountsStream,
       builder: (context, snapshot) {
         final accounts = snapshot.data ?? [];
-        final pending = accounts.where((a) => a.status == AccountStatus.pending).length;
+        final pending = accounts
+            .where((a) => a.status == AccountStatus.pending)
+            .length;
 
         return AppLayout(
           title: 'Admin Overview',
@@ -51,9 +53,6 @@ class AdminDashboard extends StatelessWidget {
       },
     );
   }
-
-  static String _formatDate(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }
 
 class _ManageAccountsCard extends StatelessWidget {
@@ -74,94 +73,52 @@ class _ManageAccountsCard extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 44, height: 44,
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: isDark ? 0.12 : 0.12), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.manage_accounts_outlined, color: Colors.white, size: 22),
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: isDark ? 0.12 : 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.manage_accounts_outlined,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Manage Accounts', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                    const Text(
+                      'Manage Accounts',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
                     const SizedBox(height: 2),
                     Text(
-                      pending > 0 ? '$pending account${pending == 1 ? '' : 's'} waiting for approval' : 'Review, approve, or remove accounts',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+                      pending > 0
+                          ? '$pending account${pending == 1 ? '' : 's'} waiting for approval'
+                          : 'Review, approve, or remove accounts',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14),
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white,
+                size: 14,
+              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Widget child;
-  const _SectionCard({required this.title, required this.icon, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: isDark ? Colors.white : const Color(0xFF121212)),
-              const SizedBox(width: 6),
-              Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
-            ],
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _ActivityRow extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String? trailing;
-  const _ActivityRow({required this.title, required this.subtitle, this.trailing});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(subtitle, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
-              ],
-            ),
-          ),
-          if (trailing != null) ...[
-            const SizedBox(width: 8),
-            Text(trailing!, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontWeight: FontWeight.w600)),
-          ],
-        ],
       ),
     );
   }

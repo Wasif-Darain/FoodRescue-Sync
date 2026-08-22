@@ -23,7 +23,6 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
   String _selectedCategory = 'All';
   String _filter = 'All';
   final _categories = ['All', 'Cooked Meals', 'Bakery', 'Dairy', 'Produce', 'Grains'];
-  final String _dummyLocation = 'Gulshan, Dhaka';
 
   @override
   Widget build(BuildContext context) {
@@ -375,6 +374,7 @@ class _ListingCard extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () async {
                     final success = await consumer.claimListing(listing.docId ?? '', listing.quantity, deliveryAddress: deliveryAddress);
+                    if (!context.mounted) return;
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text(success ? 'Claimed: ${listing.title}' : 'Failed to claim: ${listing.title}'),
@@ -400,6 +400,7 @@ class _ListingCard extends StatelessWidget {
                     if (picked == null) return;
                     if (!context.mounted) return;
                     final success = await consumer.claimListing(listing.docId ?? '', listing.quantity, scheduledTime: picked, deliveryAddress: deliveryAddress);
+                    if (!context.mounted) return;
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text(success ? 'Scheduled pickup for ${listing.title}' : 'Failed to claim: ${listing.title}'),
@@ -427,7 +428,6 @@ class _ListingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isDonation = true;
 
     final imageUrl = listing.imageUrl ??
         'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80';

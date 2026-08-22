@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:latlong2/latlong.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_button.dart';
 import '../../widgets/ui/form_field.dart';
@@ -50,15 +49,39 @@ class _SettingSlider extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+            Icon(
+              icon,
+              size: 16,
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575),
+            ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF121212),
+                ),
+              ),
             ),
-            Text(displayValue, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF16A34A))),
+            Text(
+              displayValue,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF16A34A),
+              ),
+            ),
           ],
         ),
-        Text(hint, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+        Text(
+          hint,
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575),
+          ),
+        ),
         Slider(
           value: value,
           min: min,
@@ -90,8 +113,18 @@ class EditProfile extends StatelessWidget {
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(16),
-          border: Border.fromBorderSide(BorderSide(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+          border: Border.fromBorderSide(
+            BorderSide(
+              color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2),
+            ),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14),
+              offset: const Offset(0, 4),
+              blurRadius: 0,
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,47 +156,100 @@ class EditProfile extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
-            Text('Location', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252))),
+            Text(
+              'Location',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isDark
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF525252),
+              ),
+            ),
             const SizedBox(height: 4),
             InkWell(
               borderRadius: BorderRadius.circular(8),
               onTap: () async {
                 final picked = await pickLocation(context);
                 if (picked == null || !context.mounted) return;
-                context.read<AuthProvider>().updateOwnLocation(lat: picked.lat, lng: picked.lng, address: picked.address);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Location updated!'),
-                  backgroundColor: Color(0xFF16A34A),
-                ));
+                context.read<AuthProvider>().updateOwnLocation(
+                  lat: picked.lat,
+                  lng: picked.lng,
+                  address: picked.address,
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Location updated!'),
+                    backgroundColor: Color(0xFF16A34A),
+                  ),
+                );
               },
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
-                ),
-                  child: Row(children: [
-                  Icon(Icons.location_on_outlined, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      auth.address ?? 'Not set — tap to pick on map',
-                      style: TextStyle(fontSize: 13, color: auth.address == null ? const Color(0xFFBFBFBF) : (isDark ? Colors.white : const Color(0xFF121212))),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF3F3F46)
+                        : const Color(0xFFE2E2E2),
                   ),
-                  Icon(Icons.edit_outlined, size: 15, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                ]),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: 16,
+                      color: isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF757575),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        auth.address ?? 'Not set — tap to pick on map',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: auth.address == null
+                              ? const Color(0xFFBFBFBF)
+                              : (isDark
+                                    ? Colors.white
+                                    : const Color(0xFF121212)),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(
+                      Icons.edit_outlined,
+                      size: 15,
+                      color: isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF757575),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 18),
-            Text('Radar & Notifications', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252))),
+            Text(
+              'Radar & Notifications',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isDark
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFF525252),
+              ),
+            ),
             const SizedBox(height: 4),
             _SettingSlider(
               icon: Icons.radar_outlined,
               label: 'Surplus Radar Radius',
-              hint: 'Listings within this radius appear on the Radar map and trigger nearby notifications.',
+              hint:
+                  'Listings within this radius appear on the Radar map and trigger nearby notifications.',
               displayValue: '${auth.maxRadiusKm.toStringAsFixed(0)} km',
               value: auth.maxRadiusKm.clamp(1, 50).toDouble(),
               min: 1,
@@ -175,7 +261,8 @@ class EditProfile extends StatelessWidget {
             _SettingSlider(
               icon: Icons.schedule_outlined,
               label: 'Unattended Listing Alert',
-              hint: 'Listings outside your radius that remain unclaimed for longer than this will still notify you.',
+              hint:
+                  'Listings outside your radius that remain unclaimed for longer than this will still notify you.',
               displayValue: '${auth.unattendedAfterHours} h',
               value: auth.unattendedAfterHours.clamp(6, 72).toDouble(),
               min: 6,
@@ -185,7 +272,9 @@ class EditProfile extends StatelessWidget {
               onChanged: (v) => auth.updateUnattendedAfterHours(v.round()),
             ),
             const SizedBox(height: 22),
-            Divider(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFF262626)),
+            Divider(
+              color: isDark ? const Color(0xFF3F3F46) : const Color(0xFF262626),
+            ),
             const SizedBox(height: 18),
             Text(
               'Change Password',

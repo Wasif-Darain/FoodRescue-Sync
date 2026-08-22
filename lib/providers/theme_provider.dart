@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ThemeProvider extends ChangeNotifier {
   static const _prefKey = 'themeMode';
   ThemeMode _mode = ThemeMode.light;
-  bool _loaded = false;
 
   ThemeMode get mode => _mode;
   bool get isDark => _mode == ThemeMode.dark;
@@ -25,11 +24,8 @@ class ThemeProvider extends ChangeNotifier {
       } else if (stored == 'light') {
         _mode = ThemeMode.light;
       }
-      _loaded = true;
       notifyListeners();
-    } catch (_) {
-      _loaded = true;
-    }
+    } catch (_) {}
   }
 
   Future<void> toggle() async {

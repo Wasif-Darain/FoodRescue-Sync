@@ -90,11 +90,10 @@ class _SurplusRadarState extends State<SurplusRadar> {
     final now = DateTime.now();
     final listings = context.watch<DonorProvider>().allListings.where((l) => l.pickupEnd.isAfter(now)).toList();
 
-    // Resolve the current consumer's own account so the "You" marker and
-    // live distances are based on a real position when one has been set
+    // Resolve the current consumer's own position so the "You" marker and
+    // live distances are based on a real location when one has been set
     // (Profile > Edit Profile > Location), falling back to the old Dhaka
     // reference point otherwise.
-    final user = context.watch<AuthProvider>().user!;
     final maxRadiusKm = context.watch<AuthProvider>().maxRadiusKm;
     final youLat = context.watch<AuthProvider>().latitude ?? 23.81;
     final youLng = context.watch<AuthProvider>().longitude ?? 90.41;

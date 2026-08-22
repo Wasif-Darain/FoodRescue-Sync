@@ -173,7 +173,7 @@ class _HeroVisual extends StatelessWidget {
                       label: 'Meals/day',
                       stream: FirebaseFirestore.instance.collection('donation_logs').snapshots(),
                       reduce: (docs) {
-                        final total = docs.fold<double>(0, (sum, d) => sum + ((d.data()['totalWeight'] as num?)?.toDouble() ?? 0));
+                        final total = docs.fold<double>(0, (acc, d) => acc + ((d.data()['totalWeight'] as num?)?.toDouble() ?? 0));
                         return '${total.round()}+';
                       },
                     ),

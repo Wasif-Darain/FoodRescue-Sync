@@ -45,6 +45,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
     final auth = context.read<AuthProvider>();
     if (_isLogin) {
       await auth.signIn(_emailCtrl.text, _passCtrl.text);
+      if (!mounted) return;
       if (auth.errorMessage != null) {
         _showAuthError(auth.errorMessage!);
         return;
@@ -71,6 +72,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
       address: _addressCtrl.text,
       accountType: _accountType,
     );
+    if (!mounted) return;
     if (auth.errorMessage != null) {
       _showAuthError(auth.errorMessage!);
       return;

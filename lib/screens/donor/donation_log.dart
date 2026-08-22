@@ -29,7 +29,7 @@ class DonationLogScreen extends StatelessWidget {
       stream: stream,
       builder: (context, snapshot) {
         final logs = snapshot.data ?? [];
-        final total = logs.fold<double>(0, (sum, l) => sum + l.totalWeightKg);
+        final total = logs.fold<double>(0, (acc, l) => acc + l.totalWeightKg);
 
         return AppLayout(
           title: 'Donation Log',

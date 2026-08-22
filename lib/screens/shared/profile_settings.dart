@@ -194,24 +194,3 @@ class ProfileSettings extends StatelessWidget {
     );
   }
 }
-
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  const _StatChip({required this.icon, required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      children: [
-        Icon(icon, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-        const SizedBox(height: 2),
-        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
-        const SizedBox(height: 1),
-        Text(label, style: TextStyle(fontSize: 9, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
-      ],
-    );
-  }
-}

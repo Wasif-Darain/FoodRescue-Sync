@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
-import '../../widgets/ui/responsive_grid.dart';
-import '../../widgets/ui/stat_card.dart';
 import '../../providers/auth_provider.dart';
 
 class LeaderboardScreen extends StatefulWidget {

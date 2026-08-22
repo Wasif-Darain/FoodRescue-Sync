@@ -60,7 +60,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
     final pickupsThisPeriod = pickupSnap.docs.length;
     final totalWeight = allDonationSnap.docs.fold<double>(
       0,
-      (sum, doc) => sum + (((doc.data()['totalWeight'] as num?)?.toDouble()) ?? 0),
+      (acc, doc) => acc + (((doc.data()['totalWeight'] as num?)?.toDouble()) ?? 0),
     );
 
     final pointsThisPeriod = donationsThisPeriod * 10 + pickupsThisPeriod * 5;
@@ -214,8 +214,6 @@ class _RewardsScreenState extends State<RewardsScreen> {
       },
     );
   }
-
-  String get _statusLabel => _periodLabel;
 
   Widget _buildBadges(_RewardsData rewards) {
     final isDark = Theme.of(context).brightness == Brightness.dark;

@@ -32,6 +32,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
     setState(() => _isSending = true);
     final auth = context.read<AuthProvider>();
     await auth.sendPasswordResetEmail(email);
+    if (!mounted) return;
     setState(() => _isSending = false);
     if (auth.errorMessage != null) {
       _message(auth.errorMessage!);

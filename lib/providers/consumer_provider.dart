@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import '../models/listing.dart';
 import '../models/pickup.dart';
 import '../models/request.dart';
-import '../models/models.dart';
 
 class ConsumerProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -117,7 +116,6 @@ class ConsumerProvider extends ChangeNotifier {
   double _degToRad(double deg) => deg * pi / 180;
 
   Stream<List<ListingModel>> get availableListingsStream {
-    final now = Timestamp.now();
     return _firestore
         .collection('listings')
         .where('status', isEqualTo: ListingStatusModel.active.name)
