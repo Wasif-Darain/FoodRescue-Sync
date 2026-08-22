@@ -44,13 +44,15 @@ class DonationLogScreen extends StatelessWidget {
           currentRoute: '/donor/donation-log',
           child: Column(
             children: [
-              Row(children: [
-                Expanded(child: _SummaryCard(value: '${logs.length}', label: isDonor ? 'Total Donations' : 'Total Received')),
-                const SizedBox(width: 12),
-                Expanded(child: _SummaryCard(value: total.toStringAsFixed(1), label: 'Weight (kg)')),
-                const SizedBox(width: 12),
-                Expanded(child: _SummaryCard(value: '${logs.map((l) => isDonor ? l.recipientId : l.donorId).toSet().length}', label: isDonor ? 'Recipients' : 'Donors')),
-              ]),
+              IntrinsicHeight(
+                child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  Expanded(child: _SummaryCard(value: '${logs.length}', label: isDonor ? 'Total Donations' : 'Total Received')),
+                  const SizedBox(width: 12),
+                  Expanded(child: _SummaryCard(value: total.toStringAsFixed(1), label: 'Weight (kg)')),
+                  const SizedBox(width: 12),
+                  Expanded(child: _SummaryCard(value: '${logs.map((l) => isDonor ? l.recipientId : l.donorId).toSet().length}', label: isDonor ? 'Recipients' : 'Donors')),
+                ]),
+              ),
               const SizedBox(height: 20),
               if (logs.isEmpty)
                 Container(

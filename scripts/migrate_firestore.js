@@ -83,10 +83,94 @@ async function migrateListings() {
   console.log(`listings migrated: ${updated}`);
 }
 
+async function backfillNames() {
+  const users = await db.collection('users').get();
+  const nameByUid = {};
+  for (const doc of users.docs) {
+    nameByUid[doc.id] = doc.data().name || '';
+  }
+
+  const logs = await db.collection('donation_logs').get();
+  for (const doc of logs.docs) {
+    const data = doc.data() || {};
+    if (!data.donorName && nameByUid[data.donorId]) {
+      await doc.ref.set({ donorName: nameByUid[data.donorId] }, { merge: true });
+    }
+  }
+
+  const pickups = await db.collection('pickups').get();
+  for (const doc of pickups.docs) {
+    const data = doc.data() || {};
+    if (!data.consumerName && nameByUid[data.consumerId]) {
+      await doc.ref.set({ consumerName: nameByUid[data.consumerId] }, { merge: true });
+    }
+  }
+  console.log('names backfilled on donation_logs and pickups');
+}
+
+function hoursFromNow(h) {
+  return new Date(Date.now() + h * 3600 * 1000);
+}
+
+async function boostDemoAccounts() {
+  const metaRef = db.collection('meta').doc('boost_v1');
+  if ((await metaRef.get()).exists) {
+    console.log('boost already applied, skipping');
+    return;
+  }
+
+  const users = await db.collection('users').get();
+  const byEmail = {};
+  for (const doc of users.docs) {
+    byEmail[doc.data().email] = { uid: doc.id, ...doc.data() };
+  }
+  const rahim = byEmail['rahim.kacchi@foodrescue.test'];
+  const nusrat = byEmail['nusrat.bakery@foodrescue.test'];
+  const mannan = byEmail['mannan.ngo@foodrescue.test'];
+  const rownak = byEmail['rownak.foodbank@foodrescue.test'];
+
+  if (rahim && nusrat) {
+    for (let i = 0; i < 12; i++) {
+      const donor = i % 2 === 0 ? rahim : nusrat;
+      await db.collection('donation_logs').add({
+        donorId: donor.uid,
+        donorName: donor.name,
+        recipientId: mannan ? mannan.uid : '',
+        totalWeight: 15 + (i % 5) * 8,
+        itemSummary: { rice: 6, curry: 4 },
+        completedAt: hoursFromNow(-(i + 1) * 20),
+      });
+    }
+  }
+  if (mannan && rownak) {
+    for (let i = 0; i < 10; i++) {
+      const consumer = i % 2 === 0 ? mannan : rownak;
+      await db.collection('pickups').add({
+        consumerId: consumer.uid,
+        consumerName: consumer.name,
+        requestId: '',
+        listingId: '',
+        isBulk: false,
+        status: 'completed',
+        scheduledTime: hoursFromNow(-(i + 1) * 24),
+        completedAt: hoursFromNow(-(i + 1) * 24 + 2),
+        latitude: 23.79,
+        longitude: 90.4,
+        address: 'Dhaka',
+        createdAt: hoursFromNow(-(i + 1) * 24 - 2),
+      });
+    }
+  }
+  await metaRef.set({ appliedAt: hoursFromNow(0) });
+  console.log('demo accounts boosted (rahim/nusrat donations, mannan/rownak completed pickups)');
+}
+
 async function main() {
   await migrateListings();
   await migrateRequests();
   await migratePickups();
+  await backfillNames();
+  await boostDemoAccounts();
   console.log('Migration complete.');
   process.exit(0);
 }

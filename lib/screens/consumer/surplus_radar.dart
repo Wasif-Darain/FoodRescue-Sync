@@ -112,6 +112,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
       title: 'Surplus Radar',
       subtitle: 'Discover surplus food near you',
       currentRoute: '/consumer/radar',
+      useOwnScroll: true,
       child: LayoutBuilder(builder: (context, constraints) {
         // Stack the map above the list on narrow (mobile-width) screens,
         // otherwise show them side by side.
@@ -224,7 +225,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
         );
 
         final list = SizedBox(
-          width: isNarrow ? double.infinity : 280,
+          width: double.infinity,
           child: Column(
             children: [
               // "Nearest first" sort indicator (informational only for now).
@@ -284,24 +285,49 @@ class _SurplusRadarState extends State<SurplusRadar> {
           ),
         );
 
-        // Narrow screens: map on top, list below. Wide screens: side by side.
-        if (isNarrow) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [map, const SizedBox(height: 20), list],
-          );
-        }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(flex: 3, child: map),
-            const SizedBox(width: 20),
-            list,
+        return CustomScrollView(
+          slivers: [
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _MapHeaderDelegate(child: map),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(padding: const EdgeInsets.only(top: 20), child: list),
+            ),
           ],
         );
       }),
     );
   }
+}
+
+class _MapHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  _MapHeaderDelegate({required this.child});
+
+  @override
+  double get minExtent => 250;
+
+  @override
+  double get maxExtent => 500;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final height = (maxExtent - shrinkOffset).clamp(minExtent, maxExtent);
+    return ClipRect(
+      child: SizedBox(
+        height: height,
+        child: OverflowBox(
+          maxHeight: maxExtent,
+          alignment: Alignment.topCenter,
+          child: SizedBox(height: maxExtent, width: double.infinity, child: child),
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _MapHeaderDelegate oldDelegate) => oldDelegate.child != child;
 }
 
 // Small floating card shown over the map when a marker is tapped, so the

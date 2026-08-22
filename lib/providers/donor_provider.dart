@@ -10,6 +10,7 @@ class DonorProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   StreamSubscription<QuerySnapshot>? _inventorySub;
   StreamSubscription<QuerySnapshot>? _listingsSub;
+  StreamSubscription<QuerySnapshot>? _directDonationsSub;
   StreamSubscription<User?>? _authSub;
 
   List<InventoryItem> _inventory = [];
@@ -50,10 +51,13 @@ class DonorProvider extends ChangeNotifier {
     _authSub = _auth.authStateChanges().listen((user) {
       _inventorySub?.cancel();
       _listingsSub?.cancel();
+      _directDonationsSub?.cancel();
       _inventorySub = null;
       _listingsSub = null;
+      _directDonationsSub = null;
       _inventory = [];
       _listings = [];
+      _scheduledDonations.clear();
       notifyListeners();
       _subscribe();
     });
@@ -70,6 +74,7 @@ class DonorProvider extends ChangeNotifier {
   void _subscribe() {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
+    _subscribeDirectDonations(uid);
     _inventorySub = _firestore
         .collection('inventory_items')
         .where('donorId', isEqualTo: uid)
@@ -113,6 +118,7 @@ class DonorProvider extends ChangeNotifier {
     final data = doc.data() as Map<String, dynamic>;
     final start = data['pickupStart'];
     final end = data['pickupEnd'];
+    final photoUrls = (data['photoUrls'] as List?)?.cast<String>() ?? const <String>[];
     return Listing(
       id: int.tryParse(doc.id) ?? 0,
       docId: doc.id,
@@ -134,9 +140,8 @@ class DonorProvider extends ChangeNotifier {
         orElse: () => ListingStatus.active,
       ),
       category: data['category'] as String? ?? '',
-      imageUrl: (data['photoUrls'] as List?)?.isNotEmpty == true
-          ? (data['photoUrls'] as List).first as String?
-          : null,
+      imageUrl: photoUrls.isNotEmpty ? photoUrls.first : null,
+      imageCount: photoUrls.length,
       address: data['address'] as String?,
     );
   }
@@ -248,7 +253,6 @@ class DonorProvider extends ChangeNotifier {
   bool get isAvailable => _isAvailable;
 
   final List<ScheduledDonation> _scheduledDonations = [];
-  int _nextScheduledDonationId = 1;
   List<ScheduledDonation> get scheduledDonations =>
       List.unmodifiable(_scheduledDonations);
 
@@ -260,41 +264,86 @@ class DonorProvider extends ChangeNotifier {
       )
       .length;
 
-  void donateToConsumer({
-    required int consumerId,
+  void _subscribeDirectDonations(String uid) {
+    _directDonationsSub ??= _firestore
+        .collection('direct_donations')
+        .where('donorId', isEqualTo: uid)
+        .snapshots()
+        .listen((snapshot) {
+      _scheduledDonations
+        ..clear()
+        ..addAll(snapshot.docs.map(_directDonationFromDoc).toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+      notifyListeners();
+    });
+  }
+
+  ScheduledDonation _directDonationFromDoc(QueryDocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final scheduled = data['scheduledTime'];
+    final created = data['createdAt'];
+    return ScheduledDonation(
+      id: doc.id.hashCode,
+      docId: doc.id,
+      consumerId: 0,
+      consumerName: data['consumerName'] as String? ?? '',
+      donorName: data['donorName'] as String? ?? '',
+      itemName: data['itemName'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      category: data['category'] as String? ?? '',
+      quantity: (data['quantity'] as num?)?.toInt() ?? 0,
+      scheduledTime: scheduled is Timestamp ? scheduled.toDate() : DateTime.now(),
+      location: data['location'] as String? ?? '',
+      status: DonationScheduleStatus.values.firstWhere(
+        (e) => e.name == (data['status'] as String? ?? 'scheduled'),
+        orElse: () => DonationScheduleStatus.scheduled,
+      ),
+      createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
+      lastModifiedAt: DateTime.now(),
+    );
+  }
+
+  Future<void> donateToConsumer({
+    required String consumerId,
     required String consumerName,
     required String itemName,
     required String category,
     required int quantity,
     required DateTime scheduledTime,
     required String location,
+    String description = '',
     String donorName = 'You',
-  }) {
-    final now = DateTime.now();
-    _scheduledDonations.insert(
-      0,
-      ScheduledDonation(
-        id: _nextScheduledDonationId++,
-        consumerId: consumerId,
-        consumerName: consumerName,
-        donorName: donorName,
-        itemName: itemName,
-        category: category,
-        quantity: quantity,
-        scheduledTime: scheduledTime,
-        location: location,
-        status: DonationScheduleStatus.scheduled,
-        createdAt: now,
-        lastModifiedAt: now,
-      ),
-    );
-    notifyListeners();
+  }) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    await _firestore.collection('direct_donations').add({
+      'donorId': uid,
+      'donorName': donorName,
+      'consumerId': consumerId,
+      'consumerName': consumerName,
+      'itemName': itemName,
+      'description': description,
+      'category': category,
+      'quantity': quantity,
+      'scheduledTime': Timestamp.fromDate(scheduledTime),
+      'location': location,
+      'status': DonationScheduleStatus.scheduled.name,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    await _firestore.collection('notifications').add({
+      'recipientUid': consumerId,
+      'payloadType': 'pickup',
+      'message':
+          '$donorName offered you a direct donation: $itemName. Open Requests to accept or reject it.',
+      'isRead': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 
-  Future<void> _notifyConsumer(String message) async {
-    final consumerRef = _auth.currentUser?.uid;
+  Future<void> _notifyConsumerUid(String? uid, String message) async {
+    if (uid == null || uid.isEmpty || uid == '0') return;
     await _firestore.collection('notifications').add({
-      'recipientUid': consumerRef,
+      'recipientUid': uid,
       'payloadType': 'pickup',
       'message': message,
       'isRead': false,
@@ -312,17 +361,18 @@ class DonorProvider extends ChangeNotifier {
     if (d.scheduledTime.difference(DateTime.now()).inHours < 12) {
       return 'Changes must be made at least 12 hours before the scheduled pickup time.';
     }
-    _scheduledDonations[i] = d.copyWith(
-      scheduledTime: newTime,
-      location: newLocation,
-      lastModifiedAt: DateTime.now(),
-    );
-    _notifyConsumer(
+    if (d.docId != null) {
+      _firestore.collection('direct_donations').doc(d.docId).update({
+        'scheduledTime': Timestamp.fromDate(newTime),
+        'location': newLocation,
+      });
+    }
+    _notifyConsumerUid(
+      d.consumerId.toString() == '0' ? null : d.consumerId.toString(),
       '${d.donorName} rescheduled your donation pickup to '
       '${newTime.hour.toString().padLeft(2, '0')}:${newTime.minute.toString().padLeft(2, '0')} '
       'on ${newTime.day}/${newTime.month}/${newTime.year} at $newLocation.',
     );
-    notifyListeners();
     return null;
   }
 
@@ -336,15 +386,16 @@ class DonorProvider extends ChangeNotifier {
     if (d.scheduledTime.difference(DateTime.now()).inHours < 12) {
       return 'Cancellations must be made at least 12 hours before the scheduled pickup time.';
     }
-    _scheduledDonations[i] = d.copyWith(
-      status: DonationScheduleStatus.cancelled,
-      lastModifiedAt: DateTime.now(),
-    );
-    _notifyConsumer(
+    if (d.docId != null) {
+      _firestore.collection('direct_donations').doc(d.docId).update({
+        'status': DonationScheduleStatus.cancelled.name,
+      });
+    }
+    _notifyConsumerUid(
+      d.consumerId.toString() == '0' ? null : d.consumerId.toString(),
       '${d.donorName} cancelled the donation scheduled for '
       '${d.scheduledTime.day}/${d.scheduledTime.month}/${d.scheduledTime.year}.',
     );
-    notifyListeners();
     return null;
   }
 
@@ -354,18 +405,19 @@ class DonorProvider extends ChangeNotifier {
       final now = DateTime.now();
       var cancelled = 0;
       var blocked = 0;
-      for (var i = 0; i < _scheduledDonations.length; i++) {
-        final d = _scheduledDonations[i];
+      for (final d in _scheduledDonations) {
         if (d.status != DonationScheduleStatus.scheduled) continue;
         if (d.scheduledTime.difference(now).inHours < 12) {
           blocked++;
           continue;
         }
-        _scheduledDonations[i] = d.copyWith(
-          status: DonationScheduleStatus.cancelled,
-          lastModifiedAt: now,
-        );
-        _notifyConsumer(
+        if (d.docId != null) {
+          _firestore.collection('direct_donations').doc(d.docId).update({
+            'status': DonationScheduleStatus.cancelled.name,
+          });
+        }
+        _notifyConsumerUid(
+          d.consumerId.toString() == '0' ? null : d.consumerId.toString(),
           '${d.donorName} has marked themselves unavailable and cancelled '
           'the donation scheduled for '
           '${d.scheduledTime.day}/${d.scheduledTime.month}/${d.scheduledTime.year}.',
@@ -391,6 +443,7 @@ class DonorProvider extends ChangeNotifier {
     _authSub?.cancel();
     _inventorySub?.cancel();
     _listingsSub?.cancel();
+    _directDonationsSub?.cancel();
     super.dispose();
   }
 }

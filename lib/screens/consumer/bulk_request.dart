@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:latlong2/latlong.dart';
 import '../../widgets/layout/app_layout.dart';
+import '../../widgets/ui/location_picker.dart';
 import '../../widgets/ui/app_button.dart';
 import '../../widgets/ui/date_time_field.dart';
 import '../../providers/consumer_provider.dart';
@@ -17,7 +19,9 @@ class _BulkRequestState extends State<BulkRequest> {
   final _orgCtrl = TextEditingController();
   final _contactCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  final _addressCtrl = TextEditingController();
+  double? _pickupLat;
+  double? _pickupLng;
+  String? _pickupAddress;
   final _peopleCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   final _items = <_RequestItem>[_RequestItem()];
@@ -29,7 +33,6 @@ class _BulkRequestState extends State<BulkRequest> {
     _orgCtrl.dispose();
     _contactCtrl.dispose();
     _phoneCtrl.dispose();
-    _addressCtrl.dispose();
     _peopleCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
@@ -44,10 +47,9 @@ class _BulkRequestState extends State<BulkRequest> {
     final org = _orgCtrl.text.trim();
     final contact = _contactCtrl.text.trim();
     final phone = _phoneCtrl.text.trim();
-    final address = _addressCtrl.text.trim();
     final people = int.tryParse(_peopleCtrl.text.trim()) ?? 0;
 
-    if (org.isEmpty || contact.isEmpty || phone.isEmpty || address.isEmpty || people <= 0) {
+    if (org.isEmpty || contact.isEmpty || phone.isEmpty || _pickupAddress == null || people <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Please fill in all required fields.'),
         backgroundColor: Color(0xFFDC2626),
@@ -78,7 +80,9 @@ class _BulkRequestState extends State<BulkRequest> {
       orgName: org,
       contactPerson: contact,
       phone: phone,
-      address: address,
+      address: _pickupAddress!,
+      latitude: _pickupLat,
+      longitude: _pickupLng,
       requiredDate: _requiredDate,
       peopleToFeed: people,
       items: items,
@@ -129,7 +133,43 @@ class _BulkRequestState extends State<BulkRequest> {
                     Expanded(child: _FormField(label: 'Phone', placeholder: '+880 XXXX XXXXXX', keyboardType: TextInputType.phone, controller: _phoneCtrl)),
                   ]),
                   const SizedBox(height: 12),
-                  _FormField(label: 'Delivery / Pickup Address', placeholder: 'Full address', controller: _addressCtrl),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () async {
+                      final picked = await pickLocation(
+                        context,
+                        initial: _pickupLat != null && _pickupLng != null ? LatLng(_pickupLat!, _pickupLng!) : null,
+                        initialAddress: _pickupAddress,
+                      );
+                      if (picked == null) return;
+                      setState(() {
+                        _pickupLat = picked.lat;
+                        _pickupLng = picked.lng;
+                        _pickupAddress = picked.address;
+                      });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+                      ),
+                      child: Row(children: [
+                        Icon(Icons.location_on_outlined, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _pickupAddress ?? 'Collection location — tap to pick on map',
+                            style: TextStyle(fontSize: 13, color: _pickupAddress == null ? const Color(0xFFBFBFBF) : (isDark ? Colors.white : const Color(0xFF121212))),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Icon(Icons.edit_outlined, size: 15, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                      ]),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Row(children: [
                     Expanded(child: DateTimeField(label: 'Required Date & Time', value: _requiredDate, onTap: _pickRequiredDate)),

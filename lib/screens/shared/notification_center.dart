@@ -17,11 +17,11 @@ class NotificationCenter extends StatelessWidget {
         : FirebaseFirestore.instance
             .collection('notifications')
             .where('recipientUid', isEqualTo: uid)
-            .orderBy('createdAt', descending: true)
             .snapshots()
             .map((snap) => snap.docs
                 .map((doc) => NotificationModel.fromFirestore(doc))
-                .toList());
+                .toList()
+              ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
 
     return StreamBuilder<List<NotificationModel>>(
       stream: stream,

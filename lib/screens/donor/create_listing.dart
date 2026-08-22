@@ -22,7 +22,7 @@ class CreateListing extends StatefulWidget {
 class _CreateListingState extends State<CreateListing> {
   String _listingType = 'donation';
   String _category = 'Cooked Meals';
-  File? _imageFile;
+  final List<File> _images = [];
   DateTime _pickupStart = DateTime.now();
   DateTime _pickupEnd = DateTime.now().add(const Duration(hours: 3));
 
@@ -62,12 +62,19 @@ class _CreateListingState extends State<CreateListing> {
 
   Future<void> _pickPickupStart() async {
     final picked = await pickDateTime(context, initial: _pickupStart, defaultTime: const TimeOfDay(hour: 18, minute: 0));
-    if (picked != null) setState(() => _pickupStart = picked);
+    if (picked == null) return;
+    setState(() {
+      _pickupStart = picked;
+      if (!_pickupEnd.isAfter(picked)) {
+        _pickupEnd = picked.add(const Duration(hours: 3));
+      }
+    });
   }
 
   Future<void> _pickPickupEnd() async {
-    final picked = await pickDateTime(context, initial: _pickupEnd, defaultTime: const TimeOfDay(hour: 21, minute: 0));
-    if (picked != null) setState(() => _pickupEnd = picked);
+    final picked = await pickDateTime(context, initial: _pickupEnd.isAfter(_pickupStart) ? _pickupEnd : _pickupStart.add(const Duration(hours: 3)), defaultTime: const TimeOfDay(hour: 21, minute: 0));
+    if (picked == null) return;
+    setState(() => _pickupEnd = picked.isAfter(_pickupStart) ? picked : _pickupStart.add(const Duration(hours: 3)));
   }
 
   Future<void> _submit() async {
@@ -88,10 +95,13 @@ class _CreateListingState extends State<CreateListing> {
       address: _pickupAddress,
     );
 
-    if (listingId != null && _imageFile != null) {
+    if (listingId != null && _images.isNotEmpty) {
       final imageManager = ListingImageManager();
-      final imageUrl = await imageManager.uploadListingImage(_imageFile!);
-      await donor.updateListingPhotoUrls(listingId, [imageUrl]);
+      final urls = <String>[];
+      for (final image in _images) {
+        urls.add(await imageManager.uploadListingImage(image));
+      }
+      await donor.updateListingPhotoUrls(listingId, urls);
     }
 
     if (!mounted) return;
@@ -133,21 +143,46 @@ class _CreateListingState extends State<CreateListing> {
               const SizedBox(height: 16),
               _FormField(label: 'Description', placeholder: 'Describe the food, quantity, freshness...', maxLines: 3, controller: _descCtrl),
               const SizedBox(height: 16),
-              _Label('Photo (optional)'),
+              _Label('Photos (optional, up to 5)'),
               const SizedBox(height: 6),
-              PhotoPickerRow(
-                imageBytes: _imageFile == null ? null : _imageFile!.readAsBytesSync(),
-                onChanged: (bytes) {
-                  if (bytes != null) {
+              if (_images.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (var i = 0; i < _images.length; i++)
+                        Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(_images[i], width: 56, height: 56, fit: BoxFit.cover),
+                            ),
+                            Positioned(
+                              top: -6,
+                              right: -6,
+                              child: IconButton(
+                                icon: const Icon(Icons.cancel, size: 18, color: Color(0xFFDC2626)),
+                                onPressed: () => setState(() => _images.removeAt(i)),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              if (_images.length < 5)
+                PhotoPickerRow(
+                  imageBytes: null,
+                  onChanged: (bytes) {
+                    if (bytes == null) return;
                     final tempDir = Directory.systemTemp;
                     final tempFile = File('${tempDir.path}/listing_${DateTime.now().millisecondsSinceEpoch}.jpg');
                     tempFile.writeAsBytesSync(bytes);
-                    setState(() => _imageFile = tempFile);
-                  } else {
-                    setState(() => _imageFile = null);
-                  }
-                },
-              ),
+                    setState(() => _images.add(tempFile));
+                  },
+                ),
               const SizedBox(height: 4),
               Text('Shown on this listing in the consumer marketplace.', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
               const SizedBox(height: 16),

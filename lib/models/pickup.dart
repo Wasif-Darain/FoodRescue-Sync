@@ -5,6 +5,9 @@ enum PickupStatusModel { scheduled, enRoute, completed }
 class PickupModel {
   final String id;
   final String requestId;
+  final String? listingId;
+  final String? donorName;
+  final String? listingTitle;
   final String? volunteerDriverId;
   final DateTime? scheduledTime;
   final DateTime? completedAt;
@@ -16,6 +19,9 @@ class PickupModel {
   PickupModel({
     required this.id,
     required this.requestId,
+    this.listingId,
+    this.donorName,
+    this.listingTitle,
     this.volunteerDriverId,
     this.scheduledTime,
     this.completedAt,
@@ -32,6 +38,9 @@ class PickupModel {
     return PickupModel(
       id: doc.id,
       requestId: data['requestId'] as String? ?? '',
+      listingId: data['listingId'] as String?,
+      donorName: data['donorName'] as String?,
+      listingTitle: data['listingTitle'] as String?,
       volunteerDriverId: data['volunteerDriverId'] as String?,
       scheduledTime: scheduled is Timestamp ? scheduled.toDate() : null,
       completedAt: completed is Timestamp ? completed.toDate() : null,
