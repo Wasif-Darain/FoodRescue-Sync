@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
@@ -16,15 +18,71 @@ class LeaderboardScreen extends StatefulWidget {
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   String _timeFrame = 'Weekly';
 
+  Duration get _periodStart {
+    final now = DateTime.now();
+    switch (_timeFrame) {
+      case 'Monthly':
+        return now.difference(DateTime(now.year, now.month, 1));
+      case 'Yearly':
+        return now.difference(DateTime(now.year, 1, 1));
+      default:
+        return now.difference(now.subtract(const Duration(days: 7)));
+    }
+  }
+
+  Stream<List<_LeaderEntry>> _donorsStream() {
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    return FirebaseFirestore.instance
+        .collection('donation_logs')
+        .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(DateTime.now().subtract(_periodStart)))
+        .snapshots()
+        .map((snap) {
+      final counts = <String, int>{};
+      final names = <String, String>{};
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final donorId = data['donorId'] as String? ?? currentUid ?? '';
+        counts[donorId] = (counts[donorId] ?? 0) + 1;
+        names[donorId] = data['donorName'] as String? ?? 'Donor';
+      }
+      final entries = counts.entries
+          .map((e) => _LeaderEntry(id: e.key, name: names[e.key] ?? 'Donor', count: e.value))
+          .toList()
+        ..sort((a, b) => b.count.compareTo(a.count));
+      return entries;
+    });
+  }
+
+  Stream<List<_LeaderEntry>> _consumersStream() {
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    return FirebaseFirestore.instance
+        .collection('pickups')
+        .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(DateTime.now().subtract(_periodStart)))
+        .where('status', isEqualTo: 'completed')
+        .snapshots()
+        .map((snap) {
+      final counts = <String, int>{};
+      final names = <String, String>{};
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final consumerId = data['consumerId'] as String? ?? currentUid ?? '';
+        counts[consumerId] = (counts[consumerId] ?? 0) + 1;
+        names[consumerId] = data['consumerName'] as String? ?? 'Consumer';
+      }
+      final entries = counts.entries
+          .map((e) => _LeaderEntry(id: e.key, name: names[e.key] ?? 'Consumer', count: e.value))
+          .toList()
+        ..sort((a, b) => b.count.compareTo(a.count));
+      return entries;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
-    final topDonors = _getMockDonors(_timeFrame);
-    final topConsumers = _getMockConsumers(_timeFrame);
-    final myDonorRank = _getMyDonorRank(_timeFrame);
-    final myConsumerRank = _getMyConsumerRank(_timeFrame);
     final periodLabel = _timeFrame == 'Weekly' ? 'week' : _timeFrame == 'Monthly' ? 'month' : 'year';
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return AppLayout(
       title: 'Leaderboard',
@@ -51,7 +109,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 6),
                         Text(
-                          'You\'re ranked #$myDonorRank among donors and #$myConsumerRank among consumers this $periodLabel.',
+                          'See who\'s leading this $periodLabel.',
                           style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                         ),
                       ],
@@ -84,56 +142,31 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          ResponsiveGrid(
-            children: [
-              StatCard(
-                label: 'My Donor Rank',
-                value: '#$myDonorRank',
-                icon: const Icon(Icons.volunteer_activism_outlined),
-                color: 'green',
-                subtitle: 'Top 10 this $periodLabel',
-              ),
-              StatCard(
-                label: 'My Consumer Rank',
-                value: '#$myConsumerRank',
-                icon: const Icon(Icons.restaurant_outlined),
-                color: 'blue',
-                subtitle: 'Top 10 this $periodLabel',
-              ),
-              StatCard(
-                label: 'Donations Made',
-                value: _getMyDonations(_timeFrame),
-                icon: const Icon(Icons.favorite_outlined),
-                color: 'red',
-                subtitle: 'This $periodLabel',
-              ),
-              StatCard(
-                label: 'Items Rescued',
-                value: _getMyConsumptions(_timeFrame),
-                icon: const Icon(Icons.eco_outlined),
-                color: 'orange',
-                subtitle: 'This $periodLabel',
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
           LayoutBuilder(builder: (context, constraints) {
             final isNarrow = constraints.maxWidth < 700;
 
-            final donorsSection = _LeaderboardSection(
-              title: 'Top Donors',
-              icon: Icons.volunteer_activism_outlined,
-              iconColor: const Color(0xFF16A34A),
-              data: topDonors,
-              myRank: myDonorRank,
+            final donorsSection = StreamBuilder<List<_LeaderEntry>>(
+              stream: _donorsStream(),
+              builder: (context, snapshot) => _LeaderboardSection(
+                title: 'Top Donors',
+                icon: Icons.volunteer_activism_outlined,
+                iconColor: const Color(0xFF16A34A),
+                data: snapshot.data ?? [],
+                myId: currentUid,
+                periodLabel: periodLabel,
+              ),
             );
 
-            final consumersSection = _LeaderboardSection(
-              title: 'Top Consumers',
-              icon: Icons.restaurant_outlined,
-              iconColor: const Color(0xFF2563EB),
-              data: topConsumers,
-              myRank: myConsumerRank,
+            final consumersSection = StreamBuilder<List<_LeaderEntry>>(
+              stream: _consumersStream(),
+              builder: (context, snapshot) => _LeaderboardSection(
+                title: 'Top Consumers',
+                icon: Icons.restaurant_outlined,
+                iconColor: const Color(0xFF2563EB),
+                data: snapshot.data ?? [],
+                myId: currentUid,
+                periodLabel: periodLabel,
+              ),
             );
 
             if (isNarrow) {
@@ -155,92 +188,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       ),
     );
   }
+}
 
-  int _getMyDonorRank(String timeFrame) {
-    return switch (timeFrame) {
-      'Monthly' => 3,
-      'Yearly' => 5,
-      _ => 2,
-    };
-  }
-
-  int _getMyConsumerRank(String timeFrame) {
-    return switch (timeFrame) {
-      'Monthly' => 4,
-      'Yearly' => 6,
-      _ => 3,
-    };
-  }
-
-  int _getMyDonations(String timeFrame) {
-    return switch (timeFrame) {
-      'Monthly' => 42,
-      'Yearly' => 180,
-      _ => 12,
-    };
-  }
-
-  int _getMyConsumptions(String timeFrame) {
-    return switch (timeFrame) {
-      'Monthly' => 35,
-      'Yearly' => 150,
-      _ => 10,
-    };
-  }
-
-  List<Map<String, dynamic>> _getMockDonors(String timeFrame) {
-    final mockData = {
-      'Weekly': [
-        {'name': 'Karim Ahmed', 'count': 45, 'org': 'Green Kitchen Restaurant', 'trend': 12},
-        {'name': 'Rafiq Chowdhury', 'count': 30, 'org': 'Dhaka Bakery House', 'trend': 8},
-        {'name': 'Habib Rahman', 'count': 20, 'org': 'Star Caterers', 'trend': -3},
-        {'name': 'Nasir Uddin', 'count': 15, 'org': 'Honest Grocery', 'trend': 5},
-        {'name': 'Farhan Islam', 'count': 12, 'org': 'Bismillah Catering', 'trend': 2},
-      ],
-      'Monthly': [
-        {'name': 'Karim Ahmed', 'count': 120, 'org': 'Green Kitchen Restaurant', 'trend': 25},
-        {'name': 'Rafiq Chowdhury', 'count': 90, 'org': 'Dhaka Bakery House', 'trend': 15},
-        {'name': 'Habib Rahman', 'count': 60, 'org': 'Star Caterers', 'trend': -8},
-        {'name': 'Nasir Uddin', 'count': 45, 'org': 'Honest Grocery', 'trend': 10},
-        {'name': 'Farhan Islam', 'count': 38, 'org': 'Bismillah Catering', 'trend': 6},
-      ],
-      'Yearly': [
-        {'name': 'Karim Ahmed', 'count': 500, 'org': 'Green Kitchen Restaurant', 'trend': 80},
-        {'name': 'Rafiq Chowdhury', 'count': 300, 'org': 'Dhaka Bakery House', 'trend': 45},
-        {'name': 'Habib Rahman', 'count': 200, 'org': 'Star Caterers', 'trend': -20},
-        {'name': 'Nasir Uddin', 'count': 150, 'org': 'Honest Grocery', 'trend': 30},
-        {'name': 'Farhan Islam', 'count': 120, 'org': 'Bismillah Catering', 'trend': 18},
-      ],
-    };
-    return mockData[timeFrame]!;
-  }
-
-  List<Map<String, dynamic>> _getMockConsumers(String timeFrame) {
-    final mockData = {
-      'Weekly': [
-        {'name': 'Farida Begum', 'count': 35, 'org': 'Dhaka Food Bank', 'trend': 10},
-        {'name': 'Shakil Hasan', 'count': 25, 'org': 'Hunger Help BD', 'trend': 6},
-        {'name': 'Tanvir Ahmed', 'count': 15, 'org': 'Al-Amin Shelter', 'trend': -2},
-        {'name': 'Rina Akter', 'count': 12, 'org': 'Rahim Uddin', 'trend': 4},
-        {'name': 'Anika Sultana', 'count': 9, 'org': 'Community Kitchen', 'trend': 1},
-      ],
-      'Monthly': [
-        {'name': 'Farida Begum', 'count': 100, 'org': 'Dhaka Food Bank', 'trend': 22},
-        {'name': 'Shakil Hasan', 'count': 70, 'org': 'Hunger Help BD', 'trend': 14},
-        {'name': 'Tanvir Ahmed', 'count': 50, 'org': 'Al-Amin Shelter', 'trend': -5},
-        {'name': 'Rina Akter', 'count': 40, 'org': 'Rahim Uddin', 'trend': 8},
-        {'name': 'Anika Sultana', 'count': 32, 'org': 'Community Kitchen', 'trend': 3},
-      ],
-      'Yearly': [
-        {'name': 'Farida Begum', 'count': 400, 'org': 'Dhaka Food Bank', 'trend': 60},
-        {'name': 'Shakil Hasan', 'count': 250, 'org': 'Hunger Help BD', 'trend': 35},
-        {'name': 'Tanvir Ahmed', 'count': 150, 'org': 'Al-Amin Shelter', 'trend': -12},
-        {'name': 'Rina Akter', 'count': 120, 'org': 'Rahim Uddin', 'trend': 20},
-        {'name': 'Anika Sultana', 'count': 95, 'org': 'Community Kitchen', 'trend': 8},
-      ],
-    };
-    return mockData[timeFrame]!;
-  }
+class _LeaderEntry {
+  final String id;
+  final String name;
+  final int count;
+  const _LeaderEntry({required this.id, required this.name, required this.count});
 }
 
 class _TimeFrameChip extends StatelessWidget {
@@ -280,20 +234,26 @@ class _LeaderboardSection extends StatelessWidget {
   final String title;
   final IconData icon;
   final Color iconColor;
-  final List<Map<String, dynamic>> data;
-  final int myRank;
+  final List<_LeaderEntry> data;
+  final String myId;
+  final String periodLabel;
 
   const _LeaderboardSection({
     required this.title,
     required this.icon,
     required this.iconColor,
     required this.data,
-    required this.myRank,
+    required this.myId,
+    required this.periodLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final top = data.take(5).toList();
+    final myRankIndex = data.indexWhere((e) => e.id == myId);
+    final myRank = myRankIndex >= 0 ? myRankIndex + 1 : null;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -318,83 +278,53 @@ class _LeaderboardSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ...data.asMap().entries.map((entry) {
-            final index = entry.key;
-            final user = entry.value;
-            final rank = index + 1;
-            final isTop3 = rank <= 3;
-            final trend = user['trend'] as int;
+          if (top.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text('No activity this $periodLabel.', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+              ),
+            )
+          else
+            ...top.asMap().entries.map((entry) {
+              final index = entry.key;
+              final entryData = entry.value;
+              final rank = index + 1;
+              final isTop3 = rank <= 3;
 
-            return _HoverScale(
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isTop3 ? _getRankColor(index).withValues(alpha: 0.06) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF9FAFB)),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isTop3 ? _getRankColor(index).withValues(alpha: 0.4) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+              return _HoverScale(
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isTop3 ? _getRankColor(index).withValues(alpha: 0.06) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF9FAFB)),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isTop3 ? _getRankColor(index).withValues(alpha: 0.4) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      _RankBadge(rank: rank, color: _getRankColor(index)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          entryData.name,
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${entryData.count} items',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    _RankBadge(rank: rank, color: _getRankColor(index)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user['name'] as String,
-                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            user['org'] as String,
-                            style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '${user['count']} items',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              trend >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
-                              size: 10,
-                              color: trend >= 0 ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              '${trend.abs()}%',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: trend >= 0 ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
+              );
+            }),
           const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.all(12),
@@ -416,12 +346,12 @@ class _LeaderboardSection extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Your current position',
+                    myRank == null ? 'No activity this $periodLabel' : 'Your current position',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF15803D)),
                   ),
                 ),
                 Text(
-                  '#$myRank',
+                  myRank == null ? '—' : '#$myRank',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF15803D)),
                 ),
               ],

@@ -1,21 +1,62 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import '../data/mock_data.dart';
 import '../models/models.dart';
 
 class AdminProvider extends ChangeNotifier {
-  final List<RegisteredAccount> _accounts = List.of(mockAccounts);
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  List<RegisteredAccount> get accounts => List.unmodifiable(_accounts);
-
-  void setStatus(int id, AccountStatus status) {
-    final i = _accounts.indexWhere((a) => a.id == id);
-    if (i == -1) return;
-    _accounts[i] = _accounts[i].copyWith(status: status);
-    notifyListeners();
+  Stream<List<RegisteredAccount>> get accountsStream {
+    return _firestore.collection('users').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        final role = data['role'] as String? ?? 'consumer';
+        return RegisteredAccount(
+          id: 0,
+          name: data['name'] as String? ?? '',
+          email: data['email'] as String? ?? '',
+          accountType: role == 'donor' ? AccountType.restaurant : AccountType.ngo,
+          mode: role == 'donor' ? UserMode.donor : UserMode.consumer,
+          status: _statusFromString(data['status'] as String?),
+          joinedAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          isAvailable: data['isAvailable'] as bool? ?? true,
+          latitude: data['latitude'] as double?,
+          longitude: data['longitude'] as double?,
+          address: data['address'] as String?,
+        );
+      }).toList();
+    });
   }
 
-  void removeAccount(int id) {
-    _accounts.removeWhere((a) => a.id == id);
-    notifyListeners();
+  AccountStatus _statusFromString(String? s) {
+    switch (s) {
+      case 'approved':
+        return AccountStatus.approved;
+      case 'suspended':
+        return AccountStatus.suspended;
+      default:
+        return AccountStatus.pending;
+    }
+  }
+
+  Future<void> setStatus(String email, AccountStatus status) async {
+    final query = await _firestore
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+    if (query.docs.isEmpty) return;
+    await query.docs.first.reference.update({
+      'status': status.name,
+    });
+  }
+
+  Future<void> removeAccount(String email) async {
+    final query = await _firestore
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+    if (query.docs.isEmpty) return;
+    await query.docs.first.reference.delete();
   }
 }

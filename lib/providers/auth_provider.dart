@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import '../data/mock_data.dart';
 import '../models/models.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -204,16 +203,23 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  void updateOwnLocation({
+  Future<void> updateOwnLocation({
     required double lat,
     required double lng,
     required String address,
-  }) {
-    if (_user == null) return;
-    final i = mockAccounts.indexWhere((a) => a.name == _user!.name);
-    if (i == -1) return;
-    mockAccounts[i] = mockAccounts[i].copyWith(latitude: lat, longitude: lng, address: address);
-    notifyListeners();
+  }) async {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) return;
+    try {
+      await _firestore.collection('users').doc(firebaseUser.uid).update({
+        'latitude': lat,
+        'longitude': lng,
+        'address': address,
+      });
+    } catch (e) {
+      _errorMessage = 'Failed to update location. Please try again.';
+      notifyListeners();
+    }
   }
 
   @override

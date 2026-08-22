@@ -1,8 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'bottom_nav_bar.dart';
-import '../../data/mock_data.dart';
 import '../../providers/theme_provider.dart';
 import '../ui/animated_tap.dart';
 import '../ui/glass.dart';
@@ -25,9 +26,16 @@ class AppLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final unread = mockNotifications.where((n) => !n.isRead).length;
-
     final isDark = context.watch<ThemeProvider>().isDark;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final unreadStream = uid == null
+        ? Stream<int>.value(0)
+        : FirebaseFirestore.instance
+            .collection('notifications')
+            .where('recipientUid', isEqualTo: uid)
+            .where('isRead', isEqualTo: false)
+            .snapshots()
+            .map((snap) => snap.docs.length);
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0B1410) : const Color(0xFFF4F7F5),
@@ -77,10 +85,13 @@ class AppLayout extends StatelessWidget {
                   ),
                   ?action,
                   const SizedBox(width: 8),
-                  _HeaderIconButton(
-                    icon: Icons.notifications_outlined,
-                    badgeCount: unread,
-                    onTap: () => context.go('/notifications'),
+                  StreamBuilder<int>(
+                    stream: unreadStream,
+                    builder: (context, unreadSnapshot) => _HeaderIconButton(
+                      icon: Icons.notifications_outlined,
+                      badgeCount: unreadSnapshot.data ?? 0,
+                      onTap: () => context.go('/notifications'),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   _HeaderIconButton(

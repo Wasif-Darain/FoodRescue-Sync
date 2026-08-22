@@ -3,17 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
-import '../../widgets/ui/user_badge.dart';
 import '../../widgets/ui/countdown_timer.dart';
 import '../../widgets/ui/date_time_field.dart';
-import '../../data/mock_data.dart';
+import '../../models/listing.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/donor_provider.dart';
 import '../../providers/consumer_provider.dart';
 
-// Main marketplace screen shown to consumers, letting them browse
-// nearby surplus food listings (donations and flash sales).
 class ConsumerMarketplace extends StatefulWidget {
   const ConsumerMarketplace({super.key});
 
@@ -22,272 +18,267 @@ class ConsumerMarketplace extends StatefulWidget {
 }
 
 class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
-  // Currently selected food category filter (e.g. "Bakery", "Dairy").
   String _selectedCategory = 'All';
-  // Currently selected listing-type filter ("All", "Free", "Sale").
   String _filter = 'All';
-  // Available category chips shown in the horizontal scroll row.
   final _categories = ['All', 'Cooked Meals', 'Bakery', 'Dairy', 'Produce', 'Grains'];
-
-  // Placeholder location shown under the restaurant icon in the banner.
   final String _dummyLocation = 'Gulshan, Dhaka';
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Grab the logged-in user and the list of available listings from providers.
     final user = context.watch<AuthProvider>().user!;
-    final listings = context.watch<DonorProvider>().listings;
+    final consumer = context.watch<ConsumerProvider>();
 
-    // Apply both the category filter and the type filter (Free/Sale) to the listings.
     final now = DateTime.now();
-    final filtered = listings.where((l) {
-      final catMatch = _selectedCategory == 'All' || l.category == _selectedCategory;
-      final typeMatch = _filter == 'All' ||
-          (_filter == 'Free' && l.listingType == ListingType.donation) ||
-          (_filter == 'Sale' && l.listingType == ListingType.flashSale);
-      return catMatch && typeMatch && l.pickupEnd.isAfter(now) && l.status == ListingStatus.active;
-    }).toList();
+    return StreamBuilder<List<ListingModel>>(
+      stream: consumer.availableListingsStream,
+      builder: (context, snapshot) {
+        final listings = snapshot.data ?? [];
+        final filtered = listings.map((l) => Listing(
+          id: int.tryParse(l.id) ?? 0,
+          docId: l.id,
+          donorId: int.tryParse(l.donorId) ?? 0,
+          donorName: l.donorId,
+          title: l.title,
+          description: l.description,
+          price: l.price,
+          quantity: l.quantity.toInt(),
+          listingType: ListingType.donation,
+          pickupStart: l.claimDeadline ?? now,
+          pickupEnd: l.claimDeadline ?? now.add(const Duration(hours: 4)),
+          latitude: l.latitude,
+          longitude: l.longitude,
+          status: ListingStatus.active,
+          category: l.category,
+          imageUrl: l.photoUrls.isNotEmpty ? l.photoUrls.first : null,
+          address: l.address,
+        )).where((l) {
+          final catMatch = _selectedCategory == 'All' || l.category == _selectedCategory;
+          final typeMatch = _filter == 'All' ||
+              (_filter == 'Free' && l.listingType == ListingType.donation);
+          return catMatch && typeMatch && l.pickupEnd.isAfter(now) && l.status == ListingStatus.active;
+        }).toList();
 
-    return AppLayout(
-      title: 'Marketplace',
-      subtitle: 'Browse nearby surplus food listings',
-      currentRoute: '/consumer',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ---- Welcome banner ----
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
-            ),
-            child: Row(
-              children: [
-                // Left side: greeting text + listing count.
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+        return AppLayout(
+          title: 'Marketplace',
+          subtitle: 'Browse nearby surplus food listings',
+          currentRoute: '/consumer',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Flexible(
-                            child: Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${listings.length} surplus listing${listings.length == 1 ? '' : 's'} near you right now.',
+                            style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                           ),
-                          const SizedBox(width: 8),
-                          Builder(builder: (context) {
-                            final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
-                            final label = consumerTierLabel(consumerTierFor(account));
-                            return UserBadge(label: label, isLegend: label == 'Legend', fontSize: 9);
-                          }),
                         ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${listings.length} surplus listing${listings.length == 1 ? '' : 's'} near you right now.',
-                        style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-                // Right side: restaurant icon badge with location.
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
+                    ),
                     Container(
                       width: 52,
                       height: 52,
                       decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.all(Radius.circular(14))),
                       child: const Icon(Icons.restaurant_outlined, color: Color(0xFFEA580C), size: 26),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              _SectionCard(
+                title: 'Quick Actions',
+                icon: Icons.bolt_outlined,
+                child: Column(
+                  children: [
+                    _QuickAction(
+                      icon: Icons.radar_outlined,
+                      label: 'Surplus Radar',
+                      color: const Color(0xFF2563EB),
+                      onTap: () => context.go('/consumer/radar'),
+                    ),
+                    _QuickAction(
+                      icon: Icons.shopping_cart_outlined,
+                      label: 'Bulk Request',
+                      color: const Color(0xFFEA580C),
+                      onTap: () => context.go('/consumer/bulk-request'),
+                    ),
+                    _QuickAction(
+                      icon: Icons.history_outlined,
+                      label: 'Request Status',
+                      color: const Color(0xFF16A34A),
+                      onTap: () => context.go('/consumer/requests'),
+                    ),
+                    _QuickAction(
+                      icon: Icons.emoji_events_outlined,
+                      label: 'Rewards',
+                      color: const Color(0xFFF59E0B),
+                      onTap: () => context.go('/rewards'),
+                    ),
+                    _QuickAction(
+                      icon: Icons.leaderboard_outlined,
+                      label: 'Leaderboard',
+                      color: const Color(0xFF6B7280),
+                      onTap: () => context.go('/leaderboard'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              Builder(builder: (context) {
+                final searchBox = Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(10), border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+                  child: Row(children: [
+                    Icon(Icons.search, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                    const SizedBox(width: 8),
+                    Expanded(child: TextField(
+                      decoration: InputDecoration(hintText: 'Search food listings...', border: InputBorder.none, hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF))),
+                    )),
+                  ]),
+                );
+
+                final filterChips = [
+                  ('All', Icons.grid_view_outlined),
+                  ('Free', Icons.favorite_outline),
+                  ('Sale', Icons.local_offer_outlined)
+                ].map((f) {
+                  final isSelected = _filter == f.$1;
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: _HoverScale(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _filter = f.$1),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected ? (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7)) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)), width: isSelected ? 2 : 1),
+                          ),
+                          child: Row(children: [
+                            Icon(f.$2, size: 14, color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                            const SizedBox(width: 4),
+                            Text(f.$1, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
+                          ]),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList();
+
+                return LayoutBuilder(builder: (context, constraints) {
+                  if (constraints.maxWidth < 480) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.location_on_outlined, size: 12, color: Color(0xFF757575)),
-                        const SizedBox(width: 2),
-                        Text(
-                          _dummyLocation,
-                          style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontWeight: FontWeight.w500),
+                        searchBox,
+                        const SizedBox(height: 10),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(children: filterChips),
                         ),
                       ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
+                    );
+                  }
+                  return Row(children: [Expanded(child: searchBox), ...filterChips]);
+                });
+              }),
+              const SizedBox(height: 14),
 
-          // ---- Quick Actions ----
-          _SectionCard(
-            title: 'Quick Actions',
-            icon: Icons.bolt_outlined,
-            child: Column(
-              children: [
-                _QuickAction(
-                  icon: Icons.radar_outlined,
-                  label: 'Surplus Radar',
-                  color: const Color(0xFF2563EB),
-                  onTap: () => context.go('/consumer/radar'),
-                ),
-                _QuickAction(
-                  icon: Icons.shopping_cart_outlined,
-                  label: 'Bulk Request',
-                  color: const Color(0xFFEA580C),
-                  onTap: () => context.go('/consumer/bulk-request'),
-                ),
-                _QuickAction(
-                  icon: Icons.history_outlined,
-                  label: 'Request Status',
-                  color: const Color(0xFF16A34A),
-                  onTap: () => context.go('/consumer/requests'),
-                ),
-                _QuickAction(
-                  icon: Icons.emoji_events_outlined,
-                  label: 'Rewards',
-                  color: const Color(0xFFF59E0B),
-                  onTap: () => context.go('/rewards'),
-                ),
-                _QuickAction(
-                  icon: Icons.leaderboard_outlined,
-                  label: 'Leaderboard',
-                  color: const Color(0xFF6B7280),
-                  onTap: () => context.go('/leaderboard'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // ---- Search bar + type filter chips (Free / Sale / All) ----
-          Builder(builder: (context) {
-            final searchBox = Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(10), border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
-              child: Row(children: [
-                Icon(Icons.search, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                const SizedBox(width: 8),
-                Expanded(child: TextField(
-                  decoration: InputDecoration(hintText: 'Search food listings...', border: InputBorder.none, hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF))),
-                )),
-              ]),
-            );
-
-            final filterChips = [
-              ('All', Icons.grid_view_outlined),
-              ('Free', Icons.favorite_outline),
-              ('Sale', Icons.local_offer_outlined)
-            ].map((f) {
-              final isSelected = _filter == f.$1;
-              return Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: _HoverScale(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _filter = f.$1),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: isSelected ? (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7)) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)), width: isSelected ? 2 : 1),
-                      ),
-                      child: Row(children: [
-                        Icon(f.$2, size: 14, color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
-                        const SizedBox(width: 4),
-                        Text(f.$1, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
-                      ]),
-                    ),
-                  ),
-                ),
-              );
-            }).toList();
-
-            return LayoutBuilder(builder: (context, constraints) {
-              if (constraints.maxWidth < 480) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    searchBox,
-                    const SizedBox(height: 10),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(children: filterChips),
-                    ),
-                  ],
-                );
-              }
-              return Row(children: [Expanded(child: searchBox), ...filterChips]);
-            });
-          }),
-          const SizedBox(height: 14),
-
-          // ---- Category filter chips (All / Cooked Meals / Bakery / etc.) ----
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _categories.map((cat) {
-                final isSelected = _selectedCategory == cat;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _HoverScale(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selectedCategory = cat),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFE53238) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: isSelected ? const Color(0xFFE53238) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _categories.map((cat) {
+                    final isSelected = _selectedCategory == cat;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _HoverScale(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedCategory = cat),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: isSelected ? const Color(0xFFE53238) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: isSelected ? const Color(0xFFE53238) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+                            ),
+                            child: Text(cat, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
+                          ),
                         ),
-                        child: Text(cat, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
                       ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // ---- Grid of listing cards ----
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 320,
-                mainAxisExtent: 380,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+                    );
+                  }).toList(),
+                ),
               ),
-            itemCount: filtered.length,
-            itemBuilder: (_, i) => _ListingCard(listing: filtered[i]),
+              const SizedBox(height: 20),
+
+              if (filtered.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.storefront_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
+                      const SizedBox(height: 12),
+                      Text('No listings available', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      const SizedBox(height: 4),
+                      Text('Check back soon for new surplus food listings.', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                    ],
+                  ),
+                )
+              else
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 320,
+                    mainAxisExtent: 380,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: filtered.length,
+                  itemBuilder: (_, i) => _ListingCard(listing: filtered[i]),
+                ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-// Dummy list of Dhaka-area localities used for card display.
-const _dummyAreas = [
-  'Gulshan 1, Dhaka',
-  'Banani, Dhaka',
-  'Dhanmondi, Dhaka',
-  'Uttara, Dhaka',
-  'Mirpur, Dhaka',
-  'Bashundhara, Dhaka',
-  'Banani Time Square, Dhaka',
-  'Mohammadpur, Dhaka',
-];
-
 String _dummyAreaFor(String donorName) {
-  final index = donorName.hashCode.abs() % _dummyAreas.length;
-  return _dummyAreas[index];
+  const areas = [
+    'Gulshan 1, Dhaka',
+    'Banani, Dhaka',
+    'Dhanmondi, Dhaka',
+    'Uttara, Dhaka',
+    'Mirpur, Dhaka',
+    'Bashundhara, Dhaka',
+    'Mohammadpur, Dhaka',
+  ];
+  final index = donorName.hashCode.abs() % areas.length;
+  return areas[index];
 }
 
 class _ListingCard extends StatelessWidget {
@@ -296,7 +287,7 @@ class _ListingCard extends StatelessWidget {
 
   void _showClaimSheet(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isDonation = listing.listingType == ListingType.donation;
+    final consumer = context.read<ConsumerProvider>();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -331,7 +322,7 @@ class _ListingCard extends StatelessWidget {
               Text(listing.description, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
               const SizedBox(height: 12),
               Row(children: [
-                AppBadge(label: isDonation ? 'FREE' : '৳${listing.price.toInt()}', variant: isDonation ? BadgeVariant.green : BadgeVariant.orange),
+                AppBadge(label: 'FREE', variant: BadgeVariant.green),
                 const SizedBox(width: 8),
                 AppBadge(label: 'Qty: ${listing.quantity}', variant: BadgeVariant.blue),
                 const SizedBox(width: 8),
@@ -348,11 +339,12 @@ class _ListingCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    final success = await consumer.claimListing(listing.docId ?? '', listing.quantity);
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('Claimed: ${listing.title}'),
-                      backgroundColor: const Color(0xFF16A34A),
+                      content: Text(success ? 'Claimed: ${listing.title}' : 'Failed to claim: ${listing.title}'),
+                      backgroundColor: success ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
                     ));
                   },
                   style: ElevatedButton.styleFrom(
@@ -373,10 +365,11 @@ class _ListingCard extends StatelessWidget {
                     final picked = await pickDateTime(sheetContext, initial: DateTime.now().add(const Duration(hours: 1)));
                     if (picked == null) return;
                     if (!context.mounted) return;
+                    final success = await consumer.claimListing(listing.docId ?? '', listing.quantity);
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('Scheduled pickup for ${listing.title}'),
-                      backgroundColor: const Color(0xFF2563EB),
+                      content: Text(success ? 'Scheduled pickup for ${listing.title}' : 'Failed to claim: ${listing.title}'),
+                      backgroundColor: success ? const Color(0xFF2563EB) : const Color(0xFFDC2626),
                     ));
                   },
                   style: ElevatedButton.styleFrom(
@@ -399,12 +392,10 @@ class _ListingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isDonation = listing.listingType == ListingType.donation;
+    final isDonation = true;
 
     final imageUrl = listing.imageUrl ??
-        (isDonation
-            ? 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80'
-            : 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80');
+        'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80';
 
     return _HoverScale(
       child: Container(
@@ -418,14 +409,11 @@ class _ListingCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ---- Image header with badges ----
             Container(
               height: 120,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDonation
-                      ? [const Color(0xFFDCFCE7), const Color(0xFFDCFCE7)]
-                      : [const Color(0xFFFFE3CC), const Color(0xFFFFE3CC)],
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFDCFCE7), Color(0xFFDCFCE7)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -437,12 +425,8 @@ class _ListingCard extends StatelessWidget {
                       : Image.network(
                           imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Center(
-                            child: Icon(
-                              isDonation ? Icons.favorite_outline : Icons.local_offer_outlined,
-                              size: 40,
-                              color: isDonation ? const Color(0xFF059669) : const Color(0xFFEA580C),
-                            ),
+                          errorBuilder: (context, error, stackTrace) => const Center(
+                            child: Icon(Icons.favorite_outline, size: 40, color: Color(0xFF059669)),
                           ),
                         ),
                 ),
@@ -463,10 +447,7 @@ class _ListingCard extends StatelessWidget {
                 Positioned(
                   top: 10,
                   left: 10,
-                  child: AppBadge(
-                    label: isDonation ? 'FREE' : '৳${listing.price.toInt()}',
-                    variant: isDonation ? BadgeVariant.green : BadgeVariant.orange,
-                  ),
+                  child: AppBadge(label: 'FREE', variant: BadgeVariant.green),
                 ),
                 Positioned(
                   top: 10,
@@ -489,7 +470,6 @@ class _ListingCard extends StatelessWidget {
                 ),
               ]),
             ),
-            // ---- Card body ----
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -498,21 +478,7 @@ class _ListingCard extends StatelessWidget {
                   children: [
                     Text(listing.title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 2, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(listing.donorName, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
-                        Builder(builder: (context) {
-                          final matches = mockAccounts.where((a) => a.mode == UserMode.donor && a.name == listing.donorName);
-                          if (matches.isEmpty) return const SizedBox.shrink();
-                          final label = donorTierLabel(donorTierFor(matches.first));
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 3),
-                            child: UserBadge(label: label, isLegend: label == 'Legend', fontSize: 8),
-                          );
-                        }),
-                      ],
-                    ),
+                    Text(listing.donorName, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 2),
                     Row(
                       children: [
@@ -539,9 +505,9 @@ class _ListingCard extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: listing.pickupEnd.isBefore(DateTime.now())
                             ? null
-                            : () => isDonation ? _showClaimSheet(context) : _showCheckoutSheet(context, listing: listing),
+                            : () => _showClaimSheet(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isDonation ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
+                          backgroundColor: const Color(0xFF16A34A),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -550,7 +516,7 @@ class _ListingCard extends StatelessWidget {
                         child: Text(
                           listing.pickupEnd.isBefore(DateTime.now())
                               ? 'Expired'
-                              : (isDonation ? 'Claim Free' : 'Buy Now'),
+                              : 'Claim Free',
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                         ),
                       ),
@@ -566,224 +532,6 @@ class _ListingCard extends StatelessWidget {
   }
 }
 
-String _paymentMethodLabel(PaymentMethod m) => switch (m) {
-  PaymentMethod.cashOnDelivery => 'Cash on Delivery',
-  PaymentMethod.bkash => 'bKash',
-  PaymentMethod.nagad => 'Nagad',
-  PaymentMethod.card => 'Card',
-};
-
-IconData _paymentMethodIcon(PaymentMethod m) => switch (m) {
-  PaymentMethod.cashOnDelivery => Icons.payments_outlined,
-  PaymentMethod.bkash => Icons.account_balance_wallet_outlined,
-  PaymentMethod.nagad => Icons.account_balance_wallet_outlined,
-  PaymentMethod.card => Icons.credit_card_outlined,
-};
-
-/// Foodpanda-style checkout for a paid (flash sale) listing: payment
-/// method, delivery option (self/management/rider — defaults from the
-/// consumer's own profile preference), and delivery location, all
-/// required before the purchase is placed.
-void _showCheckoutSheet(BuildContext context, {required Listing listing}) {
-  final user = context.read<AuthProvider>().user!;
-  final consumerAccounts = mockAccounts.where((a) => a.mode == UserMode.consumer).toList();
-  final consumer = consumerAccounts.firstWhere(
-    (a) => a.name == user.name,
-    orElse: () => consumerAccounts.first,
-  );
-
-  var selectedPayment = PaymentMethod.cashOnDelivery;
-  var selectedDelivery = consumer.pickupPreference;
-  final locationCtrl = TextEditingController();
-  String? error;
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-    builder: (sheetContext) => StatefulBuilder(
-      builder: (sheetContext, setSheetState) {
-        final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
-        final total = listing.price * listing.quantity;
-        Widget label(String text) => Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)));
-
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(sheetContext).viewInsets.bottom),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: SafeArea(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Expanded(child: Text('Checkout', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212)))),
-                      IconButton(
-                        icon: Icon(Icons.close, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                        onPressed: () => Navigator.pop(sheetContext),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                      ),
-                    ]),
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(listing.title, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
-                          const SizedBox(height: 4),
-                          Row(children: [
-                            AppBadge(label: '৳${listing.price.toInt()}', variant: BadgeVariant.orange),
-                            const SizedBox(width: 8),
-                            AppBadge(label: 'Qty: ${listing.quantity}', variant: BadgeVariant.blue),
-                          ]),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Total', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
-                              Text('৳${total.toInt()}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF16A34A))),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    label('Payment Method'),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: PaymentMethod.values.map((m) => _OptionCard(
-                            label: _paymentMethodLabel(m),
-                            icon: _paymentMethodIcon(m),
-                            selected: selectedPayment == m,
-                            onTap: () => setSheetState(() => selectedPayment = m),
-                          )).toList(),
-                    ),
-                    const SizedBox(height: 16),
-                    label('Delivery Option'),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: PickupPreference.values.map((p) => _OptionCard(
-                            label: pickupPreferenceLabel(p),
-                            icon: pickupPreferenceIcon(p),
-                            selected: selectedDelivery == p,
-                            onTap: () => setSheetState(() => selectedDelivery = p),
-                          )).toList(),
-                    ),
-                    const SizedBox(height: 16),
-                    label('Delivery Location'),
-                    const SizedBox(height: 4),
-                    TextField(
-                      controller: locationCtrl,
-                      style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        hintText: 'e.g. House 12, Road 5, Gulshan',
-                        hintStyle: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
-                      ),
-                    ),
-                    if (error != null) ...[
-                      const SizedBox(height: 10),
-                      Text(error!, style: const TextStyle(fontSize: 12, color: Color(0xFFDC2626))),
-                    ],
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          final location = locationCtrl.text.trim();
-                          if (location.isEmpty) {
-                            setSheetState(() => error = 'Please enter a delivery location.');
-                            return;
-                          }
-                          context.read<ConsumerProvider>().placeOrder(
-                                listing: listing,
-                                consumerId: consumer.id,
-                                consumerName: consumer.name,
-                                paymentMethod: selectedPayment,
-                                deliveryOption: selectedDelivery,
-                                deliveryLocation: location,
-                              );
-                          context.read<DonorProvider>().markListingClaimed(listing.docId ?? '');
-                          Navigator.pop(sheetContext);
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('Order placed — ৳${total.toInt()} via ${_paymentMethodLabel(selectedPayment)}'),
-                            backgroundColor: const Color(0xFF16A34A),
-                          ));
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF16A34A),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        child: Text('Place Order — ৳${total.toInt()}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    ),
-  );
-}
-
-class _OptionCard extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-  const _OptionCard({required this.label, required this.icon, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    const color = Color(0xFF2563EB);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.08) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F0F0)),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: selected ? color : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)), width: selected ? 2 : 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 15, color: selected ? color : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
-            const SizedBox(width: 6),
-            Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: selected ? color : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)))),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Widget definition for _HoverScale
 class _HoverScale extends StatefulWidget {
   final Widget child;
   const _HoverScale({required this.child});

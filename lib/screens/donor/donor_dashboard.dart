@@ -7,7 +7,6 @@ import '../../widgets/ui/responsive_grid.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/user_badge.dart';
 import '../../widgets/ui/countdown_timer.dart';
-import '../../data/mock_data.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
@@ -72,11 +71,7 @@ class DonorDashboard extends StatelessWidget {
                                     child: Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                                   ),
                                   const SizedBox(width: 8),
-                                  Builder(builder: (context) {
-                                    final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
-                                    final label = donorTierLabel(donorTierFor(account));
-                                    return UserBadge(label: label, isLegend: label == 'Legend', fontSize: 9);
-                                  }),
+                                  const UserBadge(label: 'Contributor', isLegend: false, fontSize: 9),
                                 ],
                               ),
                               const SizedBox(height: 6),
@@ -206,11 +201,9 @@ class DonorDashboard extends StatelessWidget {
                         _SectionCard(
                           title: 'Recent Donations',
                           icon: Icons.volunteer_activism_outlined,
-                          child: Column(
-                            children: mockDonationLogs
-                                .take(3)
-                                .map((log) => _DonationRow(log: log))
-                                .toList(),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Text('Donation history will appear here once you complete donations.', style: TextStyle(fontSize: 12, color: Color(0xFF757575))),
                           ),
                         ),
                       ],

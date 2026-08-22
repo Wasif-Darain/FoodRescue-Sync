@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../models/models.dart';
-import '../../data/mock_data.dart';
 import '../ui/animated_tap.dart';
 import '../ui/glass.dart';
 import '../ui/user_badge.dart';
@@ -343,17 +342,7 @@ void showNavMenuSheet(BuildContext context) {
                         else ...[
                           Text(_accountTypeLabel[user.accountType] ?? '', style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
                           const SizedBox(height: 4),
-                          Builder(builder: (context) {
-                            final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
-                            final isDonorMode = user.mode == UserMode.donor;
-                            String label;
-                            if (isDonorMode) {
-                              label = donorTierLabel(donorTierFor(account));
-                            } else {
-                              label = consumerTierLabel(consumerTierFor(account));
-                            }
-                            return UserBadge(label: label, isLegend: label == 'Legend', fontSize: 9);
-                          }),
+                          const UserBadge(label: 'Member', isLegend: false, fontSize: 9),
                         ],
                       ],
                     ),

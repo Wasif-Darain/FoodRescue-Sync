@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/rating_stars.dart';
-import '../../widgets/ui/countdown_timer.dart';
-import '../../data/mock_data.dart';
-import '../../models/models.dart';
+import '../../models/request.dart';
+import '../../providers/consumer_provider.dart';
 
 class RequestStatusTracker extends StatelessWidget {
   const RequestStatusTracker({super.key});
@@ -12,40 +12,68 @@ class RequestStatusTracker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return AppLayout(
-      title: 'My Requests',
-      subtitle: 'Track the status of your food requests',
-      currentRoute: '/consumer/requests',
-      child: Column(
-        children: [
-          IntrinsicHeight(
-            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            for (final s in [RequestStatus.pending, RequestStatus.accepted, RequestStatus.completed, RequestStatus.rejected]) ...[
-              if (s != RequestStatus.pending) const SizedBox(width: 12),
-              Expanded(child: _HoverScale(
-                child: _StatusSummary(
-                  status: s,
-                  count: mockRequests.where((r) => r.status == s).length,
+    final consumer = context.watch<ConsumerProvider>();
+
+    return StreamBuilder<List<RequestModel>>(
+      stream: consumer.myRequestsStream,
+      builder: (context, snapshot) {
+        final requests = snapshot.data ?? [];
+
+        return AppLayout(
+          title: 'My Requests',
+          subtitle: 'Track the status of your food requests',
+          currentRoute: '/consumer/requests',
+          child: Column(
+            children: [
+              IntrinsicHeight(
+                child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  for (final s in [RequestStatusModel.pending, RequestStatusModel.accepted, RequestStatusModel.completed, RequestStatusModel.rejected]) ...[
+                    if (s != RequestStatusModel.pending) const SizedBox(width: 12),
+                    Expanded(child: _HoverScale(
+                      child: _StatusSummary(
+                        status: s,
+                        count: requests.where((r) => r.status == s).length,
+                      ),
+                    )),
+                  ],
+                ]),
+              ),
+              const SizedBox(height: 20),
+              if (requests.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.assignment_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
+                      const SizedBox(height: 12),
+                      Text('No requests yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      const SizedBox(height: 4),
+                      Text('Submit a bulk request to get started.', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
+                  child: Column(children: [
+                    for (final r in requests) _HoverScale(child: _RequestRow(request: r)),
+                  ]),
                 ),
-              )),
             ],
-          ]),
           ),
-          const SizedBox(height: 20),
-          Container(
-            decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
-            child: Column(children: [
-              for (final r in mockRequests) _HoverScale(child: _RequestRow(request: r)),
-            ]),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 class _StatusSummary extends StatelessWidget {
-  final RequestStatus status;
+  final RequestStatusModel status;
   final int count;
   const _StatusSummary({required this.status, required this.count});
 
@@ -53,10 +81,10 @@ class _StatusSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final label = switch (status) {
-      RequestStatus.pending   => 'Pending',
-      RequestStatus.accepted  => 'Accepted',
-      RequestStatus.completed => 'Completed',
-      RequestStatus.rejected  => 'Rejected',
+      RequestStatusModel.pending   => 'Pending',
+      RequestStatusModel.accepted  => 'Accepted',
+      RequestStatusModel.completed => 'Completed',
+      RequestStatusModel.rejected  => 'Rejected',
     };
     return Container(
       padding: const EdgeInsets.all(16),
@@ -75,17 +103,17 @@ class _StatusSummary extends StatelessWidget {
 }
 
 class _RequestRow extends StatelessWidget {
-  final FoodRequest request;
+  final RequestModel request;
   const _RequestRow({required this.request});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final (label, variant) = switch (request.status) {
-      RequestStatus.pending   => ('Pending',   BadgeVariant.orange),
-      RequestStatus.accepted  => ('Accepted',  BadgeVariant.green),
-      RequestStatus.completed => ('Completed', BadgeVariant.blue),
-      RequestStatus.rejected  => ('Rejected',  BadgeVariant.red),
+      RequestStatusModel.pending   => ('Pending',   BadgeVariant.orange),
+      RequestStatusModel.accepted  => ('Accepted',  BadgeVariant.green),
+      RequestStatusModel.completed => ('Completed', BadgeVariant.blue),
+      RequestStatusModel.rejected  => ('Rejected',  BadgeVariant.red),
     };
     final date = '${request.createdAt.year}-${request.createdAt.month.toString().padLeft(2, '0')}-${request.createdAt.day.toString().padLeft(2, '0')}';
     return Container(
@@ -97,28 +125,17 @@ class _RequestRow extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(request.listingTitle, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                child: Text('Request #${request.id}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
               const SizedBox(width: 8),
               AppBadge(label: label, variant: variant),
             ],
           ),
           const SizedBox(height: 4),
-          Text('${request.donorName} · ×${request.quantity} · $date', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
-          if (request.status == RequestStatus.pending || request.status == RequestStatus.accepted) ...[
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Builder(builder: (context) {
-                final matches = mockListings.where((l) => l.id == request.listingId);
-                if (matches.isEmpty) return const SizedBox.shrink();
-                return CountdownTimer(expiry: matches.first.pickupEnd, fontSize: 9);
-              }),
-            ),
-          ],
-          if (request.status == RequestStatus.completed) ...[
+          Text('Qty: ${request.requestedQuantity} ${request.unit} · $date', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+          if (request.status == RequestStatusModel.completed) ...[
             const SizedBox(height: 12),
-            RatingStars(reviewLabel: 'Rate ${request.donorName}'),
+            RatingStars(reviewLabel: 'Rate this request'),
           ],
         ],
       ),

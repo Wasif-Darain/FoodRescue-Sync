@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
@@ -8,7 +9,6 @@ import '../../widgets/ui/date_time_field.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
-import '../../data/mock_data.dart';
 
 class DonorConsumers extends StatefulWidget {
   const DonorConsumers({super.key});
@@ -35,301 +35,312 @@ class _DonorConsumersState extends State<DonorConsumers> {
     final user = context.watch<AuthProvider>().user!;
     final donor = context.watch<DonorProvider>();
 
-    final consumers = mockAccounts.where((a) => a.mode == UserMode.consumer).where((a) {
-      final searchMatch = _search.isEmpty || a.name.toLowerCase().contains(_search.toLowerCase());
-      final availMatch = _availabilityFilter == 'All' ||
-          (_availabilityFilter == 'Available' && a.isAvailable) ||
-          (_availabilityFilter == 'Unavailable' && !a.isAvailable);
-      return searchMatch && availMatch;
-    }).toList()
-      ..sort((a, b) => donor.donationCountFor(b.name).compareTo(donor.donationCountFor(a.name)));
+    final consumersStream = FirebaseFirestore.instance
+        .collection('users')
+        .where('role', isEqualTo: 'consumer')
+        .snapshots()
+        .map((snap) => snap.docs.map((doc) {
+          final data = doc.data();
+          return RegisteredAccount(
+            id: 0,
+            name: data['name'] as String? ?? '',
+            email: data['email'] as String? ?? '',
+            accountType: AccountType.ngo,
+            mode: UserMode.consumer,
+            status: AccountStatus.approved,
+            joinedAt: DateTime.now(),
+            isAvailable: data['isAvailable'] as bool? ?? true,
+            latitude: data['latitude'] as double?,
+            longitude: data['longitude'] as double?,
+            address: data['address'] as String?,
+          );
+        }).toList());
 
     final upcoming = donor.scheduledDonations.where((d) => d.status == DonationScheduleStatus.scheduled).toList();
 
-    return AppLayout(
-      title: 'Consumers',
-      subtitle: 'Donate directly to consumers',
-      currentRoute: '/donor/consumers',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+    return StreamBuilder<List<RegisteredAccount>>(
+      stream: consumersStream,
+      builder: (context, snapshot) {
+        final allConsumers = snapshot.data ?? [];
+        final consumers = allConsumers.where((a) {
+          final searchMatch = _search.isEmpty || a.name.toLowerCase().contains(_search.toLowerCase());
+          final availMatch = _availabilityFilter == 'All' ||
+              (_availabilityFilter == 'Available' && a.isAvailable) ||
+              (_availabilityFilter == 'Unavailable' && !a.isAvailable);
+          return searchMatch && availMatch;
+        }).toList()
+          ..sort((a, b) => donor.donationCountFor(b.name).compareTo(donor.donationCountFor(a.name)));
+
+        return AppLayout(
+          title: 'Consumers',
+          subtitle: 'Donate directly to consumers',
+          currentRoute: '/donor/consumers',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Flexible(
-                            child: Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${consumers.length} consumer${consumers.length == 1 ? '' : 's'} available.',
+                            style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                           ),
-                          const SizedBox(width: 8),
-                          Builder(builder: (context) {
-                            final account = mockAccounts.firstWhere((a) => a.name == user.name, orElse: () => mockAccounts.first);
-                            final label = donorTierLabel(donorTierFor(account));
-                            return UserBadge(label: label, isLegend: label == 'Legend', fontSize: 9);
-                          }),
                         ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${consumers.length} consumer${consumers.length == 1 ? '' : 's'} available.',
-                        style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.all(Radius.circular(14))),
-                  child: const Icon(Icons.groups_outlined, color: Color(0xFF16A34A), size: 26),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
-            ),
-            child: Wrap(
-              spacing: 20,
-              runSpacing: 10,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Switch(
-                      value: donor.isAvailable,
-                      activeTrackColor: const Color(0xFF16A34A),
-                      onChanged: (value) {
-                        final message = donor.setAvailability(value);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(message),
-                          backgroundColor: value ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
-                        ));
-                      },
                     ),
-                    Text('Available for donations', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: isDark ? Colors.white : const Color(0xFF121212))),
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.all(Radius.circular(14))),
+                      child: const Icon(Icons.groups_outlined, color: Color(0xFF16A34A), size: 26),
+                    ),
                   ],
                 ),
-                InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () async {
-                    final picked = await showTimePicker(context: context, initialTime: donor.preferredPickupTime);
-                    if (picked != null) donor.setPreferredPickupTime(picked);
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.schedule, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Default pickup time: ${donor.preferredPickupTime.format(context)}',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: isDark ? Colors.white : const Color(0xFF121212)),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.edit_outlined, size: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 16),
 
-          if (upcoming.isNotEmpty) ...[
-            _SectionCard(
-              title: 'Upcoming Donations',
-              icon: Icons.event_available_outlined,
-              child: Column(
-                children: upcoming
-                    .map((d) => _UpcomingDonationRow(
-                          donation: d,
-                          onEdit: () => _showScheduleSheet(
-                            context,
-                            consumerLabel: d.consumerName,
-                            initialTime: d.scheduledTime,
-                            initialLocation: d.location,
-                            confirmLabel: 'Save Changes',
-                            onConfirm: (time, location) {
-                              final error = context.read<DonorProvider>().rescheduleDonation(
-                                    d.id,
-                                    time,
-                                    location.isEmpty ? d.location : location,
-                                  );
-                              if (error == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                  content: Text('Pickup rescheduled — the consumer has been notified.'),
-                                  backgroundColor: Color(0xFF16A34A),
-                                ));
-                              }
-                              return error;
-                            },
-                          ),
-                          onCancel: () async {
-                            final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (dialogContext) => AlertDialog(
-                                title: const Text('Cancel donation?'),
-                                content: Text('Cancel the donation scheduled for ${d.consumerName}?'),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Keep it')),
-                                  TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Cancel donation')),
-                                ],
-                              ),
-                            );
-                            if (confirmed != true || !context.mounted) return;
-                            final error = context.read<DonorProvider>().cancelDonation(d.id);
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+                ),
+                child: Wrap(
+                  spacing: 20,
+                  runSpacing: 10,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Switch(
+                          value: donor.isAvailable,
+                          activeTrackColor: const Color(0xFF16A34A),
+                          onChanged: (value) {
+                            final message = donor.setAvailability(value);
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(error ?? 'Donation cancelled — the consumer has been notified.'),
-                              backgroundColor: error == null ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                              content: Text(message),
+                              backgroundColor: value ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
                             ));
                           },
-                        ))
-                    .toList(),
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
-
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(10), border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
-            child: Row(children: [
-              Icon(Icons.search, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-              const SizedBox(width: 8),
-              Expanded(child: TextField(
-                onChanged: (value) => setState(() => _search = value),
-                decoration: InputDecoration(hintText: 'Search consumers...', border: InputBorder.none, hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF))),
-              )),
-            ]),
-          ),
-          const SizedBox(height: 14),
-
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: ['All', 'Available', 'Unavailable'].map((avail) {
-                final isSelected = _availabilityFilter == avail;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _HoverScale(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _availabilityFilter = avail),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
                         ),
-                        child: Row(children: [
-                          Icon(
-                            avail == 'Available' ? Icons.check_circle_outline : (avail == 'Unavailable' ? Icons.cancel_outlined : Icons.filter_list),
-                            size: 13,
-                            color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)),
+                        Text('Available for donations', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      ],
+                    ),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () async {
+                        final picked = await showTimePicker(context: context, initialTime: donor.preferredPickupTime);
+                        if (picked != null) donor.setPreferredPickupTime(picked);
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.schedule, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Default pickup time: ${donor.preferredPickupTime.format(context)}',
+                            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: isDark ? Colors.white : const Color(0xFF121212)),
                           ),
                           const SizedBox(width: 4),
-                          Text(avail, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
-                        ]),
+                          Icon(Icons.edit_outlined, size: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                        ],
                       ),
                     ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
 
-          if (consumers.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
-              ),
-              child: Column(
-                children: [
-                  Icon(Icons.groups_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
-                  const SizedBox(height: 12),
-                  Text('No consumers found', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
-                  const SizedBox(height: 4),
-                  Text('Try a different search or filter.', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
-                ],
-              ),
-            )
-          else
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 320,
-                mainAxisExtent: 300,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
-              itemCount: consumers.length,
-              itemBuilder: (_, i) {
-                final account = consumers[i];
-                final count = donor.donationCountFor(account.name);
-                return _ConsumerCard(
-                  account: account,
-                  streak: count,
-                  onDonate: () => _showDonateSheet(
-                    context,
-                    consumerLabel: account.name,
-                    initialTime: _nextOccurrence(donor.preferredPickupTime),
-                    initialLocation: _dummyLocation,
-                    onConfirm: (itemName, category, quantity, time, location) {
-                      context.read<DonorProvider>().donateToConsumer(
-                            consumerId: account.id,
-                            consumerName: account.name,
-                            itemName: itemName,
-                            category: category,
-                            quantity: quantity,
-                            scheduledTime: time,
-                            location: location.isEmpty ? _dummyLocation : location,
-                          );
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Donation scheduled for ${account.name}'),
-                        backgroundColor: const Color(0xFF16A34A),
-                      ));
-                      return null;
-                    },
+              if (upcoming.isNotEmpty) ...[
+                _SectionCard(
+                  title: 'Upcoming Donations',
+                  icon: Icons.event_available_outlined,
+                  child: Column(
+                    children: upcoming
+                        .map((d) => _UpcomingDonationRow(
+                              donation: d,
+                              onEdit: () => _showScheduleSheet(
+                                context,
+                                consumerLabel: d.consumerName,
+                                initialTime: d.scheduledTime,
+                                initialLocation: d.location,
+                                confirmLabel: 'Save Changes',
+                                onConfirm: (time, location) {
+                                  final error = context.read<DonorProvider>().rescheduleDonation(
+                                        d.id,
+                                        time,
+                                        location.isEmpty ? d.location : location,
+                                      );
+                                  if (error == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                      content: Text('Pickup rescheduled — the consumer has been notified.'),
+                                      backgroundColor: Color(0xFF16A34A),
+                                    ));
+                                  }
+                                  return error;
+                                },
+                              ),
+                              onCancel: () async {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (dialogContext) => AlertDialog(
+                                    title: const Text('Cancel donation?'),
+                                    content: Text('Cancel the donation scheduled for ${d.consumerName}?'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Keep it')),
+                                      TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Cancel donation')),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed != true || !context.mounted) return;
+                                final error = context.read<DonorProvider>().cancelDonation(d.id);
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                  content: Text(error ?? 'Donation cancelled — the consumer has been notified.'),
+                                  backgroundColor: error == null ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                                ));
+                              },
+                            ))
+                        .toList(),
                   ),
-                );
-              },
-            ),
-        ],
-      ),
+                ),
+                const SizedBox(height: 20),
+              ],
+
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(10), border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+                child: Row(children: [
+                  Icon(Icons.search, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                  const SizedBox(width: 8),
+                  Expanded(child: TextField(
+                    onChanged: (value) => setState(() => _search = value),
+                    decoration: InputDecoration(hintText: 'Search consumers...', border: InputBorder.none, hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF))),
+                  )),
+                ]),
+              ),
+              const SizedBox(height: 14),
+
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: ['All', 'Available', 'Unavailable'].map((avail) {
+                    final isSelected = _availabilityFilter == avail;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _HoverScale(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _availabilityFilter = avail),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+                            ),
+                            child: Row(children: [
+                              Icon(
+                                avail == 'Available' ? Icons.check_circle_outline : (avail == 'Unavailable' ? Icons.cancel_outlined : Icons.filter_list),
+                                size: 13,
+                                color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(avail, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
+                            ]),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              if (consumers.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.groups_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
+                      const SizedBox(height: 12),
+                      Text('No consumers found', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      const SizedBox(height: 4),
+                      Text('Try a different search or filter.', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                    ],
+                  ),
+                )
+              else
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 320,
+                    mainAxisExtent: 300,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: consumers.length,
+                  itemBuilder: (_, i) {
+                    final account = consumers[i];
+                    final count = donor.donationCountFor(account.name);
+                    return _ConsumerCard(
+                      account: account,
+                      streak: count,
+                      onDonate: () => _showDonateSheet(
+                        context,
+                        consumerLabel: account.name,
+                        initialTime: _nextOccurrence(donor.preferredPickupTime),
+                        initialLocation: _dummyLocation,
+                        onConfirm: (itemName, category, quantity, time, location) {
+                          context.read<DonorProvider>().donateToConsumer(
+                                consumerId: account.id,
+                                consumerName: account.name,
+                                itemName: itemName,
+                                category: category,
+                                quantity: quantity,
+                                scheduledTime: time,
+                                location: location.isEmpty ? _dummyLocation : location,
+                              );
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('Donation scheduled for ${account.name}'),
+                            backgroundColor: const Color(0xFF16A34A),
+                          ));
+                          return null;
+                        },
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
 const _donationCategories = ['Cooked Meals', 'Bakery', 'Dairy', 'Produce', 'Grains', 'Other'];
 
-/// Bottom sheet for starting a new donation: what's being donated, plus
-/// collection time + location. Unlike [_showScheduleSheet], item details
-/// are fixed at donation time and can't be edited afterwards — only the
-/// time/location can change, via the reschedule flow.
 void _showDonateSheet(
   BuildContext context, {
   required String consumerLabel,
@@ -495,10 +506,6 @@ void _showDonateSheet(
   );
 }
 
-/// Bottom sheet for the "reschedule" (edit) flow only — time/location can
-/// change after a donation is scheduled, but what's being donated cannot.
-/// [onConfirm] returns null on success (sheet closes) or an error string to
-/// display inline and keep the sheet open (used for the 12-hour edit gate).
 void _showScheduleSheet(
   BuildContext context, {
   required String consumerLabel,

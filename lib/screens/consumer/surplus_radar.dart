@@ -11,7 +11,6 @@ import '../../widgets/ui/location_picker.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
-import '../../data/mock_data.dart';
 
 // Map-style screen showing nearby surplus food listings as pins on a real
 // OpenStreetMap map (via flutter_map), plus a sortable list alongside it.
@@ -96,14 +95,12 @@ class _SurplusRadarState extends State<SurplusRadar> {
     // (Profile > Edit Profile > Location), falling back to the old Dhaka
     // reference point otherwise.
     final user = context.watch<AuthProvider>().user!;
-    final consumerAccounts = mockAccounts.where((a) => a.mode == UserMode.consumer).toList();
-    final account = consumerAccounts.firstWhere((a) => a.name == user.name, orElse: () => consumerAccounts.first);
-    final youLat = account.latitude ?? 23.81;
-    final youLng = account.longitude ?? 90.41;
+    final youLat = 23.81;
+    final youLng = 90.41;
     final youPoint = LatLng(youLat, youLng);
 
     double distanceFor(Listing l) =>
-        account.latitude != null && account.longitude != null ? haversineKm(youLat, youLng, l.latitude, l.longitude) : (l.distance ?? 99);
+        haversineKm(youLat, youLng, l.latitude, l.longitude);
 
     // Sort listings by (live, when available) distance so the closest
     // surplus food appears first in the side list.
