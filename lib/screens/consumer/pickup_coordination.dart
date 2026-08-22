@@ -55,6 +55,7 @@ class PickupCoordination extends StatelessWidget {
               const SizedBox(height: 12),
               if (pickups.isEmpty)
                 Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.all(40),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
