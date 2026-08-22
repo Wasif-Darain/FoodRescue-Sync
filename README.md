@@ -4,227 +4,231 @@ FoodRescue-Sync is a mobile application designed to connect food donors, consume
 
 ## Project Overview
 
-This Flutter-based application implements a three-role system comprising donors, consumers, and organizations. The platform facilitates food surplus management by providing real-time marketplace discovery, inventory tracking, pickup coordination, and notification management. The backend is powered by Firebase (Authentication, Firestore) with Cloudinary for image uploads.
+This Flutter-based application implements a three-role system comprising donors, consumers, and organizations. The platform facilitates food surplus management by providing real-time marketplace discovery, inventory tracking, pickup coordination, leaderboards, rewards, and notification management. The backend is powered by Firebase (Authentication, Firestore) with Cloudinary for image uploads.
+
+## Tech Stack
+
+While the project relies primarily on Firebase, here is the current state of the listed stack:
+
+- **UI:** Flutter (Dart)
+- **State Management:** Provider
+- **Local Database / Backend:** Firebase (Firestore, Firebase Auth)
+- **Intelligence Engine:** TensorFlow Lite — **not yet implemented.** The original proposal mentioned it, but the current codebase does not include it. There are no `tflite`/`tflite_flutter` dependencies in `pubspec.yaml`.
+- **Location Services:** OpenStreetMap — implemented via the `flutter_map` package which renders OpenStreetMap tiles and uses OSRM for routing directions.
+- **Image Uploads:** Cloudinary (REST API).
+
+> **Note:** Of the listed stack, **TensorFlow Lite is the only item not fully implemented.** All other items (UI, Provider, Firebase, OpenStreetMap) are present and working.
 
 ## Prerequisites
 
-Before running the project locally, ensure the following tools are installed on your system:
+Before running the project locally, ensure you have:
 
-1. Flutter SDK (version 3.0 or higher)
-2. Dart SDK (included with Flutter)
-3. Android Studio or Xcode (for Android and iOS development respectively)
-4. A supported code editor (Visual Studio Code recommended)
-5. A Firebase project (for Authentication and Firestore)
-6. A Cloudinary account (for image uploads)
+1. Flutter SDK (3.12 or higher)
+2. Dart SDK (bundled with Flutter)
+3. Android Studio or Xcode (for Android/iOS respectively)
+4. A code editor (VS Code recommended)
+5. Access to the team's shared **Firebase project**
 
-## Installation Instructions
+## Installation & Setup
 
-Follow these steps to set up the project on your local machine:
+1. **Clone the repository**:
 
-1. Clone the repository to your local directory
+   ```bash
+   git clone [https://github.com/Wasif-Darain/FoodRescue-Sync.git](https://github.com/Wasif-Darain/FoodRescue-Sync.git)
+   cd FoodRescue-Sync
+   ```
 
-2. Navigate to the project root directory
-
-3. Obtain all project dependencies by running the following command:
-
+2. **Install Dart dependencies**:
+   ```bash
    flutter pub get
+   ```
 
-4. Configure Firebase for your project:
-
+3. **Link to the shared Firebase project**:
+   ```bash
    flutterfire configure
+   ```
+   
+> **Note:** Select the shared team project when prompted to generate your local `lib/firebase_options.dart` file. If `flutterfire` is not installed, run `dart pub global activate flutterfire_cli` first.
 
-   This generates the `lib/firebase_options.dart` file with your Firebase project credentials.
-
-5. Verify the Flutter environment configuration:
-
+4. **Verify the Flutter environment**:
+   ```bash
    flutter doctor
+   ```
 
-## Firebase Setup
 
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
 
-2. Enable the **Email/Password** sign-in provider under **Authentication → Sign-in method**
+## Running the Project
 
-3. Create the following Firestore collections:
-   - `users` — user metadata (uid, email, role, name, profileRef)
-   - `organization_profiles` — organization details (orgName, address, contactEmail, contactPhone, isVerified)
-   - `inventory_items` — donor inventory (donorId, name, quantity, expiryDate, isSurplus, category)
-   - `listings` — food listings (donorId, title, description, price, quantity, photoUrls, pickupStart, pickupEnd, status)
+Once configured, run:
 
-4. Configure Firestore security rules to allow authenticated users to read/write their own data
+```bash
+flutter run -d chrome        # for web
+flutter run -d <device-id>   # for Android / iOS
 
-## Cloudinary Setup
+```
 
-1. Create a Cloudinary account at [cloudinary.com](https://cloudinary.com)
+For hot reload:
 
-2. Note your **cloud name** (default: `lobecgxv`)
+```bash
+flutter run -d chrome --continuous
 
-3. Create an **unsigned upload preset** named `foodrescue_preset` under **Settings → Upload**
+```
 
-4. Update the constants in `lib/services/listing_image_manager.dart` if your cloud name or preset differs
+To build a release:
 
-## Running the Project Locally
+```bash
+flutter build apk   # Android
+flutter build ios   # iOS
+flutter build web   # Web
 
-To run the application on your development machine, follow these steps:
+```
 
-1. Connect a physical device or launch an emulator
+## Firestore Collection Schema
 
-2. For web development with Edge browser, execute:
+The app reads and writes the following Firestore collections. Each document's fields are what the Dart models expect.
 
-   flutter run -d edge
+### `users`
 
-3. For Android emulator or device, execute:
+* `uid` (string) — Firebase Auth UID
+* `email` (string)
+* `role` (string) — `donor`, `consumer`, or `admin`
+* `name` (string)
+* `profileRef` (DocumentReference) — points to `organization_profiles/{orgId}`
+* `createdAt` (Timestamp)
+* `latitude` (number, optional)
+* `longitude` (number, optional)
+* `address` (string, optional)
 
-   flutter run -d android
+### `organization_profiles`
 
-4. For iOS simulator or device, execute:
+* `orgName` (string)
+* `address` (string)
+* `contactEmail` (string)
+* `contactPhone` (string)
+* `isVerified` (bool)
+* `latitude` (number, optional)
+* `longitude` (number, optional)
 
-   flutter run -d ios
+### `inventory_items`
 
-5. To run with continuous hot reload during development, use:
+* `donorId` (string) — user UID
+* `name` (string)
+* `barcode` (string, optional)
+* `quantity` (number)
+* `expiryDate` (Timestamp)
+* `isSurplus` (bool)
+* `category` (string) — e.g. `Cooked Meals`, `Bakery`, `Produce`
+* `imageUrl` (string, optional)
 
-   flutter run -d edge --continuous
+### `listings`
 
-6. To build a release version for production, execute:
+* `donorId` (string)
+* `donorName` (string)
+* `title` (string)
+* `description` (string)
+* `category` (string)
+* `price` (number)
+* `quantity` (number)
+* `unit` (string)
+* `photoUrls` (List)
+* `pickupStart` (Timestamp)
+* `pickupEnd` (Timestamp)
+* `latitude` (number)
+* `longitude` (number)
+* `address` (string, optional)
+* `status` (string) — `active`, `claimed`, `expired`
+* `claimDeadline` (Timestamp, optional)
 
-   flutter build apk (for Android)
-   flutter build ios (for iOS)
-   flutter build web (for web)
+### `requests`
+
+* `consumerId` (string)
+* `listingId` (string)
+* `requestedQuantity` (number)
+* `unit` (string)
+* `status` (string) — `pending`, `accepted`, `rejected`, `completed`
+* `createdAt` (Timestamp)
+* `updatedAt` (Timestamp, optional)
+* For bulk requests: `orgName`, `contactPerson`, `phone`, `address`, `requiredDate`, `peopleToFeed`, `items` (list of maps), `notes`
+
+### `pickups`
+
+* `requestId` (string)
+* `consumerId` (string) — for consumer pickups
+* `volunteerDriverId` (string, optional)
+* `scheduledTime` (Timestamp, optional)
+* `completedAt` (Timestamp, optional)
+* `status` (string) — `scheduled`, `enRoute`, `completed`
+* `latitude` (number)
+* `longitude` (number)
+* `address` (string, optional)
+
+### `donation_logs`
+
+* `donorId` (string)
+* `recipientId` (string)
+* `listingId` (string)
+* `totalWeight` (number)
+* `itemSummary` (Map<string, number>)
+* `completedAt` (Timestamp)
+
+### `notifications`
+
+* `recipientUid` (string)
+* `payloadType` (string) — e.g. `listing`, `request`, `pickup`, `system`
+* `message` (string)
+* `isRead` (bool)
+* `createdAt` (Timestamp)
 
 ## Project Structure
 
-The application follows a modular architecture organized as follows:
+The application follows a modular architecture:
 
-1. lib/screens/donor contains donor-specific functionality including dashboard, inventory management, and listing creation
-
-2. lib/screens/consumer contains consumer-specific functionality including marketplace discovery, radar visualization, and request tracking
-
-3. lib/screens/shared contains common screens used across multiple roles including profile settings and notification management
-
-4. lib/widgets contains reusable UI components organized by type (layout and UI)
-
-5. lib/data contains mock data and data models
-
-6. lib/providers contains state management logic with Firebase integration
-
-7. lib/models contains Firestore-backed data models with serialization
-
-8. lib/services contains external service integrations (Cloudinary image uploads)
+1. **`lib/screens/`** — feature screens grouped by role (donor, consumer, admin, shared).
+2. **`lib/widgets/`** — reusable layout and UI components.
+3. **`lib/models/`** — Firestore-backed models with `fromFirestore`/`toMap`.
+4. **`lib/providers/`** — Provider state management with Firebase integration.
+5. **`lib/services/`** — external service integrations (Cloudinary image uploads).
+6. **`lib/router.dart`** — GoRouter navigation.
+7. **`lib/utils/`** — helpers (e.g., password validator, haversine distance).
 
 ```
 FoodRescue-Sync/
 |
 |-- lib/
-|   |-- screens/
-|   |   |-- donor/
-|   |   |   |-- create_listing.dart
-|   |   |   |-- donation_log.dart
-|   |   |   |-- donor_consumers.dart
-|   |   |   |-- donor_dashboard.dart
-|   |   |   |-- expiry_tracker.dart
-|   |   |
-|   |   |-- consumer/
-|   |   |   |-- bulk_request.dart
-|   |   |   |-- consumer_marketplace.dart
-|   |   |   |-- pickup_coordination.dart
-|   |   |   |-- request_status_tracker.dart
-|   |   |   |-- surplus_radar.dart
-|   |   |
-|   |   |-- shared/
-|   |   |   |-- edit_profile.dart
-|   |   |   |-- notification_center.dart
-|   |   |   |-- profile_settings.dart
-|   |   |
-|   |   |-- admin/
-|   |   |   |-- account_management.dart
-|   |   |   |-- admin_dashboard.dart
-|   |   |
-|   |   |-- login_register_screen.dart
-|   |   |-- password_recovery_screen.dart
-|   |   |-- welcome_screen.dart
-|   |
-|   |-- widgets/
-|   |   |-- layout/
-|   |   |   |-- app_layout.dart
-|   |   |   |-- bottom_nav_bar.dart
-|   |   |
-|   |   |-- ui/
-|   |   |   |-- app_badge.dart
-|   |   |   |-- app_button.dart
-|   |   |   |-- stat_card.dart
-|   |   |   |-- photo_picker_row.dart
-|   |   |   |-- countdown_timer.dart
-|   |
-|   |-- data/
-|   |   |-- mock_data.dart
-|   |
-|   |-- models/
-|   |   |-- models.dart
-|   |   |-- user.dart
-|   |   |-- organization_profile.dart
-|   |   |-- inventory_item.dart
-|   |   |-- listing.dart
-|   |   |-- request.dart
-|   |   |-- pickup.dart
-|   |   |-- donation_log.dart
-|   |   |-- notification_model.dart
-|   |
-|   |-- providers/
-|   |   |-- auth_provider.dart
-|   |   |-- donor_provider.dart
-|   |   |-- consumer_provider.dart
-|   |   |-- admin_provider.dart
-|   |   |-- theme_provider.dart
-|   |
-|   |-- services/
-|   |   |-- listing_image_manager.dart
-|   |
-|   |-- firebase_options.dart
-|   |-- router.dart
+|   |-- screens/ (donor, consumer, shared, admin, ...)
+|   |-- widgets/ (layout, ui)
+|   |-- models/ (Firestore-backed models)
+|   |-- providers/ (auth, donor, consumer, admin, theme)
+|   |-- services/ (listing_image_manager)
+|   |-- utils/
+|   |-- firebase_options.dart (generated)
 |   |-- main.dart
+|   |-- router.dart
 |
+|-- functions/ (Cloud Functions — future)
 |-- pubspec.yaml
-|-- pubspec.lock
-|-- analysis_options.yaml
 |-- README.md
+
 ```
 
 ## Key Features
 
-1. Marketplace Discovery: Browse and filter available food listings by category and listing type
-
-2. Surplus Radar: Visualize nearby food sources on an interactive map with current location marker
-
-3. Inventory Management: Track food inventory with expiry dates and barcode scanning
-
-4. Pickup Coordination: Schedule and track food pickups with real-time status updates
-
-5. Bulk Requests: Submit large-scale food requests for organizational use
-
-6. Donation Logging: Record and document all donations made through the platform
-
-7. Notification System: Receive alerts for listing updates, request status changes, and pickup reminders
-
-8. Firebase Authentication: Email/password sign-in, sign-up, and password recovery
-
-9. Cloudinary Image Uploads: Secure image hosting for food listings
-
-## Tech Stack
-
-- Flutter 3.12.2
-- Dart 3.12.2
-- Firebase Core 3.12.0
-- Firebase Auth 5.5.0
-- Cloud Firestore 5.6.4
-- go_router 14.0.0
-- provider 6.1.2
-- http 1.6.0
-- Cloudinary (REST API)
+1. **Marketplace Discovery** — browse/filter food listings by category and type.
+2. **Surplus Radar** — OpenStreetMap view + OSRM routing.
+3. **Inventory Management** — track food with expiry dates and categories.
+4. **Pickup Coordination** — schedule/track pickups with status updates.
+5. **Bulk Requests** — large-scale organizational requests.
+6. **Donation Logging** — tax/impact history.
+7. **Notifications** — Firestore-driven alerts, read/unread.
+8. **Leaderboard** — top donors & consumers computed from real donation/pickup data.
+9. **Rewards/Badges** — level and badges computed from real activity (donations & weight saved).
+10. **Firebase Auth** — email/password, sign-up, password recovery.
+11. **Cloudinary Image Uploads** — for listing photos.
 
 ## Deployment Notes
 
-The application is configured for deployment across multiple platforms including Android, iOS, and web browsers. Ensure platform-specific configuration files are properly updated before deployment. Firebase and Cloudinary credentials must be configured in the Firebase Console and Cloudinary Dashboard respectively.
+The app targets Android, iOS, and Web. After linking Firebase with `flutterfire configure`, build with the `flutter build` commands above. On web, Firestore + Cloudinary handle the backend and storage respectively.
 
 ## Support
 
-For technical assistance or questions regarding the project, refer to the project documentation or contact the development team.
+For technical assistance, refer to the docs or open an issue on the GitHub repository.
