@@ -26,11 +26,11 @@ class DonationLogScreen extends StatelessWidget {
         : FirebaseFirestore.instance
             .collection('donation_logs')
             .where(roleField, isEqualTo: uid)
-            .orderBy('completedAt', descending: true)
             .snapshots()
             .map((snap) => snap.docs
                 .map((doc) => DonationLogModel.fromFirestore(doc))
-                .toList());
+                .toList()
+              ..sort((a, b) => b.completedAt.compareTo(a.completedAt)));
 
     return StreamBuilder<List<DonationLogModel>>(
       stream: stream,
