@@ -10,13 +10,16 @@ class DonorProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   StreamSubscription<QuerySnapshot>? _inventorySub;
   StreamSubscription<QuerySnapshot>? _listingsSub;
+  StreamSubscription<User?>? _authSub;
 
   List<InventoryItem> _inventory = [];
   List<Listing> _listings = [];
+  List<Listing> _allListings = [];
   bool _isLoading = true;
 
   List<InventoryItem> get inventory => List.unmodifiable(_inventory);
   List<Listing> get listings => List.unmodifiable(_listings);
+  List<Listing> get allListings => List.unmodifiable(_allListings);
   bool get isLoading => _isLoading;
 
   Stream<List<InventoryItem>> get inventoryStream {
@@ -44,7 +47,24 @@ class DonorProvider extends ChangeNotifier {
   }
 
   DonorProvider() {
-    _subscribe();
+    _authSub = _auth.authStateChanges().listen((user) {
+      _inventorySub?.cancel();
+      _listingsSub?.cancel();
+      _inventorySub = null;
+      _listingsSub = null;
+      _inventory = [];
+      _listings = [];
+      notifyListeners();
+      _subscribe();
+    });
+    _subscribeAllListings();
+  }
+
+  void _subscribeAllListings() {
+    _firestore.collection('listings').snapshots().listen((snapshot) {
+      _allListings = snapshot.docs.map(_listingFromDoc).toList();
+      notifyListeners();
+    });
   }
 
   void _subscribe() {
@@ -368,6 +388,7 @@ class DonorProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _authSub?.cancel();
     _inventorySub?.cancel();
     _listingsSub?.cancel();
     super.dispose();

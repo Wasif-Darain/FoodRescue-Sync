@@ -12,8 +12,18 @@ class AuthProvider extends ChangeNotifier {
   AppUser? _user;
   String? _errorMessage;
   bool _isLoading = false;
+  double _maxRadiusKm = 10;
+  int _unattendedAfterHours = 24;
+  double? _latitude;
+  double? _longitude;
+  String? _address;
 
   AppUser? get user => _user;
+  String? get address => _address;
+  double get maxRadiusKm => _maxRadiusKm;
+  int get unattendedAfterHours => _unattendedAfterHours;
+  double? get latitude => _latitude;
+  double? get longitude => _longitude;
   bool get isAuthenticated => _user != null;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
@@ -37,6 +47,11 @@ class AuthProvider extends ChangeNotifier {
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         final role = data['role'] as String? ?? 'consumer';
+        _maxRadiusKm = (data['maxRadiusKm'] as num?)?.toDouble() ?? 10;
+        _unattendedAfterHours = (data['unattendedAfterHours'] as num?)?.toInt() ?? 24;
+        _latitude = (data['latitude'] as num?)?.toDouble();
+        _longitude = (data['longitude'] as num?)?.toDouble();
+        _address = data['address'] as String?;
         _user = AppUser(
           id: 0,
           name: data['name'] as String? ?? firebaseUser.displayName ?? 'User',
@@ -203,6 +218,38 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateMaxRadiusKm(double km) async {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) return;
+    final previous = _maxRadiusKm;
+    _maxRadiusKm = km;
+    notifyListeners();
+    try {
+      await _firestore.collection('users').doc(firebaseUser.uid).update({
+        'maxRadiusKm': km,
+      });
+    } catch (_) {
+      _maxRadiusKm = previous;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateUnattendedAfterHours(int hours) async {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) return;
+    final previous = _unattendedAfterHours;
+    _unattendedAfterHours = hours;
+    notifyListeners();
+    try {
+      await _firestore.collection('users').doc(firebaseUser.uid).update({
+        'unattendedAfterHours': hours,
+      });
+    } catch (_) {
+      _unattendedAfterHours = previous;
+      notifyListeners();
+    }
+  }
+
   Future<void> updateOwnLocation({
     required double lat,
     required double lng,
@@ -211,11 +258,13 @@ class AuthProvider extends ChangeNotifier {
     final firebaseUser = _auth.currentUser;
     if (firebaseUser == null) return;
     try {
+      _address = address;
       await _firestore.collection('users').doc(firebaseUser.uid).update({
         'latitude': lat,
         'longitude': lng,
         'address': address,
       });
+      notifyListeners();
     } catch (e) {
       _errorMessage = 'Failed to update location. Please try again.';
       notifyListeners();

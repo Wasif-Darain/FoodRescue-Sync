@@ -88,23 +88,25 @@ class _SurplusRadarState extends State<SurplusRadar> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final now = DateTime.now();
-    final listings = context.watch<DonorProvider>().listings.where((l) => l.pickupEnd.isAfter(now)).toList();
+    final listings = context.watch<DonorProvider>().allListings.where((l) => l.pickupEnd.isAfter(now)).toList();
 
     // Resolve the current consumer's own account so the "You" marker and
     // live distances are based on a real position when one has been set
     // (Profile > Edit Profile > Location), falling back to the old Dhaka
     // reference point otherwise.
     final user = context.watch<AuthProvider>().user!;
-    final youLat = 23.81;
-    final youLng = 90.41;
+    final maxRadiusKm = context.watch<AuthProvider>().maxRadiusKm;
+    final youLat = context.watch<AuthProvider>().latitude ?? 23.81;
+    final youLng = context.watch<AuthProvider>().longitude ?? 90.41;
     final youPoint = LatLng(youLat, youLng);
 
     double distanceFor(Listing l) =>
         haversineKm(youLat, youLng, l.latitude, l.longitude);
 
-    // Sort listings by (live, when available) distance so the closest
-    // surplus food appears first in the side list.
-    final sorted = [...listings]..sort((a, b) => distanceFor(a).compareTo(distanceFor(b)));
+    // Only listings inside the user's configured radar radius appear on
+    // the map and in the side list.
+    final sorted = listings.where((l) => distanceFor(l) <= maxRadiusKm).toList()
+      ..sort((a, b) => distanceFor(a).compareTo(distanceFor(b)));
 
     return AppLayout(
       title: 'Surplus Radar',
@@ -132,6 +134,16 @@ class _SurplusRadarState extends State<SurplusRadar> {
                     RichAttributionWidget(
                       attributions: [TextSourceAttribution('OpenStreetMap contributors')],
                     ),
+                    CircleLayer(circles: [
+                      CircleMarker(
+                        point: youPoint,
+                        radius: maxRadiusKm * 1000,
+                        useRadiusInMeter: true,
+                        color: const Color(0xFF1D4ED8).withValues(alpha: 0.08),
+                        borderColor: const Color(0xFF1D4ED8).withValues(alpha: 0.35),
+                        borderStrokeWidth: 1.5,
+                      ),
+                    ]),
                     if (_routePoints != null)
                       PolylineLayer(polylines: [
                         Polyline(points: _routePoints!, strokeWidth: 4, color: const Color(0xFF1D4ED8)),

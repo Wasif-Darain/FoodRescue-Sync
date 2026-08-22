@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/rating_stars.dart';
+import '../../widgets/ui/detail_sheet.dart';
 import '../../models/request.dart';
 import '../../providers/consumer_provider.dart';
 
@@ -116,7 +117,20 @@ class _RequestRow extends StatelessWidget {
       RequestStatusModel.rejected  => ('Rejected',  BadgeVariant.red),
     };
     final date = '${request.createdAt.year}-${request.createdAt.month.toString().padLeft(2, '0')}-${request.createdAt.day.toString().padLeft(2, '0')}';
-    return Container(
+    return InkWell(
+      onTap: () => showDetailSheet(
+        context,
+        title: 'Request #${request.id}',
+        subtitle: 'Bulk request details',
+        rows: [
+          DetailRow(Icons.local_shipping_outlined, 'Status', label),
+          DetailRow(Icons.inventory_2_outlined, 'Requested Quantity', '${request.requestedQuantity} ${request.unit}'),
+          DetailRow(Icons.calendar_today_outlined, 'Created', date),
+          if (request.updatedAt != null)
+            DetailRow(Icons.update_outlined, 'Last Updated', '${request.updatedAt!.day}/${request.updatedAt!.month}/${request.updatedAt!.year}'),
+        ],
+      ),
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(border: Border(top: BorderSide(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)))),
       child: Column(
@@ -138,6 +152,7 @@ class _RequestRow extends StatelessWidget {
             RatingStars(reviewLabel: 'Rate this request'),
           ],
         ],
+      ),
       ),
     );
   }

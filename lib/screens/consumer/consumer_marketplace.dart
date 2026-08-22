@@ -5,6 +5,8 @@ import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/countdown_timer.dart';
 import '../../widgets/ui/date_time_field.dart';
+import '../../widgets/ui/location_picker.dart';
+import '../../widgets/ui/detail_sheet.dart';
 import '../../models/listing.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
@@ -288,11 +290,13 @@ class _ListingCard extends StatelessWidget {
   void _showClaimSheet(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final consumer = context.read<ConsumerProvider>();
+    String? deliveryAddress = context.read<AuthProvider>().address;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (sheetContext) => Container(
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => Container(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -335,12 +339,42 @@ class _ListingCard extends StatelessWidget {
                 Text('Pickup by: ${listing.pickupEnd.hour.toString().padLeft(2, '0')}:${listing.pickupEnd.minute.toString().padLeft(2, '0')} · ${listing.pickupEnd.day}/${listing.pickupEnd.month}/${listing.pickupEnd.year}',
                   style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
               ]),
+              const SizedBox(height: 12),
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () async {
+                  final picked = await pickLocation(sheetContext);
+                  if (picked == null) return;
+                  setSheetState(() => deliveryAddress = picked.address);
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+                  ),
+                  child: Row(children: [
+                    Icon(Icons.local_shipping_outlined, size: 15, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        deliveryAddress ?? 'Delivery address — tap to pick on map',
+                        style: TextStyle(fontSize: 12.5, color: deliveryAddress == null ? const Color(0xFFBFBFBF) : (isDark ? Colors.white : const Color(0xFF121212))),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(Icons.edit_outlined, size: 14, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                  ]),
+                ),
+              ),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () async {
-                    final success = await consumer.claimListing(listing.docId ?? '', listing.quantity);
+                    final success = await consumer.claimListing(listing.docId ?? '', listing.quantity, deliveryAddress: deliveryAddress);
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text(success ? 'Claimed: ${listing.title}' : 'Failed to claim: ${listing.title}'),
@@ -365,7 +399,7 @@ class _ListingCard extends StatelessWidget {
                     final picked = await pickDateTime(sheetContext, initial: DateTime.now().add(const Duration(hours: 1)));
                     if (picked == null) return;
                     if (!context.mounted) return;
-                    final success = await consumer.claimListing(listing.docId ?? '', listing.quantity);
+                    final success = await consumer.claimListing(listing.docId ?? '', listing.quantity, scheduledTime: picked, deliveryAddress: deliveryAddress);
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text(success ? 'Scheduled pickup for ${listing.title}' : 'Failed to claim: ${listing.title}'),
@@ -386,6 +420,7 @@ class _ListingCard extends StatelessWidget {
           ),
         ),
       ),
+        ),
     );
   }
 
@@ -398,7 +433,21 @@ class _ListingCard extends StatelessWidget {
         'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80';
 
     return _HoverScale(
-      child: Container(
+      child: GestureDetector(
+        onTap: () => showListingDetailSheet(
+          context,
+          title: listing.title,
+          subtitle: 'Listed by ${listing.donorName}',
+          donorId: listing.donorName,
+          rows: [
+            const DetailRow(Icons.category_outlined, 'Category', ''),
+            DetailRow(Icons.inventory_2_outlined, 'Quantity', '${listing.quantity}'),
+            DetailRow(Icons.payments_outlined, 'Price', listing.listingType == ListingType.donation ? 'Free' : '৳${listing.price.toStringAsFixed(0)}'),
+            DetailRow(Icons.schedule_outlined, 'Pickup window', '${listing.pickupStart.hour.toString().padLeft(2, '0')}:${listing.pickupStart.minute.toString().padLeft(2, '0')} – ${listing.pickupEnd.hour.toString().padLeft(2, '0')}:${listing.pickupEnd.minute.toString().padLeft(2, '0')} · ${listing.pickupEnd.day}/${listing.pickupEnd.month}/${listing.pickupEnd.year}'),
+            if (listing.address != null) DetailRow(Icons.location_on_outlined, 'Address', listing.address!),
+          ],
+        ),
+        child: Container(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(16),
@@ -527,6 +576,7 @@ class _ListingCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
