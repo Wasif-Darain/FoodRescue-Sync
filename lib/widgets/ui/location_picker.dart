@@ -95,8 +95,12 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
       _results = [];
     });
     try {
+      final c = _picked ?? widget.initial ?? _dhakaFallback;
+      final viewbox =
+          '${c.longitude - 0.5},${c.latitude + 0.5},'
+          '${c.longitude + 0.5},${c.latitude - 0.5}';
       final uri = Uri.parse(
-        'https://nominatim.openstreetmap.org/search?q=${Uri.encodeQueryComponent(query)}&format=json&limit=5&accept-language=en',
+        'https://nominatim.openstreetmap.org/search?q=${Uri.encodeQueryComponent(query)}&format=json&limit=8&accept-language=en&viewbox=$viewbox&bounded=0',
       );
       final response = await http.get(uri, headers: {'User-Agent': _nominatimUserAgent});
       if (!mounted || token != _searchToken) return;

@@ -11,6 +11,7 @@ class RequestModel {
   final RequestStatusModel status;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final bool isBulk;
 
   RequestModel({
     required this.id,
@@ -21,6 +22,7 @@ class RequestModel {
     required this.status,
     required this.createdAt,
     this.updatedAt,
+    this.isBulk = true,
   });
 
   factory RequestModel.fromFirestore(DocumentSnapshot doc) {
@@ -39,6 +41,7 @@ class RequestModel {
       ),
       createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
       updatedAt: updated is Timestamp ? updated.toDate() : null,
+      isBulk: data['isBulk'] as bool? ?? true,
     );
   }
 
@@ -48,6 +51,7 @@ class RequestModel {
       'listingId': listingId,
       'requestedQuantity': requestedQuantity,
       'unit': unit,
+      'isBulk': isBulk,
       'status': status.name,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),

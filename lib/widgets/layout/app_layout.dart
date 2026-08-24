@@ -14,6 +14,7 @@ class AppLayout extends StatelessWidget {
   final String? subtitle;
   final Widget? action;
   final String currentRoute;
+  final bool useOwnScroll;
 
   const AppLayout({
     super.key,
@@ -22,6 +23,7 @@ class AppLayout extends StatelessWidget {
     required this.currentRoute,
     this.subtitle,
     this.action,
+    this.useOwnScroll = false,
   });
 
   @override
@@ -110,15 +112,25 @@ class AppLayout extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: 140 + MediaQuery.of(context).padding.bottom,
-              ),
-              child: child,
-            ),
+            child: useOwnScroll
+                ? Padding(
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 16,
+                      bottom: 140 + MediaQuery.of(context).padding.bottom,
+                    ),
+                    child: child,
+                  )
+                : SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 16,
+                      bottom: 140 + MediaQuery.of(context).padding.bottom,
+                    ),
+                    child: child,
+                  ),
           ),
         ],
       ),

@@ -6,6 +6,8 @@ import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/user_badge.dart';
 import '../../widgets/ui/countdown_timer.dart';
 import '../../widgets/ui/date_time_field.dart';
+import 'package:latlong2/latlong.dart';
+import '../../widgets/ui/location_picker.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
@@ -42,10 +44,15 @@ class _DonorConsumersState extends State<DonorConsumers> {
         .collection('users')
         .where('role', isEqualTo: 'consumer')
         .snapshots()
-        .map((snap) => snap.docs.map((doc) {
+        .map((snap) {
+          final seen = <String>{};
+          return snap.docs.map((doc) {
           final data = doc.data();
+          final email = data['email'] as String? ?? '';
+          if (email.isNotEmpty && !seen.add(email)) return null;
           return RegisteredAccount(
             id: 0,
+            uid: doc.id,
             name: data['name'] as String? ?? '',
             email: data['email'] as String? ?? '',
             accountType: AccountType.ngo,
@@ -53,11 +60,12 @@ class _DonorConsumersState extends State<DonorConsumers> {
             status: AccountStatus.approved,
             joinedAt: DateTime.now(),
             isAvailable: data['isAvailable'] as bool? ?? true,
-            latitude: data['latitude'] as double?,
-            longitude: data['longitude'] as double?,
+            latitude: (data['latitude'] as num?)?.toDouble(),
+            longitude: (data['longitude'] as num?)?.toDouble(),
             address: data['address'] as String?,
           );
-        }).toList());
+          }).whereType<RegisteredAccount>().toList();
+        });
 
     final upcoming = donor.scheduledDonations.where((d) => d.status == DonationScheduleStatus.scheduled).toList();
 
@@ -317,12 +325,13 @@ class _DonorConsumersState extends State<DonorConsumers> {
                         context,
                         consumerLabel: account.name,
                         initialTime: _nextOccurrence(donor.preferredPickupTime),
-                        initialLocation: _dummyLocation,
-                        onConfirm: (itemName, category, quantity, time, location) {
+                        initialLocation: account.address ?? _dummyLocation,
+                        onConfirm: (itemName, description, category, quantity, time, location) {
                           context.read<DonorProvider>().donateToConsumer(
-                                consumerId: account.id,
+                                consumerId: account.uid,
                                 consumerName: account.name,
                                 itemName: itemName,
+                                description: description,
                                 category: category,
                                 quantity: quantity,
                                 scheduledTime: time,
@@ -360,12 +369,13 @@ void _showDonateSheet(
   required String consumerLabel,
   required DateTime initialTime,
   required String initialLocation,
-  required String? Function(String itemName, String category, int quantity, DateTime time, String location) onConfirm,
+  required String? Function(String itemName, String description, String category, int quantity, DateTime time, String location) onConfirm,
 }) {
   final t = context.l10n;
   var selectedTime = initialTime;
   var selectedCategory = _donationCategories(t).first.$1;
   final itemCtrl = TextEditingController();
+  final descCtrl = TextEditingController();
   final quantityCtrl = TextEditingController(text: '1');
   final locationCtrl = TextEditingController(text: initialLocation);
   String? error;
@@ -415,6 +425,15 @@ void _showDonateSheet(
                       controller: itemCtrl,
                       style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
                       decoration: fieldDecoration().copyWith(hintText: t.dcItemHint),
+                    ),
+                    const SizedBox(height: 12),
+                    label('Description'),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: descCtrl,
+                      maxLines: 2,
+                      style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
+                      decoration: fieldDecoration().copyWith(hintText: 'Freshness, allergens, packaging details...'),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -493,7 +512,7 @@ void _showDonateSheet(
                             setSheetState(() => error = t.dcValidQuantityError);
                             return;
                           }
-                          final result = onConfirm(itemName, selectedCategory, quantity, selectedTime, locationCtrl.text.trim());
+                          final result = onConfirm(itemName, descCtrl.text.trim(), selectedCategory, quantity, selectedTime, locationCtrl.text.trim());
                           if (result == null) {
                             Navigator.pop(sheetContext);
                           } else {
@@ -733,6 +752,12 @@ class _ConsumerCard extends StatelessWidget {
     final tier = consumerTierFor(account);
     final tierLabel = consumerTierLabel(t, tier);
     final tierKey = consumerTierKey(tier);
+    final auth = context.watch<AuthProvider>();
+    String? distanceLabel;
+    if (auth.latitude != null && auth.longitude != null && account.latitude != null && account.longitude != null) {
+      final km = haversineKm(auth.latitude!, auth.longitude!, account.latitude!, account.longitude!);
+      distanceLabel = '${km.toStringAsFixed(1)} km away';
+    }
 
     return _HoverScale(
       child: Container(
@@ -784,6 +809,23 @@ class _ConsumerCard extends StatelessWidget {
                 Icon(pickupPreferenceIcon(account.pickupPreference), size: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                 const SizedBox(width: 4),
                 Text(pickupPreferenceLabel(t, account.pickupPreference), style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(Icons.location_on_outlined, size: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    [if (distanceLabel != null) distanceLabel, if (account.address != null) account.address!].join(' · ').isEmpty
+                        ? 'Location not set'
+                        : [if (distanceLabel != null) distanceLabel, if (account.address != null) account.address!].join(' · '),
+                    style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 10),

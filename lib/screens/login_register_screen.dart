@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
@@ -164,7 +165,17 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
       const SizedBox(height: 4),
       Text(t.authStep2Title, style: const TextStyle(fontSize: 13, color: Color(0xFF757575))),
       const SizedBox(height: 24),
-      _Field(icon: Icons.phone_outlined, label: t.authPhoneNumber, ctrl: _phoneCtrl, placeholder: '+880 XXXX XXXXXX', keyboardType: TextInputType.phone),
+      _Field(
+        icon: Icons.phone_outlined,
+        label: t.authPhoneNumber,
+        ctrl: _phoneCtrl,
+        placeholder: '+880 1XXX-XXXXXX',
+        keyboardType: TextInputType.phone,
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')),
+          _BdPhoneFormatter(),
+        ],
+      ),
       const SizedBox(height: 18),
       _Field(icon: Icons.location_on_outlined, label: t.authAddress, ctrl: _addressCtrl, placeholder: t.authAddressHint),
       const SizedBox(height: 18),
@@ -381,18 +392,40 @@ class _AccountTypeGrid extends StatelessWidget {
   }
 }
 
+class _BdPhoneFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    var digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.startsWith('880')) digits = digits.substring(3);
+    if (digits.startsWith('0')) digits = digits.substring(1);
+    if (digits.length > 10) digits = digits.substring(0, 10);
+    final buffer = StringBuffer('+880');
+    for (var i = 0; i < digits.length; i++) {
+      if (i == 4) buffer.write('-');
+      buffer.write(digits[i]);
+    }
+    final formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
 class _Field extends StatelessWidget {
   final IconData icon;
   final String label;
   final TextEditingController ctrl;
   final String placeholder;
   final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
   const _Field({
     required this.icon,
     required this.label,
     required this.ctrl,
     required this.placeholder,
     this.keyboardType,
+    this.inputFormatters,
   });
 
   @override
@@ -404,6 +437,7 @@ class _Field extends StatelessWidget {
       TextField(
         controller: ctrl,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
         decoration: InputDecoration(
           hintText: placeholder,
           hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontSize: 13.5),

@@ -87,6 +87,7 @@ class Listing {
   final String? imageUrl;
   final Uint8List? imageBytes;
   final String? address;
+  final int imageCount;
 
   Listing({
     required this.id,
@@ -108,6 +109,7 @@ class Listing {
     this.imageUrl,
     this.imageBytes,
     this.address,
+    this.imageCount = 1,
   });
 
   Listing copyWith({ListingStatus? status}) => Listing(
@@ -130,6 +132,7 @@ class Listing {
     imageUrl: imageUrl,
     imageBytes: imageBytes,
     address: address,
+    imageCount: imageCount,
   );
 }
 
@@ -195,6 +198,7 @@ class DonationLog {
 
 class RegisteredAccount {
   final int id;
+  final String uid;
   final String name;
   final String email;
   final AccountType accountType;
@@ -216,6 +220,7 @@ class RegisteredAccount {
 
   RegisteredAccount({
     required this.id,
+    this.uid = '',
     required this.name,
     required this.email,
     required this.accountType,
@@ -245,6 +250,7 @@ class RegisteredAccount {
     String? address,
   }) => RegisteredAccount(
     id: id,
+    uid: uid,
     name: name,
     email: email,
     accountType: accountType,
@@ -282,14 +288,16 @@ class AppNotification {
   });
 }
 
-enum DonationScheduleStatus { scheduled, completed, cancelled }
+enum DonationScheduleStatus { scheduled, accepted, completed, cancelled }
 
 class ScheduledDonation {
   final int id;
+  final String? docId;
   final int consumerId;
   final String consumerName;
   final String donorName;
   final String itemName;
+  final String description;
   final String category;
   final int quantity;
   final DateTime scheduledTime;
@@ -300,10 +308,12 @@ class ScheduledDonation {
 
   ScheduledDonation({
     required this.id,
+    this.docId,
     required this.consumerId,
     required this.consumerName,
     required this.donorName,
     required this.itemName,
+    this.description = '',
     required this.category,
     required this.quantity,
     required this.scheduledTime,
@@ -320,10 +330,12 @@ class ScheduledDonation {
     DateTime? lastModifiedAt,
   }) => ScheduledDonation(
     id: id,
+    docId: docId,
     consumerId: consumerId,
     consumerName: consumerName,
     donorName: donorName,
     itemName: itemName,
+    description: description,
     category: category,
     quantity: quantity,
     scheduledTime: scheduledTime ?? this.scheduledTime,

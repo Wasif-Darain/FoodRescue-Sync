@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
+import '../../models/models.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/rating_stars.dart';
 import '../../widgets/ui/detail_sheet.dart';
 import '../../models/request.dart';
 import '../../providers/consumer_provider.dart';
+import '../../providers/donor_provider.dart';
 import '../../l10n/l10n_ext.dart';
 
 class RequestStatusTracker extends StatelessWidget {
@@ -27,7 +29,10 @@ class RequestStatusTracker extends StatelessWidget {
           subtitle: t.reqTrackerSubtitle,
           currentRoute: '/consumer/requests',
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _DirectOffersSection(),
+              const SizedBox(height: 20),
               IntrinsicHeight(
                 child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   for (final s in [RequestStatusModel.pending, RequestStatusModel.accepted, RequestStatusModel.completed, RequestStatusModel.rejected]) ...[
@@ -43,7 +48,8 @@ class RequestStatusTracker extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               if (requests.isEmpty)
-                Container(
+                Center(
+                  child: Container(
                   padding: const EdgeInsets.all(40),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
@@ -59,6 +65,7 @@ class RequestStatusTracker extends StatelessWidget {
                       Text(t.reqTrackerEmptyHint, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                     ],
                   ),
+                ),
                 )
               else
                 Container(
@@ -69,6 +76,88 @@ class RequestStatusTracker extends StatelessWidget {
                 ),
             ],
           ),
+        );
+      },
+    );
+  }
+}
+
+class _DirectOffersSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final consumer = context.watch<ConsumerProvider>();
+    return StreamBuilder<List<ScheduledDonation>>(
+      stream: consumer.myDirectDonationsStream,
+      builder: (context, snapshot) {
+        final offers = (snapshot.data ?? [])
+            .where((d) => d.status == DonationScheduleStatus.scheduled)
+            .toList();
+        if (offers.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Direct Donation Offers', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+            const SizedBox(height: 12),
+            ...offers.map((d) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF16A34A), width: 1.5),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Expanded(child: Text('${d.itemName} · Qty ${d.quantity}', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)))),
+                    AppBadge(label: 'Offer', variant: BadgeVariant.green),
+                  ]),
+                  const SizedBox(height: 4),
+                  Text('From ${d.donorName} · ${d.category}', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                  if (d.description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(d.description, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 2, overflow: TextOverflow.ellipsis),
+                  ],
+                  const SizedBox(height: 4),
+                  Row(children: [
+                    Icon(Icons.access_time, size: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                    const SizedBox(width: 4),
+                    Text('${d.scheduledTime.day}/${d.scheduledTime.month}/${d.scheduledTime.year} at ${d.scheduledTime.hour.toString().padLeft(2, '0')}:${d.scheduledTime.minute.toString().padLeft(2, '0')}', style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                  ]),
+                  if (d.location.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Row(children: [
+                      Icon(Icons.location_on_outlined, size: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                      const SizedBox(width: 4),
+                      Expanded(child: Text(d.location, style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), overflow: TextOverflow.ellipsis)),
+                    ]),
+                  ],
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.read<ConsumerProvider>().respondDirectDonation(d.docId!, true),
+                        icon: const Icon(Icons.check, size: 15),
+                        label: const Text('Accept', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.read<ConsumerProvider>().respondDirectDonation(d.docId!, false),
+                        icon: const Icon(Icons.close, size: 15),
+                        label: const Text('Reject', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, foregroundColor: const Color(0xFFDC2626), elevation: 0, side: const BorderSide(color: Color(0xFFDC2626))),
+                      ),
+                    ),
+                  ]),
+                ]),
+              ),
+            )),
+          ],
         );
       },
     );
@@ -113,6 +202,12 @@ class _RequestRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final kindLabel = request.isBulk ? 'Bulk Request' : 'Request';
+    final allListings = context.watch<DonorProvider>().allListings;
+    final matched = request.listingId.isEmpty
+        ? null
+        : allListings.where((l) => l.docId == request.listingId).firstOrNull;
+    final donorInfo = matched == null ? '' : 'From ${matched.donorName} · ${matched.title}';
     final t = context.l10n;
     final (label, variant) = switch (request.status) {
       RequestStatusModel.pending   => (t.reqStatusPending,   BadgeVariant.orange),
@@ -124,7 +219,7 @@ class _RequestRow extends StatelessWidget {
     return InkWell(
       onTap: () => showDetailSheet(
         context,
-        title: t.reqHashId(request.id),
+        title: '$kindLabel #${request.id}',
         subtitle: t.reqDetails,
         rows: [
           DetailRow(Icons.local_shipping_outlined, t.reqDetailStatus, label),
@@ -143,14 +238,44 @@ class _RequestRow extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(t.reqHashId(request.id), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                child: Text('$kindLabel #${request.id}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
               const SizedBox(width: 8),
               AppBadge(label: label, variant: variant),
             ],
           ),
+          if (donorInfo.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(children: [
+              Icon(Icons.storefront_outlined, size: 12, color: const Color(0xFF16A34A)),
+              const SizedBox(width: 4),
+              Expanded(child: Text(donorInfo, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)), maxLines: 1, overflow: TextOverflow.ellipsis)),
+            ]),
+          ],
           const SizedBox(height: 4),
           Text(t.reqQtyDate('${request.requestedQuantity}', request.unit, date), style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+          if (request.status == RequestStatusModel.pending) ...[
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => context.read<ConsumerProvider>().respondToRequest(request.id, true),
+                  icon: const Icon(Icons.check, size: 15),
+                  label: const Text('Accept', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => context.read<ConsumerProvider>().respondToRequest(request.id, false),
+                  icon: const Icon(Icons.close, size: 15),
+                  label: const Text('Reject', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, foregroundColor: const Color(0xFFDC2626), elevation: 0, side: const BorderSide(color: Color(0xFFDC2626))),
+                ),
+              ),
+            ]),
+          ],
           if (request.status == RequestStatusModel.completed) ...[
             const SizedBox(height: 12),
             RatingStars(reviewLabel: t.reqRateThis),

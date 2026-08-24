@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
+import '../../providers/donor_provider.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/rating_stars.dart';
 import '../../widgets/ui/countdown_timer.dart';
@@ -136,6 +138,12 @@ class _PickupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final allListings = context.watch<DonorProvider>().allListings;
+    final matched = (pickup.listingId == null || pickup.listingId!.isEmpty)
+        ? null
+        : allListings.where((l) => l.docId == pickup.listingId).firstOrNull;
+    final senderName = pickup.donorName?.isNotEmpty == true ? pickup.donorName! : matched?.donorName ?? '';
+    final itemTitle = pickup.listingTitle?.isNotEmpty == true ? pickup.listingTitle! : matched?.title ?? '';
     final t = context.l10n;
     final (label, variant, statusColor) = switch (pickup.status) {
       PickupStatusModel.scheduled => (t.pickupStatusScheduled, BadgeVariant.blue,   const Color(0xFF2563EB)),
@@ -151,6 +159,8 @@ class _PickupCard extends StatelessWidget {
         subtitle: t.pickupDetails,
         rows: [
           DetailRow(Icons.local_shipping_outlined, t.pickupDetailStatus, label),
+          if (senderName.isNotEmpty) DetailRow(Icons.storefront_outlined, 'From', senderName),
+          if (itemTitle.isNotEmpty) DetailRow(Icons.inventory_2_outlined, 'Item', itemTitle),
           if (pickup.scheduledTime != null)
             DetailRow(Icons.access_time, t.pickupDetailScheduled, '${pickup.scheduledTime!.day}/${pickup.scheduledTime!.month}/${pickup.scheduledTime!.year} at ${pickup.scheduledTime!.hour.toString().padLeft(2, '0')}:${pickup.scheduledTime!.minute.toString().padLeft(2, '0')}'),
           if (pickup.completedAt != null)
@@ -167,9 +177,20 @@ class _PickupCard extends StatelessWidget {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(t.pickupHashId(pickup.id), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+          Expanded(
+            child: Text(
+              itemTitle.isNotEmpty ? itemTitle : t.pickupHashId(pickup.id),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212)),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           AppBadge(label: label, variant: variant),
         ]),
+        if (senderName.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          _InfoRow(icon: Icons.storefront_outlined, label: 'From $senderName'),
+        ],
         const SizedBox(height: 12),
         _InfoRow(icon: Icons.location_on_outlined, label: pickup.address ?? t.pickupNoAddress),
         if (pickup.scheduledTime != null) ...[

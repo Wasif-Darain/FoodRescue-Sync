@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/rating_stars.dart';
 import '../../models/donation_log.dart';
+import '../../models/models.dart';
+import '../../providers/auth_provider.dart';
 import '../../l10n/l10n_ext.dart';
 
 class DonationLogScreen extends StatelessWidget {
@@ -14,17 +17,21 @@ class DonationLogScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final uid = FirebaseAuth.instance.currentUser?.uid;
+    // Show the log according to the active mode: donors see the donations
+    // they gave, consumers see the donations they received.
+    final isDonor = context.watch<AuthProvider>().user?.mode == UserMode.donor;
+    final roleField = isDonor ? 'donorId' : 'recipientId';
 
     final stream = uid == null
         ? Stream<List<DonationLogModel>>.value([])
         : FirebaseFirestore.instance
             .collection('donation_logs')
-            .where('donorId', isEqualTo: uid)
-            .orderBy('completedAt', descending: true)
+            .where(roleField, isEqualTo: uid)
             .snapshots()
             .map((snap) => snap.docs
                 .map((doc) => DonationLogModel.fromFirestore(doc))
-                .toList());
+                .toList()
+              ..sort((a, b) => b.completedAt.compareTo(a.completedAt)));
 
     return StreamBuilder<List<DonationLogModel>>(
       stream: stream,
@@ -35,17 +42,19 @@ class DonationLogScreen extends StatelessWidget {
 
         return AppLayout(
           title: t.donationLogTitle,
-          subtitle: t.donationLogSubtitle,
+          subtitle: isDonor ? t.donationLogSubtitle : 'Donations you have received',
           currentRoute: '/donor/donation-log',
           child: Column(
             children: [
-              Row(children: [
-                Expanded(child: _SummaryCard(value: '${logs.length}', label: t.donationLogTotalDonations)),
-                const SizedBox(width: 12),
-                Expanded(child: _SummaryCard(value: total.toStringAsFixed(1), label: t.donationLogWeightKg)),
-                const SizedBox(width: 12),
-                Expanded(child: _SummaryCard(value: '${logs.map((l) => l.recipientId).toSet().length}', label: t.donationLogRecipients)),
-              ]),
+              IntrinsicHeight(
+                child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  Expanded(child: _SummaryCard(value: '${logs.length}', label: isDonor ? t.donationLogTotalDonations : 'Total Received')),
+                  const SizedBox(width: 12),
+                  Expanded(child: _SummaryCard(value: total.toStringAsFixed(1), label: t.donationLogWeightKg)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _SummaryCard(value: '${logs.map((l) => isDonor ? l.recipientId : l.donorId).toSet().length}', label: isDonor ? t.donationLogRecipients : 'Donors')),
+                ]),
+              ),
               const SizedBox(height: 20),
               if (logs.isEmpty)
                 Container(
@@ -59,7 +68,7 @@ class DonationLogScreen extends StatelessWidget {
                     children: [
                       Icon(Icons.receipt_long_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
                       const SizedBox(height: 12),
-                      Text(t.donationLogEmpty, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      Text(isDonor ? t.donationLogEmpty : 'No donations received yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
                     ],
                   ),
                 )
@@ -111,6 +120,7 @@ class _LogRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDonor = context.watch<AuthProvider>().user?.mode == UserMode.donor;
     final t = context.l10n;
     final date = '${log.completedAt.year}-${log.completedAt.month.toString().padLeft(2, '0')}-${log.completedAt.day.toString().padLeft(2, '0')}';
     return Container(
@@ -129,7 +139,14 @@ class _LogRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text(t.donationLogRecipient(log.recipientId, date), style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(
+            isDonor
+                ? t.donationLogRecipient(log.recipientId, date)
+                : 'Donor: ${log.donorId} · $date',
+            style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: 12),
           RatingStars(reviewLabel: t.donationLogRateThis),
         ],

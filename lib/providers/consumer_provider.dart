@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../models/listing.dart';
 import '../models/pickup.dart';
 import '../models/request.dart';
+import '../models/models.dart';
 
 class ConsumerProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -119,10 +120,10 @@ class ConsumerProvider extends ChangeNotifier {
     return _firestore
         .collection('listings')
         .where('status', isEqualTo: ListingStatusModel.active.name)
-        .where('quantity', isGreaterThan: 0)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => ListingModel.fromFirestore(doc))
+            .where((l) => l.quantity > 0)
             .where((l) => l.claimDeadline == null || l.claimDeadline!.isAfter(DateTime.now()))
             .toList());
   }
@@ -133,11 +134,152 @@ class ConsumerProvider extends ChangeNotifier {
     return _firestore
         .collection('requests')
         .where('consumerId', isEqualTo: uid)
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => RequestModel.fromFirestore(doc))
-            .toList());
+            .toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+  }
+
+  Stream<List<ScheduledDonation>> get myDirectDonationsStream {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return Stream.value([]);
+    return _firestore
+        .collection('direct_donations')
+        .where('consumerId', isEqualTo: uid)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final data = doc.data();
+              final scheduled = data['scheduledTime'];
+              final created = data['createdAt'];
+              return ScheduledDonation(
+                id: doc.id.hashCode,
+                docId: doc.id,
+                consumerId: 0,
+                consumerName: '',
+                donorName: data['donorName'] as String? ?? '',
+                itemName: data['itemName'] as String? ?? '',
+                description: data['description'] as String? ?? '',
+                category: data['category'] as String? ?? '',
+                quantity: (data['quantity'] as num?)?.toInt() ?? 0,
+                scheduledTime: scheduled is Timestamp ? scheduled.toDate() : DateTime.now(),
+                location: data['location'] as String? ?? '',
+                status: DonationScheduleStatus.values.firstWhere(
+                  (e) => e.name == (data['status'] as String? ?? 'scheduled'),
+                  orElse: () => DonationScheduleStatus.scheduled,
+                ),
+                createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
+                lastModifiedAt: DateTime.now(),
+              );
+            }).toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+  }
+
+  Future<void> respondDirectDonation(String docId, bool accept) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    final ref = _firestore.collection('direct_donations').doc(docId);
+    final snap = await ref.get();
+    if (!snap.exists) return;
+    final data = snap.data() as Map<String, dynamic>;
+    final donorId = data['donorId'] as String?;
+    final itemName = data['itemName'] as String? ?? 'a donation';
+    final location = data['location'] as String?;
+    final scheduled = data['scheduledTime'];
+    if (accept) {
+      await ref.update({'status': 'accepted'});
+      await _firestore.collection('pickups').add({
+        'consumerId': uid,
+        'requestId': '',
+        'listingId': '',
+        'isBulk': false,
+        'directDonationId': docId,
+        'donorName': data['donorName'] as String? ?? '',
+        'listingTitle': itemName,
+        'status': PickupStatusModel.scheduled.name,
+        'scheduledTime': scheduled is Timestamp ? scheduled : null,
+        'latitude': 0,
+        'longitude': 0,
+        'address': location,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      if (donorId != null && donorId.isNotEmpty) {
+        await _firestore.collection('notifications').add({
+          'recipientUid': donorId,
+          'payloadType': 'request',
+          'message': 'A consumer accepted your direct donation: $itemName.',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } else {
+      await ref.update({'status': 'cancelled'});
+      if (donorId != null && donorId.isNotEmpty) {
+        await _firestore.collection('notifications').add({
+          'recipientUid': donorId,
+          'payloadType': 'request',
+          'message': 'A consumer rejected your direct donation: $itemName.',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }
+  }
+
+  Future<void> respondToRequest(String requestId, bool accept) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    final ref = _firestore.collection('requests').doc(requestId);
+    final snap = await ref.get();
+    if (!snap.exists) return;
+    final data = snap.data() as Map<String, dynamic>;
+    await ref.update({
+      'status': accept ? RequestStatusModel.accepted.name : RequestStatusModel.rejected.name,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    final listingId = data['listingId'] as String? ?? '';
+    if (accept && listingId.isNotEmpty) {
+      final listingSnap = await _firestore.collection('listings').doc(listingId).get();
+      if (listingSnap.exists) {
+        final listingData = listingSnap.data() as Map<String, dynamic>;
+        await _firestore.collection('pickups').add({
+          'consumerId': uid,
+          'requestId': requestId,
+          'listingId': listingId,
+          'isBulk': false,
+          'donorName': listingData['donorName'] as String? ?? '',
+          'listingTitle': listingData['title'] as String? ?? '',
+          'status': PickupStatusModel.scheduled.name,
+          'scheduledTime': null,
+          'latitude': (listingData['latitude'] as num?)?.toDouble() ?? 0,
+          'longitude': (listingData['longitude'] as num?)?.toDouble() ?? 0,
+          'address': listingData['address'] as String?,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+      final donorId = listingSnap.data()?['donorId'] as String?;
+      if (donorId != null && donorId.isNotEmpty) {
+        await _firestore.collection('notifications').add({
+          'recipientUid': donorId,
+          'payloadType': 'request',
+          'message': 'A consumer accepted the request for "${listingSnap.data()?['title'] ?? 'your listing'}".',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } else if (!accept && listingId.isNotEmpty) {
+      final listingSnap = await _firestore.collection('listings').doc(listingId).get();
+      final donorId = listingSnap.data()?['donorId'] as String?;
+      if (donorId != null && donorId.isNotEmpty) {
+        await _firestore.collection('notifications').add({
+          'recipientUid': donorId,
+          'payloadType': 'request',
+          'message': 'A consumer rejected the request for "${listingSnap.data()?['title'] ?? 'your listing'}".',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }
   }
 
   Future<bool> claimListing(
@@ -151,23 +293,40 @@ class ConsumerProvider extends ChangeNotifier {
     try {
       late final double lat;
       late final double lng;
+      late final Map<String, dynamic> listingData;
       await _firestore.runTransaction((transaction) async {
         final listingRef = _firestore.collection('listings').doc(listingId);
         final snapshot = await transaction.get(listingRef);
         if (!snapshot.exists) return;
-        final data = snapshot.data() as Map<String, dynamic>;
-        final currentQty = (data['quantity'] as num?)?.toDouble() ?? 0;
+        listingData = snapshot.data() as Map<String, dynamic>;
+        final currentQty = (listingData['quantity'] as num?)?.toDouble() ?? 0;
         final remaining = currentQty - claimQuantity;
-        lat = (data['latitude'] as num?)?.toDouble() ?? 0;
-        lng = (data['longitude'] as num?)?.toDouble() ?? 0;
+        lat = (listingData['latitude'] as num?)?.toDouble() ?? 0;
+        lng = (listingData['longitude'] as num?)?.toDouble() ?? 0;
         transaction.update(listingRef, {
           'quantity': remaining,
           if (remaining <= 0) 'status': ListingStatusModel.claimed.name,
         });
       });
+      // Record the claim as an ordinary (non-bulk) request so it shows up in
+      // the consumer's request tracker and the donor's logs.
+      final requestRef = await _firestore.collection('requests').add({
+        'consumerId': uid,
+        'listingId': listingId,
+        'requestedQuantity': claimQuantity.toDouble(),
+        'unit': listingData['unit'] as String? ?? 'kg',
+        'isBulk': false,
+        'status': RequestStatusModel.accepted.name,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
       await _firestore.collection('pickups').add({
         'consumerId': uid,
-        'requestId': listingId,
+        'requestId': requestRef.id,
+        'listingId': listingId,
+        'isBulk': false,
+        'donorName': listingData['donorName'] as String? ?? '',
+        'listingTitle': listingData['title'] as String? ?? '',
         'status': PickupStatusModel.scheduled.name,
         'scheduledTime': scheduledTime == null ? null : Timestamp.fromDate(scheduledTime),
         'latitude': lat,
@@ -175,6 +334,18 @@ class ConsumerProvider extends ChangeNotifier {
         'address': deliveryAddress,
         'createdAt': FieldValue.serverTimestamp(),
       });
+      // Notify the donor that their listing was claimed.
+      final donorId = listingData['donorId'] as String?;
+      if (donorId != null && donorId.isNotEmpty) {
+        await _firestore.collection('notifications').add({
+          'recipientUid': donorId,
+          'payloadType': 'request',
+          'message':
+              'Your listing "${listingData['title'] ?? 'a listing'}" was claimed by a consumer.',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
       return true;
     } catch (_) {
       return false;
@@ -186,6 +357,8 @@ class ConsumerProvider extends ChangeNotifier {
     required String contactPerson,
     required String phone,
     required String address,
+    double? latitude,
+    double? longitude,
     required DateTime requiredDate,
     required int peopleToFeed,
     required List<Map<String, String>> items,
@@ -195,11 +368,14 @@ class ConsumerProvider extends ChangeNotifier {
     if (uid == null) return 'Not signed in.';
     try {
       await _firestore.collection('requests').add({
+        'isBulk': true,
         'consumerId': uid,
         'orgName': orgName,
         'contactPerson': contactPerson,
         'phone': phone,
         'address': address,
+        'latitude': latitude ?? 0,
+        'longitude': longitude ?? 0,
         'requiredDate': Timestamp.fromDate(requiredDate),
         'peopleToFeed': peopleToFeed,
         'items': items,

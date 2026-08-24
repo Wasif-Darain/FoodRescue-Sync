@@ -63,6 +63,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
           status: ListingStatus.active,
           category: l.category,
           imageUrl: l.photoUrls.isNotEmpty ? l.photoUrls.first : null,
+          imageCount: l.photoUrls.length,
           address: l.address,
         )).where((l) {
           final catMatch = _selectedCategory == 'All' || l.category == _selectedCategory;
@@ -511,7 +512,24 @@ class _ListingCard extends StatelessWidget {
                 Positioned(
                   top: 10,
                   left: 10,
-                  child: AppBadge(label: t.commonFree, variant: BadgeVariant.green),
+                  child: Row(children: [
+                    AppBadge(label: t.commonFree, variant: BadgeVariant.green),
+                    if (listing.imageCount > 1) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(children: [
+                          const Icon(Icons.photo_library_outlined, size: 10, color: Colors.white70),
+                          const SizedBox(width: 3),
+                          Text('${listing.imageCount}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.white)),
+                        ]),
+                      ),
+                    ],
+                  ]),
                 ),
                 Positioned(
                   top: 10,
@@ -550,7 +568,7 @@ class _ListingCard extends StatelessWidget {
                         const SizedBox(width: 3),
                         Expanded(
                           child: Text(
-                            _dummyAreaFor(t, listing.donorName),
+                            listing.address ?? _dummyAreaFor(t, listing.donorName),
                             style: const TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF)),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
