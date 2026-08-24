@@ -6,6 +6,7 @@ import '../../widgets/ui/rating_stars.dart';
 import '../../widgets/ui/detail_sheet.dart';
 import '../../models/request.dart';
 import '../../providers/consumer_provider.dart';
+import '../../l10n/l10n_ext.dart';
 
 class RequestStatusTracker extends StatelessWidget {
   const RequestStatusTracker({super.key});
@@ -19,10 +20,11 @@ class RequestStatusTracker extends StatelessWidget {
       stream: consumer.myRequestsStream,
       builder: (context, snapshot) {
         final requests = snapshot.data ?? [];
+        final t = context.l10n;
 
         return AppLayout(
-          title: 'My Requests',
-          subtitle: 'Track the status of your food requests',
+          title: t.reqTrackerTitle,
+          subtitle: t.reqTrackerSubtitle,
           currentRoute: '/consumer/requests',
           child: Column(
             children: [
@@ -52,9 +54,9 @@ class RequestStatusTracker extends StatelessWidget {
                     children: [
                       Icon(Icons.assignment_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
                       const SizedBox(height: 12),
-                      Text('No requests yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      Text(t.reqTrackerEmpty, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
                       const SizedBox(height: 4),
-                      Text('Submit a bulk request to get started.', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                      Text(t.reqTrackerEmptyHint, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                     ],
                   ),
                 )
@@ -81,11 +83,12 @@ class _StatusSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     final label = switch (status) {
-      RequestStatusModel.pending   => 'Pending',
-      RequestStatusModel.accepted  => 'Accepted',
-      RequestStatusModel.completed => 'Completed',
-      RequestStatusModel.rejected  => 'Rejected',
+      RequestStatusModel.pending   => t.reqStatusPending,
+      RequestStatusModel.accepted  => t.reqStatusAccepted,
+      RequestStatusModel.completed => t.reqStatusCompleted,
+      RequestStatusModel.rejected  => t.reqStatusRejected,
     };
     return Container(
       padding: const EdgeInsets.all(16),
@@ -110,24 +113,25 @@ class _RequestRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     final (label, variant) = switch (request.status) {
-      RequestStatusModel.pending   => ('Pending',   BadgeVariant.orange),
-      RequestStatusModel.accepted  => ('Accepted',  BadgeVariant.green),
-      RequestStatusModel.completed => ('Completed', BadgeVariant.blue),
-      RequestStatusModel.rejected  => ('Rejected',  BadgeVariant.red),
+      RequestStatusModel.pending   => (t.reqStatusPending,   BadgeVariant.orange),
+      RequestStatusModel.accepted  => (t.reqStatusAccepted,  BadgeVariant.green),
+      RequestStatusModel.completed => (t.reqStatusCompleted, BadgeVariant.blue),
+      RequestStatusModel.rejected  => (t.reqStatusRejected,  BadgeVariant.red),
     };
     final date = '${request.createdAt.year}-${request.createdAt.month.toString().padLeft(2, '0')}-${request.createdAt.day.toString().padLeft(2, '0')}';
     return InkWell(
       onTap: () => showDetailSheet(
         context,
-        title: 'Request #${request.id}',
-        subtitle: 'Bulk request details',
+        title: t.reqHashId(request.id),
+        subtitle: t.reqDetails,
         rows: [
-          DetailRow(Icons.local_shipping_outlined, 'Status', label),
-          DetailRow(Icons.inventory_2_outlined, 'Requested Quantity', '${request.requestedQuantity} ${request.unit}'),
-          DetailRow(Icons.calendar_today_outlined, 'Created', date),
+          DetailRow(Icons.local_shipping_outlined, t.reqDetailStatus, label),
+          DetailRow(Icons.inventory_2_outlined, t.reqDetailQuantity, '${request.requestedQuantity} ${request.unit}'),
+          DetailRow(Icons.calendar_today_outlined, t.reqDetailCreated, date),
           if (request.updatedAt != null)
-            DetailRow(Icons.update_outlined, 'Last Updated', '${request.updatedAt!.day}/${request.updatedAt!.month}/${request.updatedAt!.year}'),
+            DetailRow(Icons.update_outlined, t.reqDetailLastUpdated, '${request.updatedAt!.day}/${request.updatedAt!.month}/${request.updatedAt!.year}'),
         ],
       ),
       child: Container(
@@ -139,17 +143,17 @@ class _RequestRow extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('Request #${request.id}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                child: Text(t.reqHashId(request.id), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
               const SizedBox(width: 8),
               AppBadge(label: label, variant: variant),
             ],
           ),
           const SizedBox(height: 4),
-          Text('Qty: ${request.requestedQuantity} ${request.unit} · $date', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(t.reqQtyDate('${request.requestedQuantity}', request.unit, date), style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
           if (request.status == RequestStatusModel.completed) ...[
             const SizedBox(height: 12),
-            RatingStars(reviewLabel: 'Rate this request'),
+            RatingStars(reviewLabel: t.reqRateThis),
           ],
         ],
       ),

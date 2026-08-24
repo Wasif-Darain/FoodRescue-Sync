@@ -6,6 +6,7 @@ import '../../widgets/ui/stat_card.dart';
 import '../../widgets/ui/responsive_grid.dart';
 import '../../models/models.dart';
 import '../../providers/admin_provider.dart';
+import '../../l10n/l10n_ext.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -13,6 +14,7 @@ class AdminDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final admin = context.watch<AdminProvider>();
+    final t = context.l10n;
     return StreamBuilder<List<RegisteredAccount>>(
       stream: admin.accountsStream,
       builder: (context, snapshot) {
@@ -22,8 +24,8 @@ class AdminDashboard extends StatelessWidget {
             .length;
 
         return AppLayout(
-          title: 'Admin Overview',
-          subtitle: 'Platform-wide donations, consumption & accounts',
+          title: t.adminOverviewTitle,
+          subtitle: t.adminOverviewSubtitle,
           currentRoute: '/admin',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,17 +33,17 @@ class AdminDashboard extends StatelessWidget {
               ResponsiveGrid(
                 children: [
                   StatCard(
-                    label: 'Registered Accounts',
+                    label: t.adminRegisteredAccounts,
                     value: accounts.length,
                     icon: const Icon(Icons.groups_outlined),
                     color: 'red',
                   ),
                   StatCard(
-                    label: 'Pending Approvals',
+                    label: t.adminPendingApprovals,
                     value: pending,
                     icon: const Icon(Icons.pending_actions_outlined),
                     color: 'orange',
-                    subtitle: pending > 0 ? 'Needs review' : 'All caught up',
+                    subtitle: pending > 0 ? t.adminNeedsReview : t.adminAllCaughtUp,
                   ),
                 ],
               ),
@@ -90,9 +92,9 @@ class _ManageAccountsCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Manage Accounts',
-                      style: TextStyle(
+                    Text(
+                      context.l10n.adminManageAccounts,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -101,8 +103,8 @@ class _ManageAccountsCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       pending > 0
-                          ? '$pending account${pending == 1 ? '' : 's'} waiting for approval'
-                          : 'Review, approve, or remove accounts',
+                          ? context.l10n.adminAccountsWaiting(pending)
+                          : context.l10n.adminReviewApproveRemove,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.7),
                         fontSize: 12,

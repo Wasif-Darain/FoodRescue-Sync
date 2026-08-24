@@ -11,6 +11,8 @@ import '../../models/listing.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/consumer_provider.dart';
+import '../../l10n/l10n_ext.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 class ConsumerMarketplace extends StatefulWidget {
   const ConsumerMarketplace({super.key});
@@ -22,13 +24,22 @@ class ConsumerMarketplace extends StatefulWidget {
 class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
   String _selectedCategory = 'All';
   String _filter = 'All';
-  final _categories = ['All', 'Cooked Meals', 'Bakery', 'Dairy', 'Produce', 'Grains'];
+
+  List<(String, String)> _categories(AppLocalizations t) => [
+    ('All', t.mktCatAll),
+    ('Cooked Meals', t.mktCatCookedMeals),
+    ('Bakery', t.mktCatBakery),
+    ('Dairy', t.mktCatDairy),
+    ('Produce', t.mktCatProduce),
+    ('Grains', t.mktCatGrains),
+  ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
     final consumer = context.watch<ConsumerProvider>();
+    final t = context.l10n;
 
     final now = DateTime.now();
     return StreamBuilder<List<ListingModel>>(
@@ -61,8 +72,8 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
         }).toList();
 
         return AppLayout(
-          title: 'Marketplace',
-          subtitle: 'Browse nearby surplus food listings',
+          title: t.mktTitle,
+          subtitle: t.mktSubtitle,
           currentRoute: '/consumer',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,10 +92,10 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(t.mktGreeting(user.name.split(' ').first), style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 6),
                           Text(
-                            '${listings.length} surplus listing${listings.length == 1 ? '' : 's'} near you right now.',
+                            t.mktListingsNear(listings.length),
                             style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                           ),
                         ],
@@ -102,37 +113,37 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
               const SizedBox(height: 20),
 
               _SectionCard(
-                title: 'Quick Actions',
+                title: t.mktQuickActions,
                 icon: Icons.bolt_outlined,
                 child: Column(
                   children: [
                     _QuickAction(
                       icon: Icons.radar_outlined,
-                      label: 'Surplus Radar',
+                      label: t.mktSurplusRadar,
                       color: const Color(0xFF2563EB),
                       onTap: () => context.go('/consumer/radar'),
                     ),
                     _QuickAction(
                       icon: Icons.shopping_cart_outlined,
-                      label: 'Bulk Request',
+                      label: t.mktBulkRequest,
                       color: const Color(0xFFEA580C),
                       onTap: () => context.go('/consumer/bulk-request'),
                     ),
                     _QuickAction(
                       icon: Icons.history_outlined,
-                      label: 'Request Status',
+                      label: t.mktRequestStatus,
                       color: const Color(0xFF16A34A),
                       onTap: () => context.go('/consumer/requests'),
                     ),
                     _QuickAction(
                       icon: Icons.emoji_events_outlined,
-                      label: 'Rewards',
+                      label: t.mktRewards,
                       color: const Color(0xFFF59E0B),
                       onTap: () => context.go('/rewards'),
                     ),
                     _QuickAction(
                       icon: Icons.leaderboard_outlined,
-                      label: 'Leaderboard',
+                      label: t.mktLeaderboard,
                       color: const Color(0xFF6B7280),
                       onTap: () => context.go('/leaderboard'),
                     ),
@@ -149,15 +160,15 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                     Icon(Icons.search, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                     const SizedBox(width: 8),
                     Expanded(child: TextField(
-                      decoration: InputDecoration(hintText: 'Search food listings...', border: InputBorder.none, hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF))),
+                      decoration: InputDecoration(hintText: t.mktSearchHint, border: InputBorder.none, hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF))),
                     )),
                   ]),
                 );
 
                 final filterChips = [
-                  ('All', Icons.grid_view_outlined),
-                  ('Free', Icons.favorite_outline),
-                  ('Sale', Icons.local_offer_outlined)
+                  ('All', t.mktFilterAll, Icons.grid_view_outlined),
+                  ('Free', t.mktFilterFree, Icons.favorite_outline),
+                  ('Sale', t.mktFilterSale, Icons.local_offer_outlined)
                 ].map((f) {
                   final isSelected = _filter == f.$1;
                   return Padding(
@@ -173,9 +184,9 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                             border: Border.all(color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)), width: isSelected ? 2 : 1),
                           ),
                           child: Row(children: [
-                            Icon(f.$2, size: 14, color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                            Icon(f.$3, size: 14, color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                             const SizedBox(width: 4),
-                            Text(f.$1, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
+                            Text(f.$2, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
                           ]),
                         ),
                       ),
@@ -205,13 +216,13 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: _categories.map((cat) {
-                    final isSelected = _selectedCategory == cat;
+                  children: _categories(t).map((cat) {
+                    final isSelected = _selectedCategory == cat.$1;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: _HoverScale(
                         child: GestureDetector(
-                          onTap: () => setState(() => _selectedCategory = cat),
+                          onTap: () => setState(() => _selectedCategory = cat.$1),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                             decoration: BoxDecoration(
@@ -219,7 +230,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(color: isSelected ? const Color(0xFFE53238) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
                             ),
-                            child: Text(cat, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
+                            child: Text(cat.$2, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
                           ),
                         ),
                       ),
@@ -241,9 +252,9 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                     children: [
                       Icon(Icons.storefront_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
                       const SizedBox(height: 12),
-                      Text('No listings available', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      Text(t.mktNoListings, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
                       const SizedBox(height: 4),
-                      Text('Check back soon for new surplus food listings.', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                      Text(t.mktCheckBackSoon, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                     ],
                   ),
                 )
@@ -268,15 +279,15 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
   }
 }
 
-String _dummyAreaFor(String donorName) {
-  const areas = [
-    'Gulshan 1, Dhaka',
-    'Banani, Dhaka',
-    'Dhanmondi, Dhaka',
-    'Uttara, Dhaka',
-    'Mirpur, Dhaka',
-    'Bashundhara, Dhaka',
-    'Mohammadpur, Dhaka',
+String _dummyAreaFor(AppLocalizations t, String donorName) {
+  final areas = [
+    t.areaGulshan,
+    t.areaBanani,
+    t.areaDhanmondi,
+    t.areaUttara,
+    t.areaMirpur,
+    t.areaBashundhara,
+    t.areaMohammadpur,
   ];
   final index = donorName.hashCode.abs() % areas.length;
   return areas[index];
@@ -289,6 +300,7 @@ class _ListingCard extends StatelessWidget {
   void _showClaimSheet(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final consumer = context.read<ConsumerProvider>();
+    final t = context.l10n;
     String? deliveryAddress = context.read<AuthProvider>().address;
     showModalBottomSheet(
       context: context,
@@ -325,17 +337,19 @@ class _ListingCard extends StatelessWidget {
               Text(listing.description, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
               const SizedBox(height: 12),
               Row(children: [
-                AppBadge(label: 'FREE', variant: BadgeVariant.green),
+                AppBadge(label: t.commonFree, variant: BadgeVariant.green),
                 const SizedBox(width: 8),
-                AppBadge(label: 'Qty: ${listing.quantity}', variant: BadgeVariant.blue),
+                AppBadge(label: t.mktQtyBadge(listing.quantity), variant: BadgeVariant.blue),
                 const SizedBox(width: 8),
-                AppBadge(label: '${listing.distance} km', variant: BadgeVariant.gray),
+                AppBadge(label: t.mktKmBadge(listing.distance.toString()), variant: BadgeVariant.gray),
               ]),
               const SizedBox(height: 8),
               Row(children: [
                 const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF757575)),
                 const SizedBox(width: 4),
-                Text('Pickup by: ${listing.pickupEnd.hour.toString().padLeft(2, '0')}:${listing.pickupEnd.minute.toString().padLeft(2, '0')} · ${listing.pickupEnd.day}/${listing.pickupEnd.month}/${listing.pickupEnd.year}',
+                Text(t.mktPickupBy(
+                    '${listing.pickupEnd.hour.toString().padLeft(2, '0')}:${listing.pickupEnd.minute.toString().padLeft(2, '0')}',
+                    '${listing.pickupEnd.day}/${listing.pickupEnd.month}/${listing.pickupEnd.year}'),
                   style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
               ]),
               const SizedBox(height: 12),
@@ -358,7 +372,7 @@ class _ListingCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        deliveryAddress ?? 'Delivery address — tap to pick on map',
+                        deliveryAddress ?? t.mktDeliveryAddressHint,
                         style: TextStyle(fontSize: 12.5, color: deliveryAddress == null ? const Color(0xFFBFBFBF) : (isDark ? Colors.white : const Color(0xFF121212))),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -377,7 +391,7 @@ class _ListingCard extends StatelessWidget {
                     if (!context.mounted) return;
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(success ? 'Claimed: ${listing.title}' : 'Failed to claim: ${listing.title}'),
+                      content: Text(success ? t.mktClaimedMsg(listing.title) : t.mktClaimFailedMsg(listing.title)),
                       backgroundColor: success ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
                     ));
                   },
@@ -388,7 +402,7 @@ class _ListingCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Claim Now', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  child: Text(t.mktClaimNow, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
               ),
               const SizedBox(height: 8),
@@ -403,7 +417,7 @@ class _ListingCard extends StatelessWidget {
                     if (!context.mounted) return;
                     Navigator.pop(sheetContext);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(success ? 'Scheduled pickup for ${listing.title}' : 'Failed to claim: ${listing.title}'),
+                      content: Text(success ? t.mktScheduledMsg(listing.title) : t.mktClaimFailedMsg(listing.title)),
                       backgroundColor: success ? const Color(0xFF2563EB) : const Color(0xFFDC2626),
                     ));
                   },
@@ -414,7 +428,7 @@ class _ListingCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Schedule Pickup', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  child: Text(t.mktSchedulePickup, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
@@ -428,6 +442,7 @@ class _ListingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
 
     final imageUrl = listing.imageUrl ??
         'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80';
@@ -437,14 +452,14 @@ class _ListingCard extends StatelessWidget {
         onTap: () => showListingDetailSheet(
           context,
           title: listing.title,
-          subtitle: 'Listed by ${listing.donorName}',
+          subtitle: t.mktListedBy(listing.donorName),
           donorId: listing.donorName,
           rows: [
-            const DetailRow(Icons.category_outlined, 'Category', ''),
-            DetailRow(Icons.inventory_2_outlined, 'Quantity', '${listing.quantity}'),
-            DetailRow(Icons.payments_outlined, 'Price', listing.listingType == ListingType.donation ? 'Free' : '৳${listing.price.toStringAsFixed(0)}'),
-            DetailRow(Icons.schedule_outlined, 'Pickup window', '${listing.pickupStart.hour.toString().padLeft(2, '0')}:${listing.pickupStart.minute.toString().padLeft(2, '0')} – ${listing.pickupEnd.hour.toString().padLeft(2, '0')}:${listing.pickupEnd.minute.toString().padLeft(2, '0')} · ${listing.pickupEnd.day}/${listing.pickupEnd.month}/${listing.pickupEnd.year}'),
-            if (listing.address != null) DetailRow(Icons.location_on_outlined, 'Address', listing.address!),
+            DetailRow(Icons.category_outlined, t.mktDetailCategory, ''),
+            DetailRow(Icons.inventory_2_outlined, t.mktDetailQuantity, '${listing.quantity}'),
+            DetailRow(Icons.payments_outlined, t.mktDetailPrice, listing.listingType == ListingType.donation ? t.commonFreeLabel : '৳${listing.price.toStringAsFixed(0)}'),
+            DetailRow(Icons.schedule_outlined, t.mktDetailPickupWindow, '${listing.pickupStart.hour.toString().padLeft(2, '0')}:${listing.pickupStart.minute.toString().padLeft(2, '0')} – ${listing.pickupEnd.hour.toString().padLeft(2, '0')}:${listing.pickupEnd.minute.toString().padLeft(2, '0')} · ${listing.pickupEnd.day}/${listing.pickupEnd.month}/${listing.pickupEnd.year}'),
+            if (listing.address != null) DetailRow(Icons.location_on_outlined, t.mktDetailAddress, listing.address!),
           ],
         ),
         child: Container(
@@ -496,7 +511,7 @@ class _ListingCard extends StatelessWidget {
                 Positioned(
                   top: 10,
                   left: 10,
-                  child: AppBadge(label: 'FREE', variant: BadgeVariant.green),
+                  child: AppBadge(label: t.commonFree, variant: BadgeVariant.green),
                 ),
                 Positioned(
                   top: 10,
@@ -511,7 +526,7 @@ class _ListingCard extends StatelessWidget {
                       const Icon(Icons.location_on, size: 10, color: Colors.white70),
                       const SizedBox(width: 2),
                       Text(
-                        '${listing.distance} km',
+                        t.mktKmBadge(listing.distance.toString()),
                         style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.white),
                       ),
                     ]),
@@ -535,7 +550,7 @@ class _ListingCard extends StatelessWidget {
                         const SizedBox(width: 3),
                         Expanded(
                           child: Text(
-                            _dummyAreaFor(listing.donorName),
+                            _dummyAreaFor(t, listing.donorName),
                             style: const TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF)),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -564,8 +579,8 @@ class _ListingCard extends StatelessWidget {
                         ),
                         child: Text(
                           listing.pickupEnd.isBefore(DateTime.now())
-                              ? 'Expired'
-                              : 'Claim Free',
+                              ? t.mktExpired
+                              : t.mktClaimFree,
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                         ),
                       ),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
+import '../../l10n/l10n_ext.dart';
 
 const _nominatimUserAgent = 'FoodRescueSync/1.0 (student project)';
 const _dhakaFallback = LatLng(23.81, 90.41);
@@ -111,10 +112,10 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
               .toList();
         });
       } else {
-        _showError('Search failed. Please try again.');
+        _showError(context.l10n.locPickerSearchFailed);
       }
     } catch (_) {
-      if (mounted) _showError('Could not reach the search service. Check your connection.');
+      if (mounted) _showError(context.l10n.locPickerSearchUnreachable);
     } finally {
       if (mounted) setState(() => _searching = false);
     }
@@ -141,7 +142,7 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
     }
   }
 
-  String _fallbackLabel(LatLng point) => 'Pinned location (${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)})';
+  String _fallbackLabel(LatLng point) => context.l10n.locPickerPinnedLocation(point.latitude.toStringAsFixed(5), point.longitude.toStringAsFixed(5));
 
   void _selectResult(_SearchResult result) {
     _debounce?.cancel();
@@ -170,10 +171,11 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     final center = _picked ?? widget.initial ?? _dhakaFallback;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Set Location')),
+      appBar: AppBar(title: Text(t.locPickerTitle)),
       body: Column(
         children: [
           Padding(
@@ -184,7 +186,7 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
               onChanged: _onSearchChanged,
               onSubmitted: _search,
               decoration: InputDecoration(
-                hintText: 'Search an English address...',
+                hintText: t.locPickerSearchHint,
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searching
                     ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)))
@@ -251,8 +253,8 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
                 children: [
                   Text(
                     _resolvingAddress
-                        ? 'Resolving address...'
-                        : (_address ?? (_picked == null ? 'Tap the map or search to pick a location' : _fallbackLabel(_picked!))),
+                        ? t.locPickerResolving
+                        : (_address ?? (_picked == null ? t.locPickerTapOrSearch : _fallbackLabel(_picked!))),
                     style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -275,7 +277,7 @@ class _LocationPickerPageState extends State<_LocationPickerPage> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Confirm Location', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      child: Text(t.locPickerConfirm, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],

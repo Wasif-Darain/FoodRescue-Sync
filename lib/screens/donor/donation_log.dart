@@ -5,6 +5,7 @@ import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/rating_stars.dart';
 import '../../models/donation_log.dart';
+import '../../l10n/l10n_ext.dart';
 
 class DonationLogScreen extends StatelessWidget {
   const DonationLogScreen({super.key});
@@ -30,19 +31,20 @@ class DonationLogScreen extends StatelessWidget {
       builder: (context, snapshot) {
         final logs = snapshot.data ?? [];
         final total = logs.fold<double>(0, (acc, l) => acc + l.totalWeightKg);
+        final t = context.l10n;
 
         return AppLayout(
-          title: 'Donation Log',
-          subtitle: 'Your complete donation history',
+          title: t.donationLogTitle,
+          subtitle: t.donationLogSubtitle,
           currentRoute: '/donor/donation-log',
           child: Column(
             children: [
               Row(children: [
-                Expanded(child: _SummaryCard(value: '${logs.length}', label: 'Total Donations')),
+                Expanded(child: _SummaryCard(value: '${logs.length}', label: t.donationLogTotalDonations)),
                 const SizedBox(width: 12),
-                Expanded(child: _SummaryCard(value: total.toStringAsFixed(1), label: 'Weight (kg)')),
+                Expanded(child: _SummaryCard(value: total.toStringAsFixed(1), label: t.donationLogWeightKg)),
                 const SizedBox(width: 12),
-                Expanded(child: _SummaryCard(value: '${logs.map((l) => l.recipientId).toSet().length}', label: 'Recipients')),
+                Expanded(child: _SummaryCard(value: '${logs.map((l) => l.recipientId).toSet().length}', label: t.donationLogRecipients)),
               ]),
               const SizedBox(height: 20),
               if (logs.isEmpty)
@@ -57,7 +59,7 @@ class DonationLogScreen extends StatelessWidget {
                     children: [
                       Icon(Icons.receipt_long_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
                       const SizedBox(height: 12),
-                      Text('No donations logged yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      Text(t.donationLogEmpty, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
                     ],
                   ),
                 )
@@ -109,6 +111,7 @@ class _LogRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     final date = '${log.completedAt.year}-${log.completedAt.month.toString().padLeft(2, '0')}-${log.completedAt.day.toString().padLeft(2, '0')}';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -122,13 +125,13 @@ class _LogRow extends StatelessWidget {
                 child: Text('${log.totalWeightKg.toStringAsFixed(1)} kg', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
               const SizedBox(width: 8),
-              AppBadge(label: 'Completed', variant: BadgeVariant.green),
+              AppBadge(label: t.donationLogCompleted, variant: BadgeVariant.green),
             ],
           ),
           const SizedBox(height: 4),
-          Text('Recipient: ${log.recipientId} · $date', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(t.donationLogRecipient(log.recipientId, date), style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 12),
-          RatingStars(reviewLabel: 'Rate this donation'),
+          RatingStars(reviewLabel: t.donationLogRateThis),
         ],
       ),
     );

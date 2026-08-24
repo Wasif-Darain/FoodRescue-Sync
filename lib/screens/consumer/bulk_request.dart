@@ -5,6 +5,7 @@ import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_button.dart';
 import '../../widgets/ui/date_time_field.dart';
 import '../../providers/consumer_provider.dart';
+import '../../l10n/l10n_ext.dart';
 
 class BulkRequest extends StatefulWidget {
   const BulkRequest({super.key});
@@ -48,9 +49,9 @@ class _BulkRequestState extends State<BulkRequest> {
     final people = int.tryParse(_peopleCtrl.text.trim()) ?? 0;
 
     if (org.isEmpty || contact.isEmpty || phone.isEmpty || address.isEmpty || people <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Please fill in all required fields.'),
-        backgroundColor: Color(0xFFDC2626),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(context.l10n.bulkReqFillRequired),
+        backgroundColor: const Color(0xFFDC2626),
       ));
       return;
     }
@@ -65,9 +66,9 @@ class _BulkRequestState extends State<BulkRequest> {
         .toList();
 
     if (items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Add at least one food item.'),
-        backgroundColor: Color(0xFFDC2626),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(context.l10n.bulkReqAddOneItem),
+        backgroundColor: const Color(0xFFDC2626),
       ));
       return;
     }
@@ -95,9 +96,9 @@ class _BulkRequestState extends State<BulkRequest> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Bulk request submitted successfully!'),
-      backgroundColor: Color(0xFF16A34A),
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(context.l10n.bulkReqSuccess),
+      backgroundColor: const Color(0xFF16A34A),
     ));
     context.go('/consumer/requests');
   }
@@ -105,9 +106,10 @@ class _BulkRequestState extends State<BulkRequest> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     return AppLayout(
-      title: 'Bulk Request',
-      subtitle: 'Submit large-scale food requests for your organization',
+      title: t.bulkReqTitle,
+      subtitle: t.bulkReqSubtitle,
       currentRoute: '/consumer/bulk-request',
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 700),
@@ -119,22 +121,22 @@ class _BulkRequestState extends State<BulkRequest> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Organization Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+                  Text(t.bulkReqOrgDetails, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
                   const SizedBox(height: 16),
-                  _FormField(label: 'Organization Name', placeholder: 'Your NGO or food bank name', controller: _orgCtrl),
+                  _FormField(label: t.bulkReqOrgName, placeholder: t.bulkReqOrgNameHint, controller: _orgCtrl),
                   const SizedBox(height: 12),
                   Row(children: [
-                    Expanded(child: _FormField(label: 'Contact Person', placeholder: 'Full name', controller: _contactCtrl)),
+                    Expanded(child: _FormField(label: t.bulkReqContactPerson, placeholder: t.bulkReqFullName, controller: _contactCtrl)),
                     const SizedBox(width: 12),
-                    Expanded(child: _FormField(label: 'Phone', placeholder: '+880 XXXX XXXXXX', keyboardType: TextInputType.phone, controller: _phoneCtrl)),
+                    Expanded(child: _FormField(label: t.bulkReqPhone, placeholder: '+880 XXXX XXXXXX', keyboardType: TextInputType.phone, controller: _phoneCtrl)),
                   ]),
                   const SizedBox(height: 12),
-                  _FormField(label: 'Delivery / Pickup Address', placeholder: 'Full address', controller: _addressCtrl),
+                  _FormField(label: t.bulkReqAddress, placeholder: t.bulkReqAddressHint, controller: _addressCtrl),
                   const SizedBox(height: 12),
                   Row(children: [
-                    Expanded(child: DateTimeField(label: 'Required Date & Time', value: _requiredDate, onTap: _pickRequiredDate)),
+                    Expanded(child: DateTimeField(label: t.bulkReqRequiredDate, value: _requiredDate, onTap: _pickRequiredDate)),
                     const SizedBox(width: 12),
-                    Expanded(child: _FormField(label: 'People to Feed', placeholder: '0', keyboardType: TextInputType.number, controller: _peopleCtrl)),
+                    Expanded(child: _FormField(label: t.bulkReqPeopleToFeed, placeholder: '0', keyboardType: TextInputType.number, controller: _peopleCtrl)),
                   ]),
                 ]),
               ),
@@ -146,12 +148,12 @@ class _BulkRequestState extends State<BulkRequest> {
                 decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Text('Food Items', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+                    Text(t.bulkReqFoodItems, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
                     _HoverScale(
                       child: TextButton.icon(
                         onPressed: () => setState(() => _items.add(_RequestItem())),
                         icon: const Icon(Icons.add, size: 14),
-                        label: const Text('Add Item', style: TextStyle(fontSize: 12)),
+                        label: Text(t.bulkReqAddItem, style: const TextStyle(fontSize: 12)),
                       ),
                     ),
                   ]),
@@ -159,11 +161,11 @@ class _BulkRequestState extends State<BulkRequest> {
                   ..._items.asMap().entries.map((e) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Row(children: [
-                      Expanded(flex: 3, child: _FormField(label: '', placeholder: 'Food item name', controller: e.value.nameCtrl)),
+                      Expanded(flex: 3, child: _FormField(label: '', placeholder: t.bulkReqItemNameHint, controller: e.value.nameCtrl)),
                       const SizedBox(width: 10),
-                      Expanded(child: _FormField(label: '', placeholder: 'Qty', keyboardType: TextInputType.number, controller: e.value.qtyCtrl)),
+                      Expanded(child: _FormField(label: '', placeholder: t.bulkReqQtyHint, keyboardType: TextInputType.number, controller: e.value.qtyCtrl)),
                       const SizedBox(width: 10),
-                      Expanded(child: _FormField(label: '', placeholder: 'Unit (kg/pcs)', controller: e.value.unitCtrl)),
+                      Expanded(child: _FormField(label: '', placeholder: t.bulkReqUnitHint, controller: e.value.unitCtrl)),
                       if (_items.length > 1) ...[
                         const SizedBox(width: 8),
                         IconButton(
@@ -187,19 +189,19 @@ class _BulkRequestState extends State<BulkRequest> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Additional Notes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+                  Text(t.bulkReqAdditionalNotes, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
                   const SizedBox(height: 12),
-                  _FormField(label: '', placeholder: 'Any dietary restrictions, special requirements, or notes...', maxLines: 4, controller: _notesCtrl),
+                  _FormField(label: '', placeholder: t.bulkReqNotesHint, maxLines: 4, controller: _notesCtrl),
                 ]),
               ),
             ),
             const SizedBox(height: 24),
             Row(children: [
-              _HoverScale(child: AppButton(label: 'Cancel', outlined: true, onPressed: () => context.go('/consumer'))),
+              _HoverScale(child: AppButton(label: t.bulkReqCancel, outlined: true, onPressed: () => context.go('/consumer'))),
               const SizedBox(width: 12),
               _HoverScale(
                 child: AppButton(
-                  label: _submitting ? 'Submitting...' : 'Submit Request',
+                  label: _submitting ? t.bulkReqSubmitting : t.bulkReqSubmit,
                   icon: const Icon(Icons.send, size: 16),
                   onPressed: _submitting ? null : _submit,
                 ),

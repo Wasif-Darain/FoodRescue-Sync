@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../providers/auth_provider.dart';
+import '../../l10n/l10n_ext.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -30,6 +31,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   Stream<List<_LeaderEntry>> _donorsStream() {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final donorFallback = context.l10n.acctMgmtDonor;
     return FirebaseFirestore.instance
         .collection('donation_logs')
         .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(DateTime.now().subtract(_periodStart)))
@@ -41,10 +43,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         final data = doc.data();
         final donorId = data['donorId'] as String? ?? currentUid ?? '';
         counts[donorId] = (counts[donorId] ?? 0) + 1;
-        names[donorId] = data['donorName'] as String? ?? 'Donor';
+        names[donorId] = data['donorName'] as String? ?? donorFallback;
       }
       final entries = counts.entries
-          .map((e) => _LeaderEntry(id: e.key, name: names[e.key] ?? 'Donor', count: e.value))
+          .map((e) => _LeaderEntry(id: e.key, name: names[e.key] ?? donorFallback, count: e.value))
           .toList()
         ..sort((a, b) => b.count.compareTo(a.count));
       return entries;
@@ -53,6 +55,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   Stream<List<_LeaderEntry>> _consumersStream() {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final consumerFallback = context.l10n.acctMgmtConsumer;
     return FirebaseFirestore.instance
         .collection('pickups')
         .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(DateTime.now().subtract(_periodStart)))
@@ -65,10 +68,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         final data = doc.data();
         final consumerId = data['consumerId'] as String? ?? currentUid ?? '';
         counts[consumerId] = (counts[consumerId] ?? 0) + 1;
-        names[consumerId] = data['consumerName'] as String? ?? 'Consumer';
+        names[consumerId] = data['consumerName'] as String? ?? consumerFallback;
       }
       final entries = counts.entries
-          .map((e) => _LeaderEntry(id: e.key, name: names[e.key] ?? 'Consumer', count: e.value))
+          .map((e) => _LeaderEntry(id: e.key, name: names[e.key] ?? consumerFallback, count: e.value))
           .toList()
         ..sort((a, b) => b.count.compareTo(a.count));
       return entries;
@@ -79,12 +82,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
-    final periodLabel = _timeFrame == 'Weekly' ? 'week' : _timeFrame == 'Monthly' ? 'month' : 'year';
+    final t = context.l10n;
+    final periodLabel = _timeFrame == 'Weekly' ? t.rewardsPeriodWeek : _timeFrame == 'Monthly' ? t.rewardsPeriodMonth : t.rewardsPeriodYear;
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return AppLayout(
-      title: 'Leaderboard',
-      subtitle: 'Top donors and consumers this $periodLabel',
+      title: t.lbTitle,
+      subtitle: t.lbSubtitle(periodLabel),
       currentRoute: '/leaderboard',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,10 +108,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text(t.lbGreeting(user.name.split(' ').first), style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 6),
                         Text(
-                          'See who\'s leading this $periodLabel.',
+                          t.lbSeeWhosLeading(periodLabel),
                           style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                         ),
                       ],
@@ -131,7 +135,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 for (final tf in ['Weekly', 'Monthly', 'Yearly']) ...[
                   if (tf != 'Weekly') const SizedBox(width: 8),
                   _TimeFrameChip(
-                    label: tf,
+                    label: tf == 'Weekly' ? t.rewardsTimeframeWeekly : tf == 'Monthly' ? t.rewardsTimeframeMonthly : t.rewardsTimeframeYearly,
                     selected: _timeFrame == tf,
                     onTap: () => setState(() => _timeFrame = tf),
                   ),
@@ -146,7 +150,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             final donorsSection = StreamBuilder<List<_LeaderEntry>>(
               stream: _donorsStream(),
               builder: (context, snapshot) => _LeaderboardSection(
-                title: 'Top Donors',
+                title: t.lbTopDonors,
                 icon: Icons.volunteer_activism_outlined,
                 iconColor: const Color(0xFF16A34A),
                 data: snapshot.data ?? [],
@@ -158,7 +162,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             final consumersSection = StreamBuilder<List<_LeaderEntry>>(
               stream: _consumersStream(),
               builder: (context, snapshot) => _LeaderboardSection(
-                title: 'Top Consumers',
+                title: t.lbTopConsumers,
                 icon: Icons.restaurant_outlined,
                 iconColor: const Color(0xFF2563EB),
                 data: snapshot.data ?? [],
@@ -248,6 +252,7 @@ class _LeaderboardSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     final top = data.take(5).toList();
     final myRankIndex = data.indexWhere((e) => e.id == myId);
     final myRank = myRankIndex >= 0 ? myRankIndex + 1 : null;
@@ -272,7 +277,7 @@ class _LeaderboardSection extends StatelessWidget {
                   Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
                 ],
               ),
-              AppBadge(label: 'Top 5', variant: BadgeVariant.green),
+              AppBadge(label: t.lbTop5, variant: BadgeVariant.green),
             ],
           ),
           const SizedBox(height: 12),
@@ -280,7 +285,7 @@ class _LeaderboardSection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
-                child: Text('No activity this $periodLabel.', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                child: Text(t.lbNoActivity(periodLabel), style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
               ),
             )
           else
@@ -315,7 +320,7 @@ class _LeaderboardSection extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '${entryData.count} items',
+                        t.lbItemsCount(entryData.count),
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)),
                       ),
                     ],
@@ -337,14 +342,14 @@ class _LeaderboardSection extends StatelessWidget {
                   width: 28,
                   height: 28,
                   decoration: const BoxDecoration(color: Color(0xFF16A34A), shape: BoxShape.circle),
-                  child: const Center(
-                    child: Text('YOU', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                  child: Center(
+                    child: Text(t.lbYou, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    myRank == null ? 'No activity this $periodLabel' : 'Your current position',
+                    myRank == null ? t.lbNoActivityShort(periodLabel) : t.lbYourPosition,
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF15803D)),
                   ),
                 ),

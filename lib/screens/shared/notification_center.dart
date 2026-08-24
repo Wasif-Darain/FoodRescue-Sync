@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../models/notification_model.dart';
+import '../../l10n/l10n_ext.dart';
 
 class NotificationCenter extends StatelessWidget {
   const NotificationCenter({super.key});
@@ -28,10 +29,11 @@ class NotificationCenter extends StatelessWidget {
       builder: (context, snapshot) {
         final notifications = snapshot.data ?? [];
         final unread = notifications.where((n) => !n.isRead).length;
+        final t = context.l10n;
 
         return AppLayout(
-          title: 'Notifications',
-          subtitle: '$unread unread notifications',
+          title: t.notifCenterTitle,
+          subtitle: t.notifCenterUnread(unread),
           currentRoute: '/notifications',
           action: TextButton(
             onPressed: () async {
@@ -47,7 +49,7 @@ class NotificationCenter extends StatelessWidget {
               }
               await batch.commit();
             },
-            child: Text('Mark all read', style: TextStyle(color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A), fontSize: 13)),
+            child: Text(t.notifCenterMarkAllRead, style: TextStyle(color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A), fontSize: 13)),
           ),
           child: Container(
             decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],),
@@ -58,7 +60,7 @@ class NotificationCenter extends StatelessWidget {
                       children: [
                         Icon(Icons.notifications_off_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
                         const SizedBox(height: 12),
-                        Text('No notifications', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                        Text(t.notifCenterEmpty, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
                       ],
                     ),
                   )

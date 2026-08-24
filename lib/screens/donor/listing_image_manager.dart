@@ -3,15 +3,17 @@ import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../providers/donor_provider.dart';
 import '../../models/models.dart';
+import '../../l10n/l10n_ext.dart';
 
 class ListingImageManager extends StatelessWidget {
   const ListingImageManager({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return AppLayout(
-      title: 'Image Manager',
-      subtitle: 'Manage photos for your food listings',
+      title: t.imgMgrTitle,
+      subtitle: t.imgMgrSubtitle,
       currentRoute: '/donor/images',
       child: StreamBuilder<List<Listing>>(
         stream: context.read<DonorProvider>().listingsStream,
@@ -19,9 +21,9 @@ class ListingImageManager extends StatelessWidget {
           final listings = snapshot.data ?? [];
 
           if (listings.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(40),
-              child: Center(child: Text('No listings yet.', style: TextStyle(fontSize: 14, color: Color(0xFF757575)))),
+            return Padding(
+              padding: const EdgeInsets.all(40),
+              child: Center(child: Text(t.imgMgrNoListings, style: const TextStyle(fontSize: 14, color: Color(0xFF757575)))),
             );
           }
 
@@ -53,12 +55,12 @@ class ListingImageManager extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: const Color(0xFFE2E2E2), style: BorderStyle.solid),
                             ),
-                            child: const Column(
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.add_photo_alternate_outlined, size: 28, color: Color(0xFF757575)),
-                                SizedBox(height: 4),
-                                Text('Add Photo', style: TextStyle(fontSize: 11, color: Color(0xFF757575))),
+                                const Icon(Icons.add_photo_alternate_outlined, size: 28, color: Color(0xFF757575)),
+                                const SizedBox(height: 4),
+                                Text(t.imgMgrAddPhoto, style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
                               ],
                             ),
                           ),

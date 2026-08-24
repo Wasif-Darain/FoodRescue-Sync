@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'image_thumbnail.dart';
+import '../../l10n/l10n_ext.dart';
 
 /// Thumbnail preview + "Camera" / "Gallery" buttons for attaching a photo
 /// from the device. Controlled component: the caller owns [imageBytes] and
@@ -27,7 +28,9 @@ class _PhotoPickerRowState extends State<PhotoPickerRow> {
       widget.onChanged(bytes);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not access ${source == ImageSource.camera ? 'camera' : 'gallery'}: $e')));
+        final t = context.l10n;
+        final sourceLabel = source == ImageSource.camera ? t.photoCamera : t.photoGallery;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.photoAccessError(sourceLabel, '$e'))));
       }
     } finally {
       if (mounted) setState(() => _picking = false);
@@ -36,6 +39,7 @@ class _PhotoPickerRowState extends State<PhotoPickerRow> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return Row(children: [
       ImageThumbnail(imageBytes: widget.imageBytes, size: 56),
       const SizedBox(width: 10),
@@ -44,7 +48,7 @@ class _PhotoPickerRowState extends State<PhotoPickerRow> {
           Expanded(
             child: _PhotoSourceButton(
               icon: Icons.photo_camera_outlined,
-              label: 'Camera',
+              label: t.photoCamera,
               busy: _picking,
               onTap: () => _pick(ImageSource.camera),
             ),
@@ -53,7 +57,7 @@ class _PhotoPickerRowState extends State<PhotoPickerRow> {
           Expanded(
             child: _PhotoSourceButton(
               icon: Icons.photo_library_outlined,
-              label: 'Gallery',
+              label: t.photoGallery,
               busy: _picking,
               onTap: () => _pick(ImageSource.gallery),
             ),

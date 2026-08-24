@@ -11,6 +11,8 @@ import '../../widgets/ui/photo_picker_row.dart';
 import '../../widgets/ui/location_picker.dart';
 import '../../models/models.dart';
 import '../../providers/donor_provider.dart';
+import '../../l10n/l10n_ext.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 class CreateListing extends StatefulWidget {
   const CreateListing({super.key});
@@ -35,14 +37,14 @@ class _CreateListingState extends State<CreateListing> {
   double? _pickupLng;
   String? _pickupAddress;
 
-  final _categories = [
-    'Cooked Meals',
-    'Bakery',
-    'Dairy',
-    'Produce',
-    'Grains',
-    'Pulses',
-    'Other',
+  List<(String, String)> _categories(AppLocalizations t) => [
+    ('Cooked Meals', t.catCookedMeals),
+    ('Bakery', t.catBakery),
+    ('Dairy', t.catDairy),
+    ('Produce', t.catProduce),
+    ('Grains', t.catGrains),
+    ('Pulses', t.catPulses),
+    ('Other', t.catOther),
   ];
 
   @override
@@ -92,10 +94,11 @@ class _CreateListingState extends State<CreateListing> {
     if (_titleCtrl.text.trim().isEmpty) return;
 
     final donor = context.read<DonorProvider>();
+    final t = context.l10n;
     final listingId = await donor.createListing(
       title: _titleCtrl.text.trim(),
       description: _descCtrl.text.trim().isEmpty
-          ? 'No additional details provided.'
+          ? t.createListingNoDetails
           : _descCtrl.text.trim(),
       category: _category,
       quantity: int.tryParse(_quantityCtrl.text.trim()) ?? 1,
@@ -120,9 +123,9 @@ class _CreateListingState extends State<CreateListing> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Listing created successfully!'),
-        backgroundColor: Color(0xFF16A34A),
+      SnackBar(
+        content: Text(t.createListingSuccess),
+        backgroundColor: const Color(0xFF16A34A),
       ),
     );
     context.go('/donor');
@@ -131,9 +134,10 @@ class _CreateListingState extends State<CreateListing> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     return AppLayout(
-      title: 'Create Listing',
-      subtitle: 'List your surplus food for donation or flash sale',
+      title: t.createListingTitle,
+      subtitle: t.createListingSubtitle,
       currentRoute: '/donor/create-listing',
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 700),
@@ -154,12 +158,12 @@ class _CreateListingState extends State<CreateListing> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Listing type toggle
-              _Label('Listing Type'),
+              _Label(t.createListingType),
               const SizedBox(height: 8),
               Row(
                 children: [
                   _TypeToggle(
-                    label: 'Donation (Free)',
+                    label: t.createListingDonationFree,
                     icon: Icons.favorite_outline,
                     value: 'donation',
                     selected: _listingType,
@@ -167,7 +171,7 @@ class _CreateListingState extends State<CreateListing> {
                   ),
                   const SizedBox(width: 12),
                   _TypeToggle(
-                    label: 'Flash Sale',
+                    label: t.createListingFlashSale,
                     icon: Icons.local_offer_outlined,
                     value: 'flash_sale',
                     selected: _listingType,
@@ -177,19 +181,19 @@ class _CreateListingState extends State<CreateListing> {
               ),
               const SizedBox(height: 20),
               _FormField(
-                label: 'Title',
-                placeholder: 'e.g. Chicken Biryani (30 servings)',
+                label: t.createListingTitleLabel,
+                placeholder: t.createListingTitleHint,
                 controller: _titleCtrl,
               ),
               const SizedBox(height: 16),
               _FormField(
-                label: 'Description',
-                placeholder: 'Describe the food, quantity, freshness...',
+                label: t.createListingDescription,
+                placeholder: t.createListingDescriptionHint,
                 maxLines: 3,
                 controller: _descCtrl,
               ),
               const SizedBox(height: 16),
-              _Label('Photo (optional)'),
+              _Label(t.createListingPhotoOptional),
               const SizedBox(height: 6),
               PhotoPickerRow(
                 imageBytes: _imageFile?.readAsBytesSync(),
@@ -208,7 +212,7 @@ class _CreateListingState extends State<CreateListing> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Shown on this listing in the consumer marketplace.',
+                t.createListingPhotoHint,
                 style: TextStyle(
                   fontSize: 11,
                   color: isDark
@@ -223,7 +227,7 @@ class _CreateListingState extends State<CreateListing> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _Label('Category'),
+                        _Label(t.createListingCategory),
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -248,11 +252,11 @@ class _CreateListingState extends State<CreateListing> {
                             dropdownColor: isDark
                                 ? const Color(0xFF2A2A2A)
                                 : Colors.white,
-                            items: _categories
+                            items: _categories(t)
                                 .map(
                                   (c) => DropdownMenuItem(
-                                    value: c,
-                                    child: Text(c),
+                                    value: c.$1,
+                                    child: Text(c.$2),
                                   ),
                                 )
                                 .toList(),
@@ -266,7 +270,7 @@ class _CreateListingState extends State<CreateListing> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _FormField(
-                      label: 'Quantity',
+                      label: t.createListingQuantity,
                       placeholder: '0',
                       keyboardType: TextInputType.number,
                       controller: _quantityCtrl,
@@ -277,7 +281,7 @@ class _CreateListingState extends State<CreateListing> {
               if (_listingType == 'flash_sale') ...[
                 const SizedBox(height: 16),
                 _FormField(
-                  label: 'Price (৳)',
+                  label: t.createListingPrice,
                   placeholder: '0',
                   keyboardType: TextInputType.number,
                   controller: _priceCtrl,
@@ -288,7 +292,7 @@ class _CreateListingState extends State<CreateListing> {
                 children: [
                   Expanded(
                     child: DateTimeField(
-                      label: 'Pickup Start',
+                      label: t.createListingPickupStart,
                       value: _pickupStart,
                       onTap: _pickPickupStart,
                     ),
@@ -296,7 +300,7 @@ class _CreateListingState extends State<CreateListing> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: DateTimeField(
-                      label: 'Pickup End',
+                      label: t.createListingPickupEnd,
                       value: _pickupEnd,
                       onTap: _pickPickupEnd,
                     ),
@@ -304,7 +308,7 @@ class _CreateListingState extends State<CreateListing> {
                 ],
               ),
               const SizedBox(height: 16),
-              _Label('Pickup Location'),
+              _Label(t.createListingPickupLocation),
               const SizedBox(height: 6),
               InkWell(
                 borderRadius: BorderRadius.circular(8),
@@ -335,7 +339,7 @@ class _CreateListingState extends State<CreateListing> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _pickupAddress ?? 'Not set — tap to pick on map',
+                          _pickupAddress ?? t.editProfileNotSetTapToPick,
                           style: TextStyle(
                             fontSize: 13,
                             color: _pickupAddress == null
@@ -362,15 +366,15 @@ class _CreateListingState extends State<CreateListing> {
               Row(
                 children: [
                   AppButton(
-                    label: 'Cancel',
+                    label: t.createListingCancel,
                     outlined: true,
                     onPressed: () => context.go('/donor'),
                   ),
                   const SizedBox(width: 12),
                   AppButton(
                     label: _listingType == 'donation'
-                        ? 'Post Donation'
-                        : 'Post Flash Sale',
+                        ? t.createListingPostDonation
+                        : t.createListingPostFlashSale,
                     icon: const Icon(Icons.check, size: 16),
                     onPressed: _submit,
                   ),

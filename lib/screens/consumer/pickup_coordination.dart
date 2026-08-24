@@ -7,6 +7,7 @@ import '../../widgets/ui/rating_stars.dart';
 import '../../widgets/ui/countdown_timer.dart';
 import '../../widgets/ui/detail_sheet.dart';
 import '../../models/pickup.dart';
+import '../../l10n/l10n_ext.dart';
 
 class PickupCoordination extends StatelessWidget {
   const PickupCoordination({super.key});
@@ -30,10 +31,11 @@ class PickupCoordination extends StatelessWidget {
       stream: stream,
       builder: (context, snapshot) {
         final pickups = snapshot.data ?? [];
+        final t = context.l10n;
 
         return AppLayout(
-          title: 'Pickups',
-          subtitle: 'Coordinate and track your food pickups',
+          title: t.pickupTitle,
+          subtitle: t.pickupSubtitle,
           currentRoute: '/consumer/pickups',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +54,7 @@ class PickupCoordination extends StatelessWidget {
                 ]),
               ),
               const SizedBox(height: 20),
-              Text('Active Pickups', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+              Text(t.pickupActivePickups, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
               const SizedBox(height: 12),
               if (pickups.isEmpty)
                 Center(
@@ -67,7 +69,7 @@ class PickupCoordination extends StatelessWidget {
                     children: [
                       Icon(Icons.local_shipping_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
                       const SizedBox(height: 12),
-                      Text('No pickups scheduled', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      Text(t.pickupNoneScheduled, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
                     ],
                   ),
                 ),
@@ -93,10 +95,11 @@ class _PickupStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     final (label, icon, color) = switch (status) {
-      PickupStatusModel.scheduled => ('Scheduled', Icons.schedule, const Color(0xFF2563EB)),
-      PickupStatusModel.enRoute   => ('En Route',  Icons.directions_car, const Color(0xFFEA580C)),
-      PickupStatusModel.completed => ('Completed', Icons.check_circle_outline, const Color(0xFF16A34A)),
+      PickupStatusModel.scheduled => (t.pickupStatusScheduled, Icons.schedule, const Color(0xFF2563EB)),
+      PickupStatusModel.enRoute   => (t.pickupStatusEnRoute,  Icons.directions_car, const Color(0xFFEA580C)),
+      PickupStatusModel.completed => (t.pickupStatusCompleted, Icons.check_circle_outline, const Color(0xFF16A34A)),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
@@ -133,25 +136,26 @@ class _PickupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     final (label, variant, statusColor) = switch (pickup.status) {
-      PickupStatusModel.scheduled => ('Scheduled', BadgeVariant.blue,   const Color(0xFF2563EB)),
-      PickupStatusModel.enRoute   => ('En Route',  BadgeVariant.orange, const Color(0xFFEA580C)),
-      PickupStatusModel.completed => ('Completed', BadgeVariant.green,  const Color(0xFF16A34A)),
+      PickupStatusModel.scheduled => (t.pickupStatusScheduled, BadgeVariant.blue,   const Color(0xFF2563EB)),
+      PickupStatusModel.enRoute   => (t.pickupStatusEnRoute,  BadgeVariant.orange, const Color(0xFFEA580C)),
+      PickupStatusModel.completed => (t.pickupStatusCompleted, BadgeVariant.green,  const Color(0xFF16A34A)),
     };
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () => showDetailSheet(
         context,
-        title: 'Pickup #${pickup.id}',
-        subtitle: 'Pickup details',
+        title: t.pickupHashId(pickup.id),
+        subtitle: t.pickupDetails,
         rows: [
-          DetailRow(Icons.local_shipping_outlined, 'Status', label),
+          DetailRow(Icons.local_shipping_outlined, t.pickupDetailStatus, label),
           if (pickup.scheduledTime != null)
-            DetailRow(Icons.access_time, 'Scheduled', '${pickup.scheduledTime!.day}/${pickup.scheduledTime!.month}/${pickup.scheduledTime!.year} at ${pickup.scheduledTime!.hour.toString().padLeft(2, '0')}:${pickup.scheduledTime!.minute.toString().padLeft(2, '0')}'),
+            DetailRow(Icons.access_time, t.pickupDetailScheduled, '${pickup.scheduledTime!.day}/${pickup.scheduledTime!.month}/${pickup.scheduledTime!.year} at ${pickup.scheduledTime!.hour.toString().padLeft(2, '0')}:${pickup.scheduledTime!.minute.toString().padLeft(2, '0')}'),
           if (pickup.completedAt != null)
-            DetailRow(Icons.check_circle_outline, 'Completed', '${pickup.completedAt!.day}/${pickup.completedAt!.month}/${pickup.completedAt!.year}'),
-          if (pickup.address != null) DetailRow(Icons.location_on_outlined, 'Address', pickup.address!),
+            DetailRow(Icons.check_circle_outline, t.pickupDetailCompleted, '${pickup.completedAt!.day}/${pickup.completedAt!.month}/${pickup.completedAt!.year}'),
+          if (pickup.address != null) DetailRow(Icons.location_on_outlined, t.pickupDetailAddress, pickup.address!),
         ],
       ),
       child: Container(
@@ -163,11 +167,11 @@ class _PickupCard extends StatelessWidget {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('Pickup #${pickup.id}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+          Text(t.pickupHashId(pickup.id), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
           AppBadge(label: label, variant: variant),
         ]),
         const SizedBox(height: 12),
-        _InfoRow(icon: Icons.location_on_outlined, label: pickup.address ?? 'No address'),
+        _InfoRow(icon: Icons.location_on_outlined, label: pickup.address ?? t.pickupNoAddress),
         if (pickup.scheduledTime != null) ...[
           const SizedBox(height: 6),
           _InfoRow(icon: Icons.access_time, label:
@@ -178,13 +182,13 @@ class _PickupCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: pickup.scheduledTime != null
-                ? CountdownTimer(expiry: pickup.scheduledTime!, fontSize: 9, expiredLabel: 'Overdue')
+                ? CountdownTimer(expiry: pickup.scheduledTime!, fontSize: 9, expiredLabel: t.pickupOverdue)
                 : const SizedBox.shrink(),
           ),
         ],
         if (pickup.status == PickupStatusModel.completed) ...[
           const SizedBox(height: 14),
-          RatingStars(reviewLabel: 'Rate this pickup'),
+          RatingStars(reviewLabel: t.pickupRateThis),
         ],
       ]),
       ),

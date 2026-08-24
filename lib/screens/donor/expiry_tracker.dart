@@ -5,6 +5,7 @@ import '../../widgets/ui/responsive_grid.dart';
 import '../../widgets/ui/countdown_timer.dart';
 import '../../models/models.dart';
 import '../../providers/donor_provider.dart';
+import '../../l10n/l10n_ext.dart';
 
 class ExpiryTracker extends StatelessWidget {
   const ExpiryTracker({super.key});
@@ -12,6 +13,7 @@ class ExpiryTracker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final donor = context.watch<DonorProvider>();
+    final t = context.l10n;
     return StreamBuilder<List<InventoryItem>>(
       stream: donor.inventoryStream,
       builder: (context, snapshot) {
@@ -29,8 +31,8 @@ class ExpiryTracker extends StatelessWidget {
         final safe = inventory.where((i) => i.expiryDate.difference(now).inDays > 7).toList();
 
         return AppLayout(
-          title: 'Expiry Tracker',
-          subtitle: 'Monitor your inventory expiration dates',
+          title: t.expiryTitle,
+          subtitle: t.expirySubtitle,
           currentRoute: '/donor/expiry',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,17 +40,17 @@ class ExpiryTracker extends StatelessWidget {
               ResponsiveGrid(
                 spacing: 12,
                 children: [
-                  _ExpiryStatCard(count: expired.length, label: 'Expired', color: const Color(0xFFEF4444)),
-                  _ExpiryStatCard(count: today.length, label: 'Expires Today', color: const Color(0xFFEA580C)),
-                  _ExpiryStatCard(count: thisWeek.length, label: 'This Week', color: const Color(0xFFD97706)),
-                  _ExpiryStatCard(count: safe.length, label: 'Safe', color: const Color(0xFF16A34A)),
+                  _ExpiryStatCard(count: expired.length, label: t.expiryExpired, color: const Color(0xFFEF4444)),
+                  _ExpiryStatCard(count: today.length, label: t.expiryExpiresToday, color: const Color(0xFFEA580C)),
+                  _ExpiryStatCard(count: thisWeek.length, label: t.expiryThisWeek, color: const Color(0xFFD97706)),
+                  _ExpiryStatCard(count: safe.length, label: t.expirySafe, color: const Color(0xFF16A34A)),
                 ],
               ),
               const SizedBox(height: 24),
-              if (expired.isNotEmpty) _ExpirySection(title: 'Expired', items: expired),
-              if (today.isNotEmpty) _ExpirySection(title: 'Expires Today', items: today),
-              if (thisWeek.isNotEmpty) _ExpirySection(title: 'Expires This Week', items: thisWeek),
-              if (safe.isNotEmpty) _ExpirySection(title: 'Safe Items', items: safe),
+              if (expired.isNotEmpty) _ExpirySection(title: t.expiryExpired, items: expired),
+              if (today.isNotEmpty) _ExpirySection(title: t.expiryExpiresToday, items: today),
+              if (thisWeek.isNotEmpty) _ExpirySection(title: t.expiryExpiresThisWeek, items: thisWeek),
+              if (safe.isNotEmpty) _ExpirySection(title: t.expirySafeItems, items: safe),
             ],
           ),
         );
@@ -112,7 +114,7 @@ class _ExpirySection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(item.name, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212))),
-                      Text('${item.category} · Qty: ${item.quantity}', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                      Text(context.l10n.donorDashQtyLabel(item.category, item.quantity), style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                     ],
                   )),
                   Column(

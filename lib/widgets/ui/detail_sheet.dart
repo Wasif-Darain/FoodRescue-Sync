@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../l10n/l10n_ext.dart';
 
 class DetailRow {
   final IconData icon;
@@ -83,7 +84,7 @@ Future<void> showDetailSheet(
                     Expanded(
                       child: _ContactButton(
                         icon: Icons.phone_outlined,
-                        label: 'Call',
+                        label: sheetContext.l10n.commonCall,
                         color: const Color(0xFF16A34A),
                         onTap: () => launchUrl(Uri.parse('tel:$phone')),
                       ),
@@ -93,7 +94,7 @@ Future<void> showDetailSheet(
                     Expanded(
                       child: _ContactButton(
                         icon: Icons.mail_outline,
-                        label: 'Email',
+                        label: sheetContext.l10n.commonEmail,
                         color: const Color(0xFF2563EB),
                         onTap: () => launchUrl(Uri.parse('mailto:$email')),
                       ),

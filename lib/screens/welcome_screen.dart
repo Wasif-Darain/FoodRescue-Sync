@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../l10n/l10n_ext.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
@@ -48,9 +50,9 @@ class WelcomeScreen extends StatelessWidget {
                         children: [
                           const Text('🍽️', style: TextStyle(fontSize: 18)),
                           const SizedBox(width: 6),
-                          const Text(
-                            'How will you help?',
-                            style: TextStyle(
+                          Text(
+                            t.welcomeHowWillYouHelp,
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w800,
                               color: Color(0xFF121212),
@@ -69,9 +71,9 @@ class WelcomeScreen extends StatelessWidget {
                                 imageUrl:
                                     'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80',
                                 icon: Icons.restaurant_menu,
-                                title: 'Donor',
-                                subtitle: 'Restaurants · Stores',
-                                features: const ['Inventory', 'Donations'],
+                                title: t.welcomeDonor,
+                                subtitle: t.welcomeDonorSubtitle,
+                                features: [t.welcomeFeatureInventory, t.navDonations],
                                 accentColor: const Color(0xFF16A34A),
                                 radius: const BorderRadius.only(
                                   topLeft: Radius.circular(32),
@@ -87,9 +89,9 @@ class WelcomeScreen extends StatelessWidget {
                                 imageUrl:
                                     'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=600&q=80',
                                 icon: Icons.volunteer_activism_outlined,
-                                title: 'Consumer',
-                                subtitle: 'NGOs · Shelters',
-                                features: const ['Marketplace', 'Pickups'],
+                                title: t.welcomeConsumer,
+                                subtitle: t.welcomeConsumerSubtitle,
+                                features: [t.navMarketplace, t.navPickups],
                                 accentColor: const Color(0xFFEA580C),
                                 radius: const BorderRadius.only(
                                   topLeft: Radius.circular(14),
@@ -112,7 +114,7 @@ class WelcomeScreen extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 800),
                 child: _GetStartedBar(
-                  label: 'Get Started',
+                  label: t.welcomeGetStarted,
                   onTap: () => context.go('/login'),
                 ),
               ),
@@ -129,6 +131,7 @@ class _HeroVisual extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return Container(
       height: 230,
       clipBehavior: Clip.antiAlias,
@@ -170,7 +173,7 @@ class _HeroVisual extends StatelessWidget {
                   children: [
                     _LiveStatPill(
                       icon: '🍲',
-                      label: 'Meals/day',
+                      label: t.welcomeMealsPerDay,
                       stream: FirebaseFirestore.instance.collection('donation_logs').snapshots(),
                       reduce: (docs) {
                         final total = docs.fold<double>(0, (acc, d) => acc + ((d.data()['totalWeight'] as num?)?.toDouble() ?? 0));
@@ -180,14 +183,14 @@ class _HeroVisual extends StatelessWidget {
                     const SizedBox(width: 8),
                     _LiveStatPill(
                       icon: '🤝',
-                      label: 'Donors',
+                      label: t.welcomeDonors,
                       stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'donor').snapshots(),
                       reduce: (docs) => '${docs.length}+',
                     ),
                     const SizedBox(width: 8),
                     _LiveStatPill(
                       icon: '❤️',
-                      label: 'Partners',
+                      label: t.welcomePartners,
                       stream: FirebaseFirestore.instance.collection('organization_profiles').snapshots(),
                       reduce: (docs) => '${docs.length}+',
                     ),
@@ -195,8 +198,8 @@ class _HeroVisual extends StatelessWidget {
                 ),
                 const Spacer(),
                 RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
+                  text: TextSpan(
+                    style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
@@ -204,18 +207,18 @@ class _HeroVisual extends StatelessWidget {
                       letterSpacing: 0.1,
                     ),
                     children: [
-                      TextSpan(text: 'Fight Food Waste,\nOne '),
-                      WidgetSpan(
+                      TextSpan(text: t.welcomeHeroLine1),
+                      const WidgetSpan(
                         alignment: PlaceholderAlignment.middle,
                         child: _HighlightWord(),
                       ),
-                      TextSpan(text: ' at a Time.'),
+                      TextSpan(text: t.welcomeHeroLine2),
                     ],
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Connecting food donors with organizations and consumers — before it\'s wasted.',
+                  t.welcomeHeroTagline,
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.white.withValues(alpha: 0.88),
@@ -244,9 +247,9 @@ class _HighlightWord extends StatelessWidget {
       color: const Color(0xFFE53238),
       borderRadius: BorderRadius.circular(16),
     ),
-    child: const Text(
-      'Meal',
-      style: TextStyle(
+    child: Text(
+      context.l10n.welcomeHeroHighlight,
+      style: const TextStyle(
         fontSize: 26,
         fontWeight: FontWeight.w900,
         color: Colors.white,
