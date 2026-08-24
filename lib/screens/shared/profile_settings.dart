@@ -5,15 +5,17 @@ import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/user_badge.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/models.dart';
+import '../../l10n/l10n_ext.dart';
+import '../../l10n/gen/app_localizations.dart';
 
-const _accountTypeLabel = {
-  AccountType.restaurant: 'Restaurant',
-  AccountType.caterer: 'Caterer',
-  AccountType.store: 'Store',
-  AccountType.ngo: 'NGO',
-  AccountType.foodBank: 'Food Bank',
-  AccountType.shelter: 'Shelter',
-  AccountType.individual: 'Individual',
+Map<AccountType, String> _accountTypeLabel(AppLocalizations t) => {
+  AccountType.restaurant: t.accountTypeRestaurant,
+  AccountType.caterer: t.accountTypeCaterer,
+  AccountType.store: t.accountTypeStore,
+  AccountType.ngo: t.accountTypeNgo,
+  AccountType.foodBank: t.accountTypeFoodBank,
+  AccountType.shelter: t.accountTypeShelter,
+  AccountType.individual: t.accountTypeIndividual,
 };
 
 class ProfileSettings extends StatelessWidget {
@@ -23,18 +25,19 @@ class ProfileSettings extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
+    final t = context.l10n;
 
     final quickLinks = [
-      (Icons.person_outline, 'Edit Profile', '/profile/edit'),
-      (Icons.notifications_outlined, 'Notification Preferences', '/profile/notifications'),
-      (Icons.lock_outline, 'Privacy & Security', '/profile/privacy-security'),
-      (Icons.language_outlined, 'Language & Region', '/profile/language-region'),
-      (Icons.help_outline, 'Help & Support', '/profile/help-support'),
+      (Icons.person_outline, t.profileEditProfile, '/profile/edit'),
+      (Icons.notifications_outlined, t.profileNotificationPreferences, '/profile/notifications'),
+      (Icons.lock_outline, t.profilePrivacySecurity, '/profile/privacy-security'),
+      (Icons.language_outlined, t.profileLanguageRegion, '/profile/language-region'),
+      (Icons.help_outline, t.profileHelpSupport, '/profile/help-support'),
     ];
 
     return AppLayout(
-      title: 'Profile & Settings',
-      subtitle: 'Manage your account information',
+      title: t.profileSettingsTitle,
+      subtitle: t.profileSettingsSubtitle,
       currentRoute: '/profile',
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -106,7 +109,7 @@ class ProfileSettings extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          _accountTypeLabel[user.accountType] ?? '',
+                          _accountTypeLabel(t)[user.accountType] ?? '',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFF16A34A),
@@ -116,7 +119,7 @@ class ProfileSettings extends StatelessWidget {
                       ),
                       if (user.mode != UserMode.admin) ...[
                         const SizedBox(height: 10),
-                        const UserBadge(label: 'Member', isLegend: false),
+                        UserBadge(label: t.navMember, isLegend: false),
                       ],
                     ],
                   ),
@@ -142,7 +145,7 @@ class ProfileSettings extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                           child: Text(
-                            'Quick Links',
+                            t.profileQuickLinks,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
