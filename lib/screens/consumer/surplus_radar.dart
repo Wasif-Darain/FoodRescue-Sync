@@ -11,6 +11,7 @@ import '../../widgets/ui/location_picker.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
+import '../../l10n/l10n_ext.dart';
 
 // Map-style screen showing nearby surplus food listings as pins on a real
 // OpenStreetMap map (via flutter_map), plus a sortable list alongside it.
@@ -87,14 +88,14 @@ class _SurplusRadarState extends State<SurplusRadar> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     final now = DateTime.now();
     final listings = context.watch<DonorProvider>().allListings.where((l) => l.pickupEnd.isAfter(now)).toList();
 
-    // Resolve the current consumer's own account so the "You" marker and
-    // live distances are based on a real position when one has been set
+    // Resolve the current consumer's own position so the "You" marker and
+    // live distances are based on a real location when one has been set
     // (Profile > Edit Profile > Location), falling back to the old Dhaka
     // reference point otherwise.
-    final user = context.watch<AuthProvider>().user!;
     final maxRadiusKm = context.watch<AuthProvider>().maxRadiusKm;
     final youLat = context.watch<AuthProvider>().latitude ?? 23.81;
     final youLng = context.watch<AuthProvider>().longitude ?? 90.41;
@@ -109,8 +110,8 @@ class _SurplusRadarState extends State<SurplusRadar> {
       ..sort((a, b) => distanceFor(a).compareTo(distanceFor(b)));
 
     return AppLayout(
-      title: 'Surplus Radar',
-      subtitle: 'Discover surplus food near you',
+      title: t.radarTitle,
+      subtitle: t.radarSubtitle,
       currentRoute: '/consumer/radar',
       useOwnScroll: true,
       child: LayoutBuilder(builder: (context, constraints) {
@@ -150,7 +151,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
                         Polyline(points: _routePoints!, strokeWidth: 4, color: const Color(0xFF1D4ED8)),
                       ]),
                     MarkerLayer(markers: [
-                      Marker(point: youPoint, width: 60, height: 46, child: const _LocationMarker(label: 'You')),
+                      Marker(point: youPoint, width: 60, height: 46, child: _LocationMarker(label: t.radarYou)),
                       ...sorted.map((listing) {
                         final isDonation = listing.listingType == ListingType.donation;
                         final isSelected = _selectedListing?.docId == listing.docId;
@@ -175,7 +176,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
                                   border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
                                   boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))],
                                 ),
-                                child: Text(isDonation ? 'FREE' : '৳${listing.price.toInt()}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                child: Text(isDonation ? t.commonFree : '৳${listing.price.toInt()}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                               ),
                               Container(width: 2, height: 6, color: isDonation ? const Color(0xFF16A34A) : const Color(0xFFEA580C)),
                               Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
@@ -195,10 +196,10 @@ class _SurplusRadarState extends State<SurplusRadar> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(999)),
-                  child: Row(children: const [
-                    Icon(Icons.waves, size: 16, color: Color(0xFF1D4ED8)),
-                    SizedBox(width: 6),
-                    Text('Live Radar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8))),
+                  child: Row(children: [
+                    const Icon(Icons.waves, size: 16, color: Color(0xFF1D4ED8)),
+                    const SizedBox(width: 6),
+                    Text(t.radarLive, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8))),
                   ]),
                 ),
               ),
@@ -235,7 +236,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
                 child: Row(children: [
                   Icon(Icons.sort, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                   const SizedBox(width: 8),
-                  Text('Nearest first', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252))),
+                  Text(t.radarNearestFirst, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252))),
                 ]),
               ),
               const SizedBox(height: 12),
@@ -260,7 +261,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                             Expanded(child: Text(l.title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                            AppBadge(label: l.listingType == ListingType.donation ? 'FREE' : '৳${l.price.toInt()}', variant: l.listingType == ListingType.donation ? BadgeVariant.green : BadgeVariant.orange),
+                            AppBadge(label: l.listingType == ListingType.donation ? t.commonFree : '৳${l.price.toInt()}', variant: l.listingType == ListingType.donation ? BadgeVariant.green : BadgeVariant.orange),
                           ]),
                           const SizedBox(height: 6),
                           Text(l.donorName, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
@@ -268,7 +269,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
                           Row(children: [
                             const Icon(Icons.location_on, size: 12, color: Color(0xFF757575)),
                             const SizedBox(width: 4),
-                            Text('${distanceFor(l).toStringAsFixed(1)} km away', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                            Text(t.radarKmAway(distanceFor(l).toStringAsFixed(1)), style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                           ]),
                           const SizedBox(height: 6),
                           Align(
@@ -352,6 +353,7 @@ class _RestaurantInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     final isDonation = listing.listingType == ListingType.donation;
     return Container(
       padding: const EdgeInsets.all(14),
@@ -387,10 +389,10 @@ class _RestaurantInfoCard extends StatelessWidget {
                   const SizedBox(width: 3),
                   Text(
                     routeLoading
-                        ? 'Finding route...'
+                        ? t.radarFindingRoute
                         : routeDurationMin != null
-                            ? '${routeDistanceKm!.toStringAsFixed(1)} km · ${routeDurationMin!.round()} min drive'
-                            : '${distanceKm.toStringAsFixed(1)} km away',
+                            ? t.radarKmMinDrive(routeDistanceKm!.toStringAsFixed(1), routeDurationMin!.round())
+                            : t.radarKmAway(distanceKm.toStringAsFixed(1)),
                     style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                   ),
                 ]),
@@ -401,7 +403,7 @@ class _RestaurantInfoCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           // Price/Free badge for a quick glance without reading the whole card.
-          AppBadge(label: isDonation ? 'FREE' : '৳${listing.price.toInt()}', variant: isDonation ? BadgeVariant.green : BadgeVariant.orange),
+          AppBadge(label: isDonation ? t.commonFree : '৳${listing.price.toInt()}', variant: isDonation ? BadgeVariant.green : BadgeVariant.orange),
           // Close button to dismiss the info card.
           IconButton(
             icon: Icon(Icons.close, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF9CA3AF)),

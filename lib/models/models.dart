@@ -37,8 +37,8 @@ class AppUser {
     required this.mode,
   });
 
-  AppUser copyWith({UserMode? mode}) =>
-      AppUser(id: id, name: name, email: email, accountType: accountType, mode: mode ?? this.mode);
+  AppUser copyWith({UserMode? mode, String? name}) =>
+      AppUser(id: id, name: name ?? this.name, email: email, accountType: accountType, mode: mode ?? this.mode);
 }
 
 class InventoryItem {

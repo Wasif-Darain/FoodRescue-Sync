@@ -6,6 +6,8 @@ import '../models/models.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/ui/glass.dart';
 import '../utils/password_validator.dart';
+import '../l10n/l10n_ext.dart';
+import '../l10n/gen/app_localizations.dart';
 
 const _brandGreen = Color(0xFF16A34A);
 
@@ -46,6 +48,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
     final auth = context.read<AuthProvider>();
     if (_isLogin) {
       await auth.signIn(_emailCtrl.text, _passCtrl.text);
+      if (!mounted) return;
       if (auth.errorMessage != null) {
         _showAuthError(auth.errorMessage!);
         return;
@@ -58,10 +61,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
     // Validate password strength before creating the account.
     final passwordResult = PasswordValidationResult.validate(_passCtrl.text);
     if (!passwordResult.isValid) {
-      _showAuthError(
-        'Password is not strong enough. It must be at least $kMinPasswordLength '
-        'characters and include uppercase, lowercase, number, and special character.',
-      );
+      _showAuthError(context.l10n.authPasswordNotStrong(kMinPasswordLength));
       return;
     }
     await auth.signUp(
@@ -72,6 +72,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
       address: _addressCtrl.text,
       accountType: _accountType,
     );
+    if (!mounted) return;
     if (auth.errorMessage != null) {
       _showAuthError(auth.errorMessage!);
       return;
@@ -92,14 +93,16 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
     _signupStep = 1;
   });
 
-  Widget _buildLogin() => Column(
+  Widget _buildLogin() {
+    final t = context.l10n;
+    return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text('Welcome Back', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Color(0xFF121212))),
+      Text(t.authWelcomeBack, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Color(0xFF121212))),
       const SizedBox(height: 4),
-      const Text('Sign in to continue', style: TextStyle(fontSize: 13, color: Color(0xFF757575))),
+      Text(t.authSignInToContinue, style: const TextStyle(fontSize: 13, color: Color(0xFF757575))),
       const SizedBox(height: 24),
-      _Field(icon: Icons.email_outlined, label: 'Email', ctrl: _emailCtrl, placeholder: 'you@example.com', keyboardType: TextInputType.emailAddress),
+      _Field(icon: Icons.email_outlined, label: t.authEmail, ctrl: _emailCtrl, placeholder: 'you@example.com', keyboardType: TextInputType.emailAddress),
       const SizedBox(height: 18),
       _PasswordField(ctrl: _passCtrl, show: _showPassword, onToggle: () => setState(() => _showPassword = !_showPassword)),
       Align(
@@ -107,58 +110,64 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
         child: TextButton(
           onPressed: () => context.go('/forgot-password'),
           style: TextButton.styleFrom(foregroundColor: _brandGreen, padding: EdgeInsets.zero),
-          child: const Text('Forgot password?', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+          child: Text(t.authForgotPassword, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
         ),
       ),
       const SizedBox(height: 22),
-      _PrimaryButton(label: 'Log in', onPressed: _submit),
+      _PrimaryButton(label: t.authLogIn, onPressed: _submit),
       const SizedBox(height: 16),
       const _OrDivider(),
       const SizedBox(height: 16),
-      _SecondaryButton(label: 'Sign up', onPressed: () => _switchMode(false)),
+      _SecondaryButton(label: t.authSignUp, onPressed: () => _switchMode(false)),
     ],
-  );
+    );
+  }
 
-  Widget _buildSignupStep1() => Column(
+  Widget _buildSignupStep1() {
+    final t = context.l10n;
+    return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text('Create Account', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Color(0xFF121212))),
+      Text(t.authCreateAccount, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Color(0xFF121212))),
       const SizedBox(height: 4),
-      const Text('Step 1 of 2 · Tell us about you', style: TextStyle(fontSize: 13, color: Color(0xFF757575))),
+      Text(t.authStep1Title, style: const TextStyle(fontSize: 13, color: Color(0xFF757575))),
       const SizedBox(height: 24),
-      const Text('Account Type', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF757575), letterSpacing: 0.5)),
+      Text(t.authAccountType, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF757575), letterSpacing: 0.5)),
       const SizedBox(height: 10),
-      _AccountTypeGrid(selected: _accountType, onChanged: (t) => setState(() => _accountType = t)),
+      _AccountTypeGrid(selected: _accountType, onChanged: (v) => setState(() => _accountType = v)),
       const SizedBox(height: 18),
-      _Field(icon: Icons.badge_outlined, label: _nameLabel(_accountType), ctrl: _nameCtrl, placeholder: 'Enter name'),
+      _Field(icon: Icons.badge_outlined, label: _nameLabel(t, _accountType), ctrl: _nameCtrl, placeholder: t.authEnterName),
       const SizedBox(height: 18),
-      _Field(icon: Icons.email_outlined, label: 'Email', ctrl: _emailCtrl, placeholder: 'you@example.com', keyboardType: TextInputType.emailAddress),
+      _Field(icon: Icons.email_outlined, label: t.authEmail, ctrl: _emailCtrl, placeholder: 'you@example.com', keyboardType: TextInputType.emailAddress),
       const SizedBox(height: 22),
-      _PrimaryButton(label: 'Next', onPressed: () => setState(() => _signupStep = 2)),
+      _PrimaryButton(label: t.authNext, onPressed: () => setState(() => _signupStep = 2)),
       const SizedBox(height: 16),
       const _OrDivider(),
       const SizedBox(height: 16),
-      _SecondaryButton(label: 'Log in', onPressed: () => _switchMode(true)),
+      _SecondaryButton(label: t.authLogIn, onPressed: () => _switchMode(true)),
     ],
-  );
+    );
+  }
 
-  Widget _buildSignupStep2() => Column(
+  Widget _buildSignupStep2() {
+    final t = context.l10n;
+    return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       TextButton.icon(
         onPressed: () => setState(() => _signupStep = 1),
         style: TextButton.styleFrom(foregroundColor: const Color(0xFF757575), padding: EdgeInsets.zero),
         icon: const Icon(Icons.arrow_back, size: 16),
-        label: const Text('Back'),
+        label: Text(t.authBack),
       ),
       const SizedBox(height: 8),
-      const Text('Create Account', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Color(0xFF121212))),
+      Text(t.authCreateAccount, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Color(0xFF121212))),
       const SizedBox(height: 4),
-      const Text('Step 2 of 2 · Contact & security', style: TextStyle(fontSize: 13, color: Color(0xFF757575))),
+      Text(t.authStep2Title, style: const TextStyle(fontSize: 13, color: Color(0xFF757575))),
       const SizedBox(height: 24),
       _Field(
         icon: Icons.phone_outlined,
-        label: 'Phone Number',
+        label: t.authPhoneNumber,
         ctrl: _phoneCtrl,
         placeholder: '+880 1XXX-XXXXXX',
         keyboardType: TextInputType.phone,
@@ -168,13 +177,14 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
         ],
       ),
       const SizedBox(height: 18),
-      _Field(icon: Icons.location_on_outlined, label: 'Address', ctrl: _addressCtrl, placeholder: 'Business / organization address'),
+      _Field(icon: Icons.location_on_outlined, label: t.authAddress, ctrl: _addressCtrl, placeholder: t.authAddressHint),
       const SizedBox(height: 18),
       _PasswordField(ctrl: _passCtrl, show: _showPassword, onToggle: () => setState(() => _showPassword = !_showPassword), showValidation: true),
       const SizedBox(height: 22),
-      _PrimaryButton(label: 'Create Account', onPressed: _submit),
+      _PrimaryButton(label: t.authCreateAccount, onPressed: _submit),
     ],
-  );
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -243,14 +253,14 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
     );
   }
 
-  String _nameLabel(AccountType t) => switch (t) {
-    AccountType.restaurant => 'Restaurant Name',
-    AccountType.caterer => 'Business Name',
-    AccountType.store => 'Store Name',
-    AccountType.ngo => 'Organization Name',
-    AccountType.foodBank => 'Food Bank Name',
-    AccountType.shelter => 'Shelter Name',
-    AccountType.individual => 'Full Name',
+  String _nameLabel(AppLocalizations t, AccountType type) => switch (type) {
+    AccountType.restaurant => t.accountTypeNameRestaurant,
+    AccountType.caterer => t.accountTypeNameCaterer,
+    AccountType.store => t.accountTypeNameStore,
+    AccountType.ngo => t.accountTypeNameNgo,
+    AccountType.foodBank => t.accountTypeNameFoodBank,
+    AccountType.shelter => t.accountTypeNameShelter,
+    AccountType.individual => t.accountTypeNameIndividual,
   };
 }
 
@@ -321,9 +331,9 @@ class _OrDivider extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     children: [
       const Expanded(child: Divider(color: Color(0xFFE2E2E2))),
-      const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12),
-        child: Text('or', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 12.5)),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Text(context.l10n.authOr, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12.5)),
       ),
       const Expanded(child: Divider(color: Color(0xFFE2E2E2))),
     ],
@@ -335,14 +345,14 @@ class _AccountTypeGrid extends StatelessWidget {
   final ValueChanged<AccountType> onChanged;
   const _AccountTypeGrid({required this.selected, required this.onChanged});
 
-  static const _types = [
-    (AccountType.restaurant, 'Restaurant', Icons.restaurant),
-    (AccountType.caterer, 'Caterer', Icons.soup_kitchen),
-    (AccountType.store, 'Store', Icons.store),
-    (AccountType.ngo, 'NGO', Icons.business),
-    (AccountType.foodBank, 'Food Bank', Icons.favorite_outline),
-    (AccountType.shelter, 'Shelter', Icons.home_outlined),
-    (AccountType.individual, 'Individual', Icons.person_outline),
+  static List<(AccountType, String, IconData)> _types(AppLocalizations t) => [
+    (AccountType.restaurant, t.accountTypeRestaurant, Icons.restaurant),
+    (AccountType.caterer, t.accountTypeCaterer, Icons.soup_kitchen),
+    (AccountType.store, t.accountTypeStore, Icons.store),
+    (AccountType.ngo, t.accountTypeNgo, Icons.business),
+    (AccountType.foodBank, t.accountTypeFoodBank, Icons.favorite_outline),
+    (AccountType.shelter, t.accountTypeShelter, Icons.home_outlined),
+    (AccountType.individual, t.accountTypeIndividual, Icons.person_outline),
   ];
 
   @override
@@ -350,7 +360,7 @@ class _AccountTypeGrid extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: _types.map((t) {
+      children: _types(context.l10n).map((t) {
         final isSelected = selected == t.$1;
         return GestureDetector(
           onTap: () => onChanged(t.$1),
@@ -486,17 +496,18 @@ class _PasswordFieldState extends State<_PasswordField> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     final showFeedback = widget.showValidation && widget.ctrl.text.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Password', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF757575))),
+        Text(t.authPassword, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF757575))),
         const SizedBox(height: 4),
         TextField(
           controller: widget.ctrl,
           obscureText: !widget.show,
           decoration: InputDecoration(
-            hintText: 'Enter your password',
+            hintText: t.authEnterYourPassword,
             hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontSize: 13.5),
             prefixIcon: const Icon(Icons.lock_outline, size: 19, color: Color(0xFF9CA3AF)),
             isDense: true,
@@ -528,6 +539,7 @@ class _PasswordStrengthBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     final progress = result.score / kPasswordCriteria.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -536,7 +548,7 @@ class _PasswordStrengthBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Strength: ${result.strength.label}',
+              t.authPasswordStrength(passwordStrengthLabel(t, result.strength)),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -572,6 +584,7 @@ class _PasswordCriteriaList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: kPasswordCriteria.map((criterion) {
@@ -587,7 +600,7 @@ class _PasswordCriteriaList extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                criterion.label,
+                passwordCriterionLabel(t, criterion.id),
                 style: TextStyle(
                   fontSize: 12,
                   color: isMet ? const Color(0xFF16A34A) : const Color(0xFF757575),

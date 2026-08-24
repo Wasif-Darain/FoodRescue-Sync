@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../l10n/l10n_ext.dart';
 
 class CountdownTimer extends StatefulWidget {
   final DateTime expiry;
   final double fontSize;
-  final String expiredLabel;
+  final String? expiredLabel;
   const CountdownTimer({
     super.key,
     required this.expiry,
     this.fontSize = 10,
-    this.expiredLabel = 'Expired',
+    this.expiredLabel,
   });
 
   @override
@@ -51,7 +52,7 @@ class _CountdownTimerState extends State<CountdownTimer> {
   }
 
   String _format(Duration d) {
-    if (d.isNegative) return widget.expiredLabel;
+    if (d.isNegative) return widget.expiredLabel ?? context.l10n.mktExpired;
     if (d.inDays > 0) return '${d.inDays}d ${d.inHours % 24}h ${d.inMinutes % 60}m';
     if (d.inHours > 0) return '${d.inHours}h ${d.inMinutes % 60}m ${d.inSeconds % 60}s';
     if (d.inMinutes > 0) return '${d.inMinutes}m ${d.inSeconds % 60}s';

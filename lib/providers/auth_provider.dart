@@ -17,6 +17,14 @@ class AuthProvider extends ChangeNotifier {
   double? _latitude;
   double? _longitude;
   String? _address;
+  String _phone = '';
+  bool _notifNewListings = true;
+  bool _notifRequests = true;
+  bool _notifPickups = false;
+  bool _notifPromotions = false;
+  bool _privacyVisible = true;
+  bool _privacyLoginAlerts = true;
+  bool _privacyDataSharing = false;
 
   AppUser? get user => _user;
   String? get address => _address;
@@ -24,6 +32,14 @@ class AuthProvider extends ChangeNotifier {
   int get unattendedAfterHours => _unattendedAfterHours;
   double? get latitude => _latitude;
   double? get longitude => _longitude;
+  String get phone => _phone;
+  bool get notifNewListings => _notifNewListings;
+  bool get notifRequests => _notifRequests;
+  bool get notifPickups => _notifPickups;
+  bool get notifPromotions => _notifPromotions;
+  bool get privacyVisible => _privacyVisible;
+  bool get privacyLoginAlerts => _privacyLoginAlerts;
+  bool get privacyDataSharing => _privacyDataSharing;
   bool get isAuthenticated => _user != null;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
@@ -52,6 +68,14 @@ class AuthProvider extends ChangeNotifier {
         _latitude = (data['latitude'] as num?)?.toDouble();
         _longitude = (data['longitude'] as num?)?.toDouble();
         _address = data['address'] as String?;
+        _phone = data['phone'] as String? ?? '';
+        _notifNewListings = data['notifNewListings'] as bool? ?? true;
+        _notifRequests = data['notifRequests'] as bool? ?? true;
+        _notifPickups = data['notifPickups'] as bool? ?? false;
+        _notifPromotions = data['notifPromotions'] as bool? ?? false;
+        _privacyVisible = data['privacyVisible'] as bool? ?? true;
+        _privacyLoginAlerts = data['privacyLoginAlerts'] as bool? ?? true;
+        _privacyDataSharing = data['privacyDataSharing'] as bool? ?? false;
         _user = AppUser(
           id: 0,
           name: data['name'] as String? ?? firebaseUser.displayName ?? 'User',
@@ -159,7 +183,11 @@ class AuthProvider extends ChangeNotifier {
         });
       });
     } on FirebaseAuthException catch (e) {
+      debugPrint('signUp FirebaseAuthException: code=${e.code} message=${e.message}');
       _errorMessage = _authExceptionMessage(e);
+    } catch (e) {
+      debugPrint('signUp error: $e');
+      _errorMessage = 'Something went wrong. Please try again.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -177,7 +205,11 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());
     } on FirebaseAuthException catch (e) {
+      debugPrint('sendPasswordResetEmail FirebaseAuthException: code=${e.code} message=${e.message}');
       _errorMessage = _authExceptionMessage(e);
+    } catch (e) {
+      debugPrint('sendPasswordResetEmail error: $e');
+      _errorMessage = 'Something went wrong. Please try again.';
     }
     notifyListeners();
   }
@@ -268,6 +300,75 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Failed to update location. Please try again.';
       notifyListeners();
+    }
+  }
+
+  Future<void> _updateBoolField(String field, bool value, void Function(bool) apply, bool previous) async {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) return;
+    apply(value);
+    notifyListeners();
+    try {
+      await _firestore.collection('users').doc(firebaseUser.uid).update({field: value});
+    } catch (_) {
+      apply(previous);
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateNotifNewListings(bool value) =>
+      _updateBoolField('notifNewListings', value, (v) => _notifNewListings = v, _notifNewListings);
+  Future<void> updateNotifRequests(bool value) =>
+      _updateBoolField('notifRequests', value, (v) => _notifRequests = v, _notifRequests);
+  Future<void> updateNotifPickups(bool value) =>
+      _updateBoolField('notifPickups', value, (v) => _notifPickups = v, _notifPickups);
+  Future<void> updateNotifPromotions(bool value) =>
+      _updateBoolField('notifPromotions', value, (v) => _notifPromotions = v, _notifPromotions);
+  Future<void> updatePrivacyVisible(bool value) =>
+      _updateBoolField('privacyVisible', value, (v) => _privacyVisible = v, _privacyVisible);
+  Future<void> updatePrivacyLoginAlerts(bool value) =>
+      _updateBoolField('privacyLoginAlerts', value, (v) => _privacyLoginAlerts = v, _privacyLoginAlerts);
+  Future<void> updatePrivacyDataSharing(bool value) =>
+      _updateBoolField('privacyDataSharing', value, (v) => _privacyDataSharing = v, _privacyDataSharing);
+
+  Future<bool> updateProfile({required String name, required String phone}) async {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) return false;
+    try {
+      await _firestore.collection('users').doc(firebaseUser.uid).update({
+        'name': name,
+        'phone': phone,
+      });
+      _phone = phone;
+      if (_user != null) _user = _user!.copyWith(name: name);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to update profile. Please try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null || firebaseUser.email == null) return false;
+    _errorMessage = null;
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: firebaseUser.email!,
+        password: currentPassword,
+      );
+      await firebaseUser.reauthenticateWithCredential(credential);
+      await firebaseUser.updatePassword(newPassword);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _errorMessage = _authExceptionMessage(e);
+      notifyListeners();
+      return false;
     }
   }
 

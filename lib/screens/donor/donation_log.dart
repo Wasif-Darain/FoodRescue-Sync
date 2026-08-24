@@ -8,6 +8,7 @@ import '../../widgets/ui/rating_stars.dart';
 import '../../models/donation_log.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
+import '../../l10n/l10n_ext.dart';
 
 class DonationLogScreen extends StatelessWidget {
   const DonationLogScreen({super.key});
@@ -36,21 +37,22 @@ class DonationLogScreen extends StatelessWidget {
       stream: stream,
       builder: (context, snapshot) {
         final logs = snapshot.data ?? [];
-        final total = logs.fold<double>(0, (sum, l) => sum + l.totalWeightKg);
+        final total = logs.fold<double>(0, (acc, l) => acc + l.totalWeightKg);
+        final t = context.l10n;
 
         return AppLayout(
-          title: 'Donation Log',
-          subtitle: isDonor ? 'Your complete donation history' : 'Donations you have received',
+          title: t.donationLogTitle,
+          subtitle: isDonor ? t.donationLogSubtitle : 'Donations you have received',
           currentRoute: '/donor/donation-log',
           child: Column(
             children: [
               IntrinsicHeight(
                 child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  Expanded(child: _SummaryCard(value: '${logs.length}', label: isDonor ? 'Total Donations' : 'Total Received')),
+                  Expanded(child: _SummaryCard(value: '${logs.length}', label: isDonor ? t.donationLogTotalDonations : 'Total Received')),
                   const SizedBox(width: 12),
-                  Expanded(child: _SummaryCard(value: total.toStringAsFixed(1), label: 'Weight (kg)')),
+                  Expanded(child: _SummaryCard(value: total.toStringAsFixed(1), label: t.donationLogWeightKg)),
                   const SizedBox(width: 12),
-                  Expanded(child: _SummaryCard(value: '${logs.map((l) => isDonor ? l.recipientId : l.donorId).toSet().length}', label: isDonor ? 'Recipients' : 'Donors')),
+                  Expanded(child: _SummaryCard(value: '${logs.map((l) => isDonor ? l.recipientId : l.donorId).toSet().length}', label: isDonor ? t.donationLogRecipients : 'Donors')),
                 ]),
               ),
               const SizedBox(height: 20),
@@ -66,7 +68,7 @@ class DonationLogScreen extends StatelessWidget {
                     children: [
                       Icon(Icons.receipt_long_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
                       const SizedBox(height: 12),
-                      Text(isDonor ? 'No donations logged yet' : 'No donations received yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      Text(isDonor ? t.donationLogEmpty : 'No donations received yet', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
                     ],
                   ),
                 )
@@ -119,6 +121,7 @@ class _LogRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDonor = context.watch<AuthProvider>().user?.mode == UserMode.donor;
+    final t = context.l10n;
     final date = '${log.completedAt.year}-${log.completedAt.month.toString().padLeft(2, '0')}-${log.completedAt.day.toString().padLeft(2, '0')}';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -132,20 +135,20 @@ class _LogRow extends StatelessWidget {
                 child: Text('${log.totalWeightKg.toStringAsFixed(1)} kg', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
               const SizedBox(width: 8),
-              AppBadge(label: 'Completed', variant: BadgeVariant.green),
+              AppBadge(label: t.donationLogCompleted, variant: BadgeVariant.green),
             ],
           ),
           const SizedBox(height: 4),
           Text(
             isDonor
-                ? 'Recipient: ${log.recipientId} · $date'
+                ? t.donationLogRecipient(log.recipientId, date)
                 : 'Donor: ${log.donorId} · $date',
             style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 12),
-          RatingStars(reviewLabel: 'Rate this donation'),
+          RatingStars(reviewLabel: t.donationLogRateThis),
         ],
       ),
     );

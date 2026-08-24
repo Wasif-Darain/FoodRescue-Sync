@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
+import '../../l10n/gen/app_localizations.dart';
 
-String donorTierLabel(DonorTier tier) => switch (tier) {
+/// Canonical, unlocalized tier key — used for [UserBadge] color lookup so
+/// translated display labels don't break the color switch below.
+String donorTierKey(DonorTier tier) => switch (tier) {
   DonorTier.novice => 'Novice',
   DonorTier.contributor => 'Contributor',
   DonorTier.provider => 'Provider',
@@ -10,13 +13,31 @@ String donorTierLabel(DonorTier tier) => switch (tier) {
   DonorTier.legend => 'Legend',
 };
 
-String consumerTierLabel(ConsumerTier tier) => switch (tier) {
+String consumerTierKey(ConsumerTier tier) => switch (tier) {
   ConsumerTier.novice => 'Novice',
   ConsumerTier.scout => 'Scout',
   ConsumerTier.saver => 'Saver',
   ConsumerTier.rescuer => 'Rescuer',
   ConsumerTier.master => 'Master',
   ConsumerTier.legend => 'Legend',
+};
+
+String donorTierLabel(AppLocalizations t, DonorTier tier) => switch (tier) {
+  DonorTier.novice => t.levelNovice,
+  DonorTier.contributor => t.tierContributor,
+  DonorTier.provider => t.tierProvider,
+  DonorTier.patron => t.tierPatron,
+  DonorTier.master => t.tierMaster,
+  DonorTier.legend => t.tierLegend,
+};
+
+String consumerTierLabel(AppLocalizations t, ConsumerTier tier) => switch (tier) {
+  ConsumerTier.novice => t.levelNovice,
+  ConsumerTier.scout => t.tierScout,
+  ConsumerTier.saver => t.tierSaver,
+  ConsumerTier.rescuer => t.tierRescuer,
+  ConsumerTier.master => t.tierMaster,
+  ConsumerTier.legend => t.tierLegend,
 };
 
 DonorTier donorTierFor(RegisteredAccount a) {
@@ -38,10 +59,10 @@ DonorTier donorTierFor(RegisteredAccount a) {
   return DonorTier.novice;
 }
 
-String pickupPreferenceLabel(PickupPreference p) => switch (p) {
-  PickupPreference.self => 'Self Pickup',
-  PickupPreference.management => 'Management Pickup',
-  PickupPreference.rider => 'Rider Delivery',
+String pickupPreferenceLabel(AppLocalizations t, PickupPreference p) => switch (p) {
+  PickupPreference.self => t.pickupSelf,
+  PickupPreference.management => t.pickupManagement,
+  PickupPreference.rider => t.pickupRider,
 };
 
 IconData pickupPreferenceIcon(PickupPreference p) => switch (p) {
@@ -71,12 +92,16 @@ class UserBadge extends StatelessWidget {
   final String label;
   final bool isLegend;
   final double fontSize;
-  const UserBadge({super.key, required this.label, required this.isLegend, this.fontSize = 10});
+  /// Canonical, unlocalized key used to pick badge colors — falls back to
+  /// [label] for non-tier badges (e.g. "Member") where translation doesn't
+  /// matter for color selection.
+  final String? colorKey;
+  const UserBadge({super.key, required this.label, required this.isLegend, this.fontSize = 10, this.colorKey});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final (bg, fg, border) = switch (label) {
+    final (bg, fg, border) = switch (colorKey ?? label) {
       'Novice' => (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE2E2E2), isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252), isDark ? const Color(0xFF3F3F46) : const Color(0xFFD4D4D4)),
       'Contributor' || 'Scout' => (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7), isDark ? const Color(0xFF4ADE80) : const Color(0xFF15803D), isDark ? const Color(0xFF16A34A) : const Color(0xFF86EFAC)),
       'Provider' || 'Saver' => (isDark ? const Color(0xFF0A1A2A) : const Color(0xFFDBEAFE), isDark ? const Color(0xFF60A5FA) : const Color(0xFF1D4ED8), isDark ? const Color(0xFF3B82F6) : const Color(0xFF93C5FD)),

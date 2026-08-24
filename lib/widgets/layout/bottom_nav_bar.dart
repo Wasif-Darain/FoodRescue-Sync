@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../models/models.dart';
+import '../../l10n/l10n_ext.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../ui/animated_tap.dart';
 import '../ui/glass.dart';
 import '../ui/user_badge.dart';
@@ -16,47 +18,47 @@ class _NavItem {
   const _NavItem(this.route, this.icon, this.label);
 }
 
-const _donorLeft = [
-  _NavItem('/donor', Icons.dashboard_outlined, 'Dashboard'),
-  _NavItem('/donor/consumers', Icons.groups_outlined, 'Consumers'),
+List<_NavItem> _donorLeft(AppLocalizations t) => [
+  _NavItem('/donor', Icons.dashboard_outlined, t.navDashboard),
+  _NavItem('/donor/consumers', Icons.groups_outlined, t.navConsumers),
 ];
 
-const _donorRight = [
-  _NavItem('/donor/expiry', Icons.timer_outlined, 'Expiry'),
-  _NavItem('/donor/donation-log', Icons.receipt_long_outlined, 'Donations'),
+List<_NavItem> _donorRight(AppLocalizations t) => [
+  _NavItem('/donor/expiry', Icons.timer_outlined, t.navExpiry),
+  _NavItem('/donor/donation-log', Icons.receipt_long_outlined, t.navDonations),
 ];
 
-const _donorMenu = [
-  _NavItem('/profile', Icons.person_outlined, 'Profile & Settings'),
+List<_NavItem> _donorMenu(AppLocalizations t) => [
+  _NavItem('/profile', Icons.person_outlined, t.navProfileSettings),
 ];
 
-const _consumerLeft = [
-  _NavItem('/consumer', Icons.storefront_outlined, 'Marketplace'),
-  _NavItem('/consumer/radar', Icons.map_outlined, 'Radar'),
+List<_NavItem> _consumerLeft(AppLocalizations t) => [
+  _NavItem('/consumer', Icons.storefront_outlined, t.navMarketplace),
+  _NavItem('/consumer/radar', Icons.map_outlined, t.navRadar),
 ];
 
-const _consumerRight = [
-  _NavItem('/consumer/requests', Icons.assignment_outlined, 'Requests'),
-  _NavItem('/consumer/pickups', Icons.local_shipping_outlined, 'Pickups'),
+List<_NavItem> _consumerRight(AppLocalizations t) => [
+  _NavItem('/consumer/requests', Icons.assignment_outlined, t.navRequests),
+  _NavItem('/consumer/pickups', Icons.local_shipping_outlined, t.navPickups),
 ];
 
-const _consumerMenu = [
-  _NavItem('/profile', Icons.person_outlined, 'Profile & Settings'),
+List<_NavItem> _consumerMenu(AppLocalizations t) => [
+  _NavItem('/profile', Icons.person_outlined, t.navProfileSettings),
 ];
 
-const _adminNav = [
-  _NavItem('/admin', Icons.dashboard_outlined, 'Overview'),
-  _NavItem('/admin/accounts', Icons.people_outline, 'Accounts'),
+List<_NavItem> _adminNav(AppLocalizations t) => [
+  _NavItem('/admin', Icons.dashboard_outlined, t.navOverview),
+  _NavItem('/admin/accounts', Icons.people_outline, t.navAccounts),
 ];
 
-const _accountTypeLabel = {
-  AccountType.restaurant: 'Restaurant',
-  AccountType.caterer: 'Caterer',
-  AccountType.store: 'Store',
-  AccountType.ngo: 'NGO',
-  AccountType.foodBank: 'Food Bank',
-  AccountType.shelter: 'Shelter',
-  AccountType.individual: 'Individual',
+Map<AccountType, String> _accountTypeLabel(AppLocalizations t) => {
+  AccountType.restaurant: t.accountTypeRestaurant,
+  AccountType.caterer: t.accountTypeCaterer,
+  AccountType.store: t.accountTypeStore,
+  AccountType.ngo: t.accountTypeNgo,
+  AccountType.foodBank: t.accountTypeFoodBank,
+  AccountType.shelter: t.accountTypeShelter,
+  AccountType.individual: t.accountTypeIndividual,
 };
 
 bool _isActive(String currentRoute, String route) =>
@@ -172,6 +174,7 @@ class BottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final mode = context.watch<AuthProvider>().user!.mode;
     final isDark = context.watch<ThemeProvider>().isDark;
+    final t = context.l10n;
 
     if (mode == UserMode.admin) {
       return _GlassBottomBar(
@@ -179,7 +182,7 @@ class BottomNavBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            for (final item in _adminNav)
+            for (final item in _adminNav(t))
               _NavIconButton(
                 icon: item.icon,
                 label: item.label,
@@ -193,8 +196,8 @@ class BottomNavBar extends StatelessWidget {
     }
 
     final isDonor = mode == UserMode.donor;
-    final left = isDonor ? _donorLeft : _consumerLeft;
-    final right = isDonor ? _donorRight : _consumerRight;
+    final left = isDonor ? _donorLeft(t) : _consumerLeft(t);
+    final right = isDonor ? _donorRight(t) : _consumerRight(t);
 
     return _GlassBottomBar(
       isDark: isDark,
@@ -301,7 +304,9 @@ void showNavMenuSheet(BuildContext context) {
   final user = auth.user!;
   final isAdmin = user.mode == UserMode.admin;
   final isDonor = user.mode == UserMode.donor;
-  final menu = isAdmin ? const <_NavItem>[] : (isDonor ? _donorMenu : _consumerMenu);
+  final t = context.l10n;
+  final menu = isAdmin ? const <_NavItem>[] : (isDonor ? _donorMenu(t) : _consumerMenu(t));
+  final accountTypeLabel = _accountTypeLabel(t);
   final accent = isDonor ? const Color(0xFF16A34A) : const Color(0xFFEA580C);
   final accentBg = isDonor ? const Color(0xFFDCFCE7) : const Color(0xFFFFE3CC);
 
@@ -338,11 +343,11 @@ void showNavMenuSheet(BuildContext context) {
                       children: [
                         Text(user.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: theme.isDark ? Colors.white : const Color(0xFF121212))),
                         if (isAdmin)
-                          Text('Administrator', style: const TextStyle(fontSize: 12, color: Color(0xFF757575)))
+                          Text(t.navAdministrator, style: const TextStyle(fontSize: 12, color: Color(0xFF757575)))
                         else ...[
-                          Text(_accountTypeLabel[user.accountType] ?? '', style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
+                          Text(accountTypeLabel[user.accountType] ?? '', style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
                           const SizedBox(height: 4),
-                          const UserBadge(label: 'Member', isLegend: false, fontSize: 9),
+                          UserBadge(label: t.navMember, isLegend: false, fontSize: 9),
                         ],
                       ],
                     ),
@@ -364,7 +369,7 @@ void showNavMenuSheet(BuildContext context) {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(theme.isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                        Text(theme.isDark ? t.navSwitchToLightMode : t.navSwitchToDarkMode,
                           style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w600, fontSize: 13)),
                         Icon(theme.isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined, size: 18, color: const Color(0xFF16A34A)),
                       ],
@@ -394,7 +399,7 @@ void showNavMenuSheet(BuildContext context) {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(isDonor ? 'Switch to Consumer Mode' : 'Switch to Donor Mode', style: TextStyle(color: accent, fontWeight: FontWeight.w600, fontSize: 13)),
+                          Text(isDonor ? t.navSwitchToConsumerMode : t.navSwitchToDonorMode, style: TextStyle(color: accent, fontWeight: FontWeight.w600, fontSize: 13)),
                           Icon(Icons.swap_horiz, size: 18, color: accent),
                         ],
                       ),
@@ -424,7 +429,7 @@ void showNavMenuSheet(BuildContext context) {
               color: Colors.transparent,
               child: ListTile(
                 leading: const Icon(Icons.logout, color: Color(0xFFEF4444), size: 20),
-                title: const Text('Logout', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w500)),
+                title: Text(t.navLogout, style: const TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w500)),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   auth.logout();

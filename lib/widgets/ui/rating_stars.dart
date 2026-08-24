@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/l10n_ext.dart';
 
 class RatingStars extends StatefulWidget {
   final double? initialRating;
@@ -28,17 +29,19 @@ class _RatingStarsState extends State<RatingStars> {
   }
 
   String get _label {
-    if (_rating == 0) return 'Tap to rate';
-    if (_rating <= 1) return 'Poor';
-    if (_rating <= 2) return 'Fair';
-    if (_rating <= 3) return 'Good';
-    if (_rating <= 4) return 'Very Good';
-    return 'Excellent';
+    final t = context.l10n;
+    if (_rating == 0) return t.ratingTapToRate;
+    if (_rating <= 1) return t.ratingPoor;
+    if (_rating <= 2) return t.ratingFair;
+    if (_rating <= 3) return t.ratingGood;
+    if (_rating <= 4) return t.ratingVeryGood;
+    return t.ratingExcellent;
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     final bg = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5);
     final text = isDark ? const Color(0xFFE5E5E5) : const Color(0xFF525252);
     final muted = isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575);
@@ -55,7 +58,7 @@ class _RatingStarsState extends State<RatingStars> {
               children: [
                 Icon(Icons.check_circle, size: 18, color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A)),
                 const SizedBox(width: 8),
-                Text('Rating submitted', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A))),
+                Text(t.ratingSubmitted, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A))),
                 const Spacer(),
                 Text('$_rating/5', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
               ],
@@ -76,7 +79,7 @@ class _RatingStarsState extends State<RatingStars> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.reviewLabel ?? 'Rate your experience', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: text)),
+          Text(widget.reviewLabel ?? t.ratingRateExperience, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: text)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -102,7 +105,7 @@ class _RatingStarsState extends State<RatingStars> {
             maxLines: 2,
             maxLength: 200,
             decoration: InputDecoration(
-              hintText: 'Write a review (optional)...',
+              hintText: t.ratingWriteReview,
               hintStyle: TextStyle(fontSize: 12, color: muted),
               counterText: '',
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -126,7 +129,7 @@ class _RatingStarsState extends State<RatingStars> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text('Submit Rating', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              child: Text(t.ratingSubmit, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
             ),
           ),
         ],

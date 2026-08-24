@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
+import '../../providers/auth_provider.dart';
+import '../../l10n/l10n_ext.dart';
 
 class NotificationPreferences extends StatelessWidget {
   const NotificationPreferences({super.key});
@@ -11,10 +14,12 @@ class NotificationPreferences extends StatelessWidget {
     final subColor = isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575);
     final cardColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
     final borderColor = isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2);
+    final auth = context.watch<AuthProvider>();
+    final t = context.l10n;
 
     return AppLayout(
-      title: 'Notification Preferences',
-      subtitle: 'Choose what you want to be notified about',
+      title: t.notifPrefsTitle,
+      subtitle: t.notifPrefsSubtitle,
       currentRoute: '/profile',
       child: Container(
         decoration: BoxDecoration(
@@ -27,33 +32,37 @@ class NotificationPreferences extends StatelessWidget {
           children: [
             _PreferenceTile(
               icon: Icons.storefront_outlined,
-              title: 'New Listings',
-              subtitle: 'Get notified when new food listings are posted',
-              value: true,
+              title: t.notifPrefsNewListings,
+              subtitle: t.notifPrefsNewListingsSub,
+              value: auth.notifNewListings,
+              onChanged: auth.updateNotifNewListings,
               textColor: textColor,
               subColor: subColor,
             ),
             _PreferenceTile(
               icon: Icons.assignment_outlined,
-              title: 'Requests',
-              subtitle: 'Get notified about new donation requests',
-              value: true,
+              title: t.notifPrefsRequests,
+              subtitle: t.notifPrefsRequestsSub,
+              value: auth.notifRequests,
+              onChanged: auth.updateNotifRequests,
               textColor: textColor,
               subColor: subColor,
             ),
             _PreferenceTile(
               icon: Icons.local_shipping_outlined,
-              title: 'Pickups',
-              subtitle: 'Get notified about pickup coordination updates',
-              value: false,
+              title: t.notifPrefsPickups,
+              subtitle: t.notifPrefsPickupsSub,
+              value: auth.notifPickups,
+              onChanged: auth.updateNotifPickups,
               textColor: textColor,
               subColor: subColor,
             ),
             _PreferenceTile(
               icon: Icons.campaign_outlined,
-              title: 'Promotions',
-              subtitle: 'Get notified about campaigns and promotions',
-              value: false,
+              title: t.notifPrefsPromotions,
+              subtitle: t.notifPrefsPromotionsSub,
+              value: auth.notifPromotions,
+              onChanged: auth.updateNotifPromotions,
               textColor: textColor,
               subColor: subColor,
             ),
@@ -69,6 +78,7 @@ class _PreferenceTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool value;
+  final ValueChanged<bool> onChanged;
   final Color textColor;
   final Color subColor;
 
@@ -77,6 +87,7 @@ class _PreferenceTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.value,
+    required this.onChanged,
     required this.textColor,
     required this.subColor,
   });
@@ -89,7 +100,7 @@ class _PreferenceTile extends StatelessWidget {
       subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: subColor)),
       value: value,
       activeTrackColor: const Color(0xFF16A34A),
-      onChanged: (_) {},
+      onChanged: onChanged,
     );
   }
 }

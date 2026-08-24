@@ -7,6 +7,22 @@ import '../../widgets/ui/stat_card.dart';
 import '../../widgets/ui/responsive_grid.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../providers/auth_provider.dart';
+import '../../l10n/l10n_ext.dart';
+import '../../l10n/gen/app_localizations.dart';
+
+String _levelLabel(AppLocalizations t, String level) => switch (level) {
+  'Platinum' => t.levelPlatinum,
+  'Gold' => t.levelGold,
+  'Silver' => t.levelSilver,
+  'Bronze' => t.levelBronze,
+  _ => t.levelNovice,
+};
+
+String _timeframeLabel(AppLocalizations t, String tf) => switch (tf) {
+  'Weekly' => t.rewardsTimeframeWeekly,
+  'Monthly' => t.rewardsTimeframeMonthly,
+  _ => t.rewardsTimeframeYearly,
+};
 
 class RewardsScreen extends StatefulWidget {
   const RewardsScreen({super.key});
@@ -30,8 +46,8 @@ class _RewardsScreenState extends State<RewardsScreen> {
     }
   }
 
-  String get _periodLabel =>
-      _timeFrame == 'Weekly' ? 'week' : _timeFrame == 'Monthly' ? 'month' : 'year';
+  String _periodLabel(AppLocalizations t) =>
+      _timeFrame == 'Weekly' ? t.rewardsPeriodWeek : _timeFrame == 'Monthly' ? t.rewardsPeriodMonth : t.rewardsPeriodYear;
 
   Future<_RewardsData> _loadRewards(String uid) async {
     final firestore = FirebaseFirestore.instance;
@@ -60,7 +76,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
     final pickupsThisPeriod = pickupSnap.docs.length;
     final totalWeight = allDonationSnap.docs.fold<double>(
       0,
-      (sum, doc) => sum + (((doc.data()['totalWeight'] as num?)?.toDouble()) ?? 0),
+      (acc, doc) => acc + (((doc.data()['totalWeight'] as num?)?.toDouble()) ?? 0),
     );
 
     final pointsThisPeriod = donationsThisPeriod * 10 + pickupsThisPeriod * 5;
@@ -90,6 +106,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final t = context.l10n;
 
     return FutureBuilder<_RewardsData>(
       future: _loadRewards(uid),
@@ -106,8 +123,8 @@ class _RewardsScreenState extends State<RewardsScreen> {
         final rescuedMeals = rewards.totalDonations + rewards.periodPickups;
 
         return AppLayout(
-          title: 'Rewards',
-          subtitle: 'Track your achievements and earn badges',
+          title: t.rewardsTitle,
+          subtitle: t.rewardsSubtitle,
           currentRoute: '/rewards',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,10 +144,10 @@ class _RewardsScreenState extends State<RewardsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                            Text(t.rewardsGreeting(user.name.split(' ').first), style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 6),
                             Text(
-                              'You\'ve earned $thisPeriodPoints points this $_periodLabel and reached ${rewards.level} level.',
+                              t.rewardsEarnedSummary(thisPeriodPoints, _periodLabel(t), _levelLabel(t, rewards.level)),
                               style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                             ),
                             const SizedBox(height: 12),
@@ -145,7 +162,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              '${rewards.totalWeight.toStringAsFixed(0)} kg saved toward Platinum',
+                              t.rewardsKgSavedToward(rewards.totalWeight.toStringAsFixed(0)),
                               style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                             ),
                           ],
@@ -168,7 +185,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                   children: [
                     for (final tf in ['Weekly', 'Monthly', 'Yearly']) ...[
                       if (tf != 'Weekly') const SizedBox(width: 8),
-                      _TimeFrameChip(label: tf, selected: _timeFrame == tf, onTap: () => setState(() => _timeFrame = tf)),
+                      _TimeFrameChip(label: _timeframeLabel(t, tf), selected: _timeFrame == tf, onTap: () => setState(() => _timeFrame = tf)),
                     ],
                   ],
                 ),
@@ -177,32 +194,32 @@ class _RewardsScreenState extends State<RewardsScreen> {
               ResponsiveGrid(
                 children: [
                   StatCard(
-                    label: 'Points This $_periodLabel',
+                    label: t.rewardsPointsThisPeriod(_periodLabel(t)),
                     value: thisPeriodPoints,
                     icon: const Icon(Icons.star_outlined),
                     color: 'yellow',
-                    subtitle: 'From real activity',
+                    subtitle: t.rewardsFromRealActivity,
                   ),
                   StatCard(
-                    label: 'Current Level',
-                    value: rewards.level,
+                    label: t.rewardsCurrentLevel,
+                    value: _levelLabel(t, rewards.level),
                     icon: const Icon(Icons.trending_up),
                     color: 'blue',
-                    subtitle: '$thisPeriodPoints points now',
+                    subtitle: t.rewardsPointsNow(thisPeriodPoints),
                   ),
                   StatCard(
-                    label: 'Rescued Meals',
+                    label: t.rewardsRescuedMeals,
                     value: rescuedMeals,
                     icon: const Icon(Icons.eco_outlined),
                     color: 'green',
-                    subtitle: 'Donations + pickups',
+                    subtitle: t.rewardsDonationsPlusPickups,
                   ),
                   StatCard(
-                    label: 'Weight Saved (kg)',
+                    label: t.rewardsWeightSavedKg,
                     value: rewards.totalWeight.toStringAsFixed(0),
                     icon: const Icon(Icons.favorite_outlined),
                     color: 'red',
-                    subtitle: 'All time',
+                    subtitle: t.rewardsAllTime,
                   ),
                 ],
               ),
@@ -215,24 +232,23 @@ class _RewardsScreenState extends State<RewardsScreen> {
     );
   }
 
-  String get _statusLabel => _periodLabel;
-
   Widget _buildBadges(_RewardsData rewards) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Badges', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
-            Text('${_countAchieved(rewards)} unlocked', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+            Text(t.rewardsBadges, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
+            Text(t.rewardsUnlocked(_countAchieved(rewards)), style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
           ],
         ),
         const SizedBox(height: 12),
         ResponsiveGrid(
           minItemWidth: 220,
-          children: _computeBadges(rewards).map((badge) => _HoverScale(
+          children: _computeBadges(context.l10n, rewards).map((badge) => _HoverScale(
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -247,8 +263,8 @@ class _RewardsScreenState extends State<RewardsScreen> {
                     children: [
                       Icon(badge.icon, size: 24, color: badge.achieved ? badge.color : const Color(0xFFBFBFBF)),
                       const Spacer(),
-                      if (badge.achieved) const AppBadge(label: 'Achieved', variant: BadgeVariant.green)
-                      else const AppBadge(label: 'Locked', variant: BadgeVariant.gray),
+                      if (badge.achieved) AppBadge(label: t.rewardsAchieved, variant: BadgeVariant.green)
+                      else AppBadge(label: t.rewardsLocked, variant: BadgeVariant.gray),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -264,41 +280,41 @@ class _RewardsScreenState extends State<RewardsScreen> {
     );
   }
 
-  int _countAchieved(_RewardsData rewards) => _computeBadges(rewards).where((b) => b.achieved).length;
+  int _countAchieved(_RewardsData rewards) => _computeBadges(context.l10n, rewards).where((b) => b.achieved).length;
 
-  List<_Badge> _computeBadges(_RewardsData rewards) {
+  List<_Badge> _computeBadges(AppLocalizations t, _RewardsData rewards) {
     return [
       _Badge(
-        name: 'First Donation',
-        description: 'Made your first donation.',
+        name: t.badgeFirstDonationName,
+        description: t.badgeFirstDonationDesc,
         icon: Icons.military_tech,
         color: const Color(0xFFF59E0B),
         achieved: rewards.totalLogs >= 1,
       ),
       _Badge(
-        name: 'Active Saver',
-        description: '10+ donations logged.',
+        name: t.badgeActiveSaverName,
+        description: t.badgeActiveSaverDesc,
         icon: Icons.volunteer_activism_outlined,
         color: const Color(0xFF16A34A),
         achieved: rewards.totalDonations >= 10,
       ),
       _Badge(
-        name: 'Meal Rescuer',
-        description: 'Complete 5 pickups.',
+        name: t.badgeMealRescuerName,
+        description: t.badgeMealRescuerDesc,
         icon: Icons.eco_outlined,
         color: const Color(0xFF2563EB),
         achieved: rewards.periodPickups >= 5,
       ),
       _Badge(
-        name: '100 kg Saved',
-        description: 'Reach 100 kg of food saved.',
+        name: t.badge100kgName,
+        description: t.badge100kgDesc,
         icon: Icons.favorite_outline,
         color: const Color(0xFF7C3AED),
         achieved: rewards.totalWeight >= 100,
       ),
       _Badge(
-        name: 'Community Star',
-        description: 'Inspire others to join the platform.',
+        name: t.badgeCommunityStarName,
+        description: t.badgeCommunityStarDesc,
         icon: Icons.emoji_events,
         color: const Color(0xFFD97706),
         achieved: rewards.totalDonations >= 1,

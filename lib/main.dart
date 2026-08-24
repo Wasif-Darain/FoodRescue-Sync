@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
@@ -7,6 +8,8 @@ import 'providers/admin_provider.dart';
 import 'providers/donor_provider.dart';
 import 'providers/consumer_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/locale_provider.dart';
+import 'l10n/gen/app_localizations.dart';
 import 'router.dart';
 import 'services/notification_service.dart';
 
@@ -32,6 +35,8 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
   late final ConsumerProvider _consumer;
   late final ThemeProvider _theme;
   late final NotificationService _notifications;
+  late final LocaleProvider _localeProvider;
+
 
   @override
   void initState() {
@@ -45,6 +50,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
     // foreground/background message handling).
     _notifications = NotificationService();
     _notifications.initialize();
+    _localeProvider = LocaleProvider();
   }
 
   @override
@@ -62,16 +68,26 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
         ChangeNotifierProvider.value(value: _donor),
         ChangeNotifierProvider.value(value: _consumer),
         ChangeNotifierProvider.value(value: _theme),
+        ChangeNotifierProvider.value(value: _localeProvider),
       ],
       child: Builder(
         builder: (context) {
           final themeMode = context.watch<ThemeProvider>().mode;
+          final locale = context.watch<LocaleProvider>().locale;
           return MaterialApp.router(
             title: 'FoodRescue Sync',
             debugShowCheckedModeBanner: false,
             themeMode: themeMode,
             theme: _lightGlassTheme(),
             darkTheme: _darkGlassTheme(),
+            locale: locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             routerConfig: buildRouter(_auth),
           );
         },

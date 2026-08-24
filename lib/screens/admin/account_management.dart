@@ -5,15 +5,17 @@ import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/detail_sheet.dart';
 import '../../models/models.dart';
 import '../../providers/admin_provider.dart';
+import '../../l10n/l10n_ext.dart';
+import '../../l10n/gen/app_localizations.dart';
 
-const _accountTypeLabel = {
-  AccountType.restaurant: 'Restaurant',
-  AccountType.caterer: 'Caterer',
-  AccountType.store: 'Store',
-  AccountType.ngo: 'NGO',
-  AccountType.foodBank: 'Food Bank',
-  AccountType.shelter: 'Shelter',
-  AccountType.individual: 'Individual',
+Map<AccountType, String> _accountTypeLabel(AppLocalizations t) => {
+  AccountType.restaurant: t.accountTypeRestaurant,
+  AccountType.caterer: t.accountTypeCaterer,
+  AccountType.store: t.accountTypeStore,
+  AccountType.ngo: t.accountTypeNgo,
+  AccountType.foodBank: t.accountTypeFoodBank,
+  AccountType.shelter: t.accountTypeShelter,
+  AccountType.individual: t.accountTypeIndividual,
 };
 
 class AccountManagement extends StatefulWidget {
@@ -30,6 +32,7 @@ class _AccountManagementState extends State<AccountManagement> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final admin = context.watch<AdminProvider>();
+    final t = context.l10n;
     return StreamBuilder<List<RegisteredAccount>>(
       stream: admin.accountsStream,
       builder: (context, snapshot) {
@@ -37,8 +40,8 @@ class _AccountManagementState extends State<AccountManagement> {
         final filtered = _filter == null ? accounts : accounts.where((a) => a.status == _filter).toList();
 
     return AppLayout(
-      title: 'Accounts',
-      subtitle: 'Approve, suspend, or remove registered accounts',
+      title: t.acctMgmtTitle,
+      subtitle: t.acctMgmtSubtitle,
       currentRoute: '/admin/accounts',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,22 +50,22 @@ class _AccountManagementState extends State<AccountManagement> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _FilterChip(label: 'All (${accounts.length})', selected: _filter == null, onTap: () => setState(() => _filter = null)),
+                _FilterChip(label: t.acctMgmtFilterAll(accounts.length), selected: _filter == null, onTap: () => setState(() => _filter = null)),
                 const SizedBox(width: 8),
                 _FilterChip(
-                  label: 'Pending (${accounts.where((a) => a.status == AccountStatus.pending).length})',
+                  label: t.acctMgmtFilterPending(accounts.where((a) => a.status == AccountStatus.pending).length),
                   selected: _filter == AccountStatus.pending,
                   onTap: () => setState(() => _filter = AccountStatus.pending),
                 ),
                 const SizedBox(width: 8),
                 _FilterChip(
-                  label: 'Approved (${accounts.where((a) => a.status == AccountStatus.approved).length})',
+                  label: t.acctMgmtFilterApproved(accounts.where((a) => a.status == AccountStatus.approved).length),
                   selected: _filter == AccountStatus.approved,
                   onTap: () => setState(() => _filter = AccountStatus.approved),
                 ),
                 const SizedBox(width: 8),
                 _FilterChip(
-                  label: 'Suspended (${accounts.where((a) => a.status == AccountStatus.suspended).length})',
+                  label: t.acctMgmtFilterSuspended(accounts.where((a) => a.status == AccountStatus.suspended).length),
                   selected: _filter == AccountStatus.suspended,
                   onTap: () => setState(() => _filter = AccountStatus.suspended),
                 ),
@@ -73,7 +76,7 @@ class _AccountManagementState extends State<AccountManagement> {
           if (filtered.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Center(child: Text('No accounts in this filter.', style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)))),
+              child: Center(child: Text(t.acctMgmtNoAccounts, style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)))),
             )
           else
             Column(
@@ -121,10 +124,11 @@ class _AccountCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     final (label, variant) = switch (account.status) {
-      AccountStatus.pending => ('Pending', BadgeVariant.orange),
-      AccountStatus.approved => ('Approved', BadgeVariant.green),
-      AccountStatus.suspended => ('Suspended', BadgeVariant.red),
+      AccountStatus.pending => (t.acctMgmtStatusPending, BadgeVariant.orange),
+      AccountStatus.approved => (t.acctMgmtStatusApproved, BadgeVariant.green),
+      AccountStatus.suspended => (t.acctMgmtStatusSuspended, BadgeVariant.red),
     };
     final admin = context.read<AdminProvider>();
 
@@ -133,13 +137,13 @@ class _AccountCard extends StatelessWidget {
       onTap: () => showDetailSheet(
         context,
         title: account.name,
-        subtitle: 'Account details',
+        subtitle: t.acctMgmtAccountDetails,
         email: account.email,
         rows: [
-          DetailRow(Icons.badge_outlined, 'Role', account.mode == UserMode.donor ? 'Donor' : 'Consumer'),
-          DetailRow(Icons.category_outlined, 'Account Type', _accountTypeLabel[account.accountType] ?? ''),
-          DetailRow(Icons.calendar_today_outlined, 'Joined', '${account.joinedAt.day}/${account.joinedAt.month}/${account.joinedAt.year}'),
-          DetailRow(Icons.verified_outlined, 'Status', label),
+          DetailRow(Icons.badge_outlined, t.acctMgmtRole, account.mode == UserMode.donor ? t.acctMgmtDonor : t.acctMgmtConsumer),
+          DetailRow(Icons.category_outlined, t.acctMgmtAccountType, _accountTypeLabel(t)[account.accountType] ?? ''),
+          DetailRow(Icons.calendar_today_outlined, t.acctMgmtJoined, '${account.joinedAt.day}/${account.joinedAt.month}/${account.joinedAt.year}'),
+          DetailRow(Icons.verified_outlined, t.acctMgmtStatus, label),
         ],
       ),
       child: Container(
@@ -188,9 +192,9 @@ class _AccountCard extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _Tag(text: account.mode == UserMode.donor ? 'Donor' : 'Consumer'),
-              _Tag(text: _accountTypeLabel[account.accountType] ?? ''),
-              _Tag(text: 'Joined ${account.joinedAt.year}-${account.joinedAt.month.toString().padLeft(2, '0')}-${account.joinedAt.day.toString().padLeft(2, '0')}'),
+              _Tag(text: account.mode == UserMode.donor ? t.acctMgmtDonor : t.acctMgmtConsumer),
+              _Tag(text: _accountTypeLabel(t)[account.accountType] ?? ''),
+              _Tag(text: t.acctMgmtJoinedTag('${account.joinedAt.year}-${account.joinedAt.month.toString().padLeft(2, '0')}-${account.joinedAt.day.toString().padLeft(2, '0')}')),
             ],
           ),
           const SizedBox(height: 12),
@@ -199,7 +203,7 @@ class _AccountCard extends StatelessWidget {
               if (account.status != AccountStatus.approved)
                 Expanded(
                   child: _ActionButton(
-                    label: 'Approve',
+                    label: t.acctMgmtApprove,
                     color: const Color(0xFF16A34A),
                     onTap: () => admin.setStatus(account.email, AccountStatus.approved),
                   ),
@@ -207,7 +211,7 @@ class _AccountCard extends StatelessWidget {
               if (account.status == AccountStatus.approved)
                 Expanded(
                   child: _ActionButton(
-                    label: 'Suspend',
+                    label: t.acctMgmtSuspend,
                     color: const Color(0xFFD97706),
                     onTap: () => admin.setStatus(account.email, AccountStatus.suspended),
                   ),
@@ -215,7 +219,7 @@ class _AccountCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _ActionButton(
-                  label: 'Remove',
+                  label: t.acctMgmtRemove,
                   color: const Color(0xFFEF4444),
                   outlined: true,
                   onTap: () => _confirmRemove(context, admin, account),
@@ -230,21 +234,22 @@ class _AccountCard extends StatelessWidget {
   }
 
   void _confirmRemove(BuildContext context, AdminProvider admin, RegisteredAccount account) {
+    final t = context.l10n;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Remove account?'),
-        content: Text('This will permanently remove "${account.name}" from the platform.'),
+        title: Text(t.acctMgmtRemoveTitle),
+        content: Text(t.acctMgmtRemoveBody(account.name)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(t.commonCancel)),
           ElevatedButton(
             onPressed: () {
               admin.removeAccount(account.email);
               Navigator.pop(dialogContext);
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), foregroundColor: Colors.white, elevation: 0),
-            child: const Text('Remove'),
+            child: Text(t.acctMgmtRemove),
           ),
         ],
       ),

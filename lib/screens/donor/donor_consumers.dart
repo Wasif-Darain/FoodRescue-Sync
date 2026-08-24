@@ -11,6 +11,8 @@ import '../../widgets/ui/location_picker.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
+import '../../l10n/l10n_ext.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 class DonorConsumers extends StatefulWidget {
   const DonorConsumers({super.key});
@@ -36,6 +38,7 @@ class _DonorConsumersState extends State<DonorConsumers> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
     final donor = context.watch<DonorProvider>();
+    final t = context.l10n;
 
     final consumersStream = FirebaseFirestore.instance
         .collection('users')
@@ -80,8 +83,8 @@ class _DonorConsumersState extends State<DonorConsumers> {
           ..sort((a, b) => donor.donationCountFor(b.name).compareTo(donor.donationCountFor(a.name)));
 
         return AppLayout(
-          title: 'Consumers',
-          subtitle: 'Donate directly to consumers',
+          title: t.dcTitle,
+          subtitle: t.dcSubtitle,
           currentRoute: '/donor/consumers',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,10 +103,10 @@ class _DonorConsumersState extends State<DonorConsumers> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(t.dcGreeting(user.name.split(' ').first), style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 6),
                           Text(
-                            '${consumers.length} consumer${consumers.length == 1 ? '' : 's'} available.',
+                            t.dcConsumersAvailable(consumers.length),
                             style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                           ),
                         ],
@@ -147,7 +150,7 @@ class _DonorConsumersState extends State<DonorConsumers> {
                             ));
                           },
                         ),
-                        Text('Available for donations', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: isDark ? Colors.white : const Color(0xFF121212))),
+                        Text(t.dcAvailableForDonations, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: isDark ? Colors.white : const Color(0xFF121212))),
                       ],
                     ),
                     InkWell(
@@ -162,7 +165,7 @@ class _DonorConsumersState extends State<DonorConsumers> {
                           Icon(Icons.schedule, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                           const SizedBox(width: 6),
                           Text(
-                            'Default pickup time: ${donor.preferredPickupTime.format(context)}',
+                            t.dcDefaultPickupTime(donor.preferredPickupTime.format(context)),
                             style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: isDark ? Colors.white : const Color(0xFF121212)),
                           ),
                           const SizedBox(width: 4),
@@ -177,7 +180,7 @@ class _DonorConsumersState extends State<DonorConsumers> {
 
               if (upcoming.isNotEmpty) ...[
                 _SectionCard(
-                  title: 'Upcoming Donations',
+                  title: t.dcUpcomingDonations,
                   icon: Icons.event_available_outlined,
                   child: Column(
                     children: upcoming
@@ -188,7 +191,7 @@ class _DonorConsumersState extends State<DonorConsumers> {
                                 consumerLabel: d.consumerName,
                                 initialTime: d.scheduledTime,
                                 initialLocation: d.location,
-                                confirmLabel: 'Save Changes',
+                                confirmLabel: t.dcSaveChanges,
                                 onConfirm: (time, location) {
                                   final error = context.read<DonorProvider>().rescheduleDonation(
                                         d.id,
@@ -196,9 +199,9 @@ class _DonorConsumersState extends State<DonorConsumers> {
                                         location.isEmpty ? d.location : location,
                                       );
                                   if (error == null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                      content: Text('Pickup rescheduled — the consumer has been notified.'),
-                                      backgroundColor: Color(0xFF16A34A),
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                      content: Text(t.dcRescheduledMsg),
+                                      backgroundColor: const Color(0xFF16A34A),
                                     ));
                                   }
                                   return error;
@@ -208,18 +211,18 @@ class _DonorConsumersState extends State<DonorConsumers> {
                                 final confirmed = await showDialog<bool>(
                                   context: context,
                                   builder: (dialogContext) => AlertDialog(
-                                    title: const Text('Cancel donation?'),
-                                    content: Text('Cancel the donation scheduled for ${d.consumerName}?'),
+                                    title: Text(t.dcCancelDonationTitle),
+                                    content: Text(t.dcCancelDonationBody(d.consumerName)),
                                     actions: [
-                                      TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Keep it')),
-                                      TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Cancel donation')),
+                                      TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(t.dcKeepIt)),
+                                      TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(t.dcCancelDonation)),
                                     ],
                                   ),
                                 );
                                 if (confirmed != true || !context.mounted) return;
                                 final error = context.read<DonorProvider>().cancelDonation(d.id);
                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                  content: Text(error ?? 'Donation cancelled — the consumer has been notified.'),
+                                  content: Text(error ?? t.dcCancelledMsg),
                                   backgroundColor: error == null ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
                                 ));
                               },
@@ -238,7 +241,7 @@ class _DonorConsumersState extends State<DonorConsumers> {
                   const SizedBox(width: 8),
                   Expanded(child: TextField(
                     onChanged: (value) => setState(() => _search = value),
-                    decoration: InputDecoration(hintText: 'Search consumers...', border: InputBorder.none, hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF))),
+                    decoration: InputDecoration(hintText: t.dcSearchHint, border: InputBorder.none, hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF))),
                   )),
                 ]),
               ),
@@ -247,13 +250,17 @@ class _DonorConsumersState extends State<DonorConsumers> {
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: ['All', 'Available', 'Unavailable'].map((avail) {
-                    final isSelected = _availabilityFilter == avail;
+                  children: [
+                    ('All', t.dcFilterAll),
+                    ('Available', t.dcFilterAvailable),
+                    ('Unavailable', t.dcFilterUnavailable),
+                  ].map((avail) {
+                    final isSelected = _availabilityFilter == avail.$1;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: _HoverScale(
                         child: GestureDetector(
-                          onTap: () => setState(() => _availabilityFilter = avail),
+                          onTap: () => setState(() => _availabilityFilter = avail.$1),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                             decoration: BoxDecoration(
@@ -263,12 +270,12 @@ class _DonorConsumersState extends State<DonorConsumers> {
                             ),
                             child: Row(children: [
                               Icon(
-                                avail == 'Available' ? Icons.check_circle_outline : (avail == 'Unavailable' ? Icons.cancel_outlined : Icons.filter_list),
+                                avail.$1 == 'Available' ? Icons.check_circle_outline : (avail.$1 == 'Unavailable' ? Icons.cancel_outlined : Icons.filter_list),
                                 size: 13,
                                 color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)),
                               ),
                               const SizedBox(width: 4),
-                              Text(avail, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
+                              Text(avail.$2, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
                             ]),
                           ),
                         ),
@@ -291,9 +298,9 @@ class _DonorConsumersState extends State<DonorConsumers> {
                     children: [
                       Icon(Icons.groups_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
                       const SizedBox(height: 12),
-                      Text('No consumers found', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      Text(t.dcNoConsumersFound, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
                       const SizedBox(height: 4),
-                      Text('Try a different search or filter.', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                      Text(t.dcTryDifferentFilter, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                     ],
                   ),
                 )
@@ -314,32 +321,32 @@ class _DonorConsumersState extends State<DonorConsumers> {
                     return _ConsumerCard(
                       account: account,
                       streak: count,
-                       onDonate: () => _showDonateSheet(
-                         context,
-                         consumerLabel: account.name,
-                         initialTime: _nextOccurrence(donor.preferredPickupTime),
-                         initialLocation: account.address ?? _dummyLocation,
-                         onConfirm: (itemName, description, category, quantity, time, location) {
-                           context.read<DonorProvider>().donateToConsumer(
-                                 consumerId: account.uid,
-                                 consumerName: account.name,
-                                 itemName: itemName,
-                                 description: description,
-                                 category: category,
-                                 quantity: quantity,
-                                 scheduledTime: time,
-                                 location: location.isEmpty ? _dummyLocation : location,
-                               );
-                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                             content: Text('Donation scheduled for ${account.name}'),
-                             backgroundColor: const Color(0xFF16A34A),
-                           ));
-                           return null;
-                         },
-                       ),
-                     );
-                   },
-                 ),
+                      onDonate: () => _showDonateSheet(
+                        context,
+                        consumerLabel: account.name,
+                        initialTime: _nextOccurrence(donor.preferredPickupTime),
+                        initialLocation: account.address ?? _dummyLocation,
+                        onConfirm: (itemName, description, category, quantity, time, location) {
+                          context.read<DonorProvider>().donateToConsumer(
+                                consumerId: account.uid,
+                                consumerName: account.name,
+                                itemName: itemName,
+                                description: description,
+                                category: category,
+                                quantity: quantity,
+                                scheduledTime: time,
+                                location: location.isEmpty ? _dummyLocation : location,
+                              );
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(t.dcDonationScheduledFor(account.name)),
+                            backgroundColor: const Color(0xFF16A34A),
+                          ));
+                          return null;
+                        },
+                      ),
+                    );
+                  },
+                ),
             ],
           ),
         );
@@ -348,7 +355,14 @@ class _DonorConsumersState extends State<DonorConsumers> {
   }
 }
 
-const _donationCategories = ['Cooked Meals', 'Bakery', 'Dairy', 'Produce', 'Grains', 'Other'];
+List<(String, String)> _donationCategories(AppLocalizations t) => [
+  ('Cooked Meals', t.catCookedMeals),
+  ('Bakery', t.catBakery),
+  ('Dairy', t.catDairy),
+  ('Produce', t.catProduce),
+  ('Grains', t.catGrains),
+  ('Other', t.catOther),
+];
 
 void _showDonateSheet(
   BuildContext context, {
@@ -357,8 +371,9 @@ void _showDonateSheet(
   required String initialLocation,
   required String? Function(String itemName, String description, String category, int quantity, DateTime time, String location) onConfirm,
 }) {
+  final t = context.l10n;
   var selectedTime = initialTime;
-  var selectedCategory = _donationCategories.first;
+  var selectedCategory = _donationCategories(t).first.$1;
   final itemCtrl = TextEditingController();
   final descCtrl = TextEditingController();
   final quantityCtrl = TextEditingController(text: '1');
@@ -395,7 +410,7 @@ void _showDonateSheet(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      Expanded(child: Text('Donate to $consumerLabel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212)))),
+                      Expanded(child: Text(t.dcDonateTo(consumerLabel), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212)))),
                       IconButton(
                         icon: Icon(Icons.close, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                         onPressed: () => Navigator.pop(sheetContext),
@@ -404,12 +419,12 @@ void _showDonateSheet(
                       ),
                     ]),
                     const SizedBox(height: 12),
-                    label('What are you donating?'),
+                    label(t.dcWhatDonating),
                     const SizedBox(height: 4),
                     TextField(
                       controller: itemCtrl,
                       style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
-                      decoration: fieldDecoration().copyWith(hintText: 'e.g. Chicken Biryani (10 servings)'),
+                      decoration: fieldDecoration().copyWith(hintText: t.dcItemHint),
                     ),
                     const SizedBox(height: 12),
                     label('Description'),
@@ -429,13 +444,13 @@ void _showDonateSheet(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              label('Category'),
+                              label(t.createListingCategory),
                               const SizedBox(height: 4),
                               DropdownButtonFormField<String>(
                                 initialValue: selectedCategory,
                                 decoration: fieldDecoration(),
                                 style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
-                                items: _donationCategories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                                items: _donationCategories(t).map((c) => DropdownMenuItem(value: c.$1, child: Text(c.$2))).toList(),
                                 onChanged: (value) {
                                   if (value != null) setSheetState(() => selectedCategory = value);
                                 },
@@ -448,7 +463,7 @@ void _showDonateSheet(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              label('Quantity'),
+                              label(t.createListingQuantity),
                               const SizedBox(height: 4),
                               TextField(
                                 controller: quantityCtrl,
@@ -463,7 +478,7 @@ void _showDonateSheet(
                     ),
                     const SizedBox(height: 12),
                     DateTimeField(
-                      label: 'Collection time',
+                      label: t.dcCollectionTime,
                       value: selectedTime,
                       onTap: () async {
                         final picked = await pickDateTime(sheetContext, initial: selectedTime, defaultTime: TimeOfDay.fromDateTime(selectedTime));
@@ -471,7 +486,7 @@ void _showDonateSheet(
                       },
                     ),
                     const SizedBox(height: 12),
-                    label('Collection location'),
+                    label(t.dcCollectionLocation),
                     const SizedBox(height: 4),
                     TextField(
                       controller: locationCtrl,
@@ -490,11 +505,11 @@ void _showDonateSheet(
                           final itemName = itemCtrl.text.trim();
                           final quantity = int.tryParse(quantityCtrl.text.trim());
                           if (itemName.isEmpty) {
-                            setSheetState(() => error = 'Please describe what you are donating.');
+                            setSheetState(() => error = t.dcDescribeItemError);
                             return;
                           }
                           if (quantity == null || quantity <= 0) {
-                            setSheetState(() => error = 'Enter a valid quantity.');
+                            setSheetState(() => error = t.dcValidQuantityError);
                             return;
                           }
                           final result = onConfirm(itemName, descCtrl.text.trim(), selectedCategory, quantity, selectedTime, locationCtrl.text.trim());
@@ -511,7 +526,7 @@ void _showDonateSheet(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                        child: const Text('Confirm Donation', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        child: Text(t.dcConfirmDonation, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ],
@@ -533,6 +548,7 @@ void _showScheduleSheet(
   required String confirmLabel,
   required String? Function(DateTime time, String location) onConfirm,
 }) {
+  final t = context.l10n;
   var selectedTime = initialTime;
   final locationCtrl = TextEditingController(text: initialLocation);
   String? error;
@@ -569,7 +585,7 @@ void _showScheduleSheet(
                   ]),
                   const SizedBox(height: 12),
                   DateTimeField(
-                    label: 'Collection time',
+                    label: t.dcCollectionTime,
                     value: selectedTime,
                     onTap: () async {
                       final picked = await pickDateTime(sheetContext, initial: selectedTime, defaultTime: TimeOfDay.fromDateTime(selectedTime));
@@ -577,7 +593,7 @@ void _showScheduleSheet(
                     },
                   ),
                   const SizedBox(height: 12),
-                  Text('Collection location', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252))),
+                  Text(t.dcCollectionLocation, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252))),
                   const SizedBox(height: 4),
                   TextField(
                     controller: locationCtrl,
@@ -694,7 +710,7 @@ class _UpcomingDonationRow extends StatelessWidget {
                 Row(children: [
                   Icon(Icons.inventory_2_outlined, size: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                   const SizedBox(width: 4),
-                  Expanded(child: Text('${donation.itemName} · ${donation.category} · Qty: ${donation.quantity}', style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), overflow: TextOverflow.ellipsis)),
+                  Expanded(child: Text(context.l10n.dcQtyItemCategory(donation.itemName, donation.category, donation.quantity), style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), overflow: TextOverflow.ellipsis)),
                 ]),
                 const SizedBox(height: 2),
                 Row(children: [
@@ -713,8 +729,8 @@ class _UpcomingDonationRow extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(icon: const Icon(Icons.edit_outlined, size: 18), onPressed: onEdit, tooltip: 'Edit'),
-          IconButton(icon: const Icon(Icons.close, size: 18), onPressed: onCancel, tooltip: 'Cancel'),
+          IconButton(icon: const Icon(Icons.edit_outlined, size: 18), onPressed: onEdit, tooltip: context.l10n.dcEdit),
+          IconButton(icon: const Icon(Icons.close, size: 18), onPressed: onCancel, tooltip: context.l10n.dcCancel),
         ],
       ),
     );
@@ -731,8 +747,11 @@ class _ConsumerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
     final isAvailable = account.isAvailable;
-    final tierLabel = consumerTierLabel(consumerTierFor(account));
+    final tier = consumerTierFor(account);
+    final tierLabel = consumerTierLabel(t, tier);
+    final tierKey = consumerTierKey(tier);
     final auth = context.watch<AuthProvider>();
     String? distanceLabel;
     if (auth.latitude != null && auth.longitude != null && account.latitude != null && account.longitude != null) {
@@ -766,7 +785,7 @@ class _ConsumerCard extends StatelessWidget {
                     children: [
                       Text(account.name, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 3),
-                      UserBadge(label: tierLabel, isLegend: tierLabel == 'Legend', fontSize: 8),
+                      UserBadge(label: tierLabel, colorKey: tierKey, isLegend: tierKey == 'Legend', fontSize: 8),
                     ],
                   ),
                 ),
@@ -789,7 +808,7 @@ class _ConsumerCard extends StatelessWidget {
               children: [
                 Icon(pickupPreferenceIcon(account.pickupPreference), size: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                 const SizedBox(width: 4),
-                Text(pickupPreferenceLabel(account.pickupPreference), style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                Text(pickupPreferenceLabel(t, account.pickupPreference), style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
               ],
             ),
             const SizedBox(height: 6),
@@ -815,11 +834,11 @@ class _ConsumerCard extends StatelessWidget {
               runSpacing: 6,
               children: [
                 AppBadge(
-                  label: isAvailable ? 'Available' : 'Unavailable',
+                  label: isAvailable ? t.dcAvailable : t.dcUnavailable,
                   variant: isAvailable ? BadgeVariant.green : BadgeVariant.orange,
                 ),
                 AppBadge(
-                  label: streak > 0 ? '${streak}x donated' : 'New',
+                  label: streak > 0 ? t.dcTimesDonated(streak) : t.dcNew,
                   variant: streak > 0 ? BadgeVariant.blue : BadgeVariant.gray,
                 ),
               ],
@@ -837,12 +856,12 @@ class _ConsumerCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.volunteer_activism_outlined, size: 14),
-                    SizedBox(width: 6),
-                    Text('Donate', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    const Icon(Icons.volunteer_activism_outlined, size: 14),
+                    const SizedBox(width: 6),
+                    Text(t.dcDonate, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),

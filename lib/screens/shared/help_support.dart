@@ -1,7 +1,75 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_button.dart';
 import '../../widgets/ui/user_badge.dart';
+import '../../l10n/l10n_ext.dart';
+
+const _supportEmail = 'support@foodrescuesync.app';
+
+Future<void> _showContentDialog(BuildContext context, String title, String content) {
+  return showDialog(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(title),
+      content: SingleChildScrollView(child: Text(content, style: const TextStyle(height: 1.5))),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(dialogContext.l10n.commonClose)),
+      ],
+    ),
+  );
+}
+
+Future<void> _showMessageDialog(BuildContext context, String title, String type) async {
+  final controller = TextEditingController();
+  final t = context.l10n;
+  final message = await showDialog<String>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(title),
+      content: TextField(
+        controller: controller,
+        maxLines: 4,
+        decoration: InputDecoration(hintText: t.helpMessageHint, border: const OutlineInputBorder()),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(t.commonCancel)),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
+          child: Text(t.helpSend),
+        ),
+      ],
+    ),
+  );
+  if (message == null) return;
+  if (!context.mounted) return;
+  if (message.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.helpMessageEmpty)));
+    return;
+  }
+  final user = FirebaseAuth.instance.currentUser;
+  await FirebaseFirestore.instance.collection('support_messages').add({
+    'uid': user?.uid,
+    'email': user?.email,
+    'type': type,
+    'message': message,
+    'createdAt': Timestamp.now(),
+  });
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(t.helpMessageSent), backgroundColor: const Color(0xFF16A34A)),
+  );
+}
+
+Future<void> _getInTouch(BuildContext context) async {
+  final t = context.l10n;
+  final uri = Uri(scheme: 'mailto', path: _supportEmail, query: 'subject=FoodRescue Sync Support');
+  final launched = await launchUrl(uri);
+  if (!context.mounted || launched) return;
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.helpNoEmailApp)));
+}
 
 class HelpSupport extends StatelessWidget {
   const HelpSupport({super.key});
@@ -13,10 +81,11 @@ class HelpSupport extends StatelessWidget {
     final subColor = isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575);
     final cardColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
     final borderColor = isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2);
+    final t = context.l10n;
 
     return AppLayout(
-      title: 'Help & Support',
-      subtitle: 'Get help with using FoodRescue Sync',
+      title: t.helpTitle,
+      subtitle: t.helpSubtitle,
       currentRoute: '/profile',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,60 +101,64 @@ class HelpSupport extends StatelessWidget {
               children: [
                 _HelpTile(
                   icon: Icons.help_outline,
-                  title: 'FAQ',
-                  subtitle: 'Find answers to common questions',
+                  title: t.helpFaq,
+                  subtitle: t.helpFaqSub,
                   textColor: textColor,
                   subColor: subColor,
+                  onTap: () => _showContentDialog(context, t.helpFaq, t.helpFaqContent),
                 ),
                 _HelpTile(
                   icon: Icons.chat_outlined,
-                  title: 'Contact Support',
-                  subtitle: 'Reach out to our support team',
+                  title: t.helpContactSupport,
+                  subtitle: t.helpContactSupportSub,
                   textColor: textColor,
                   subColor: subColor,
+                  onTap: () => _showMessageDialog(context, t.helpContactSupport, 'contact'),
                 ),
                 _HelpTile(
                   icon: Icons.report_problem_outlined,
-                  title: 'Report an Issue',
-                  subtitle: 'Report a bug or technical problem',
+                  title: t.helpReportIssue,
+                  subtitle: t.helpReportIssueSub,
                   textColor: textColor,
                   subColor: subColor,
+                  onTap: () => _showMessageDialog(context, t.helpReportIssue, 'report'),
                 ),
                 _HelpTile(
                   icon: Icons.description_outlined,
-                  title: 'Terms & Conditions',
-                  subtitle: 'Read our terms of service',
+                  title: t.helpTerms,
+                  subtitle: t.helpTermsSub,
                   textColor: textColor,
                   subColor: subColor,
+                  onTap: () => _showContentDialog(context, t.helpTerms, t.helpTermsContent),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: AppButton(
-                    label: 'Get in Touch',
+                    label: t.helpGetInTouch,
                     icon: const Icon(Icons.mail_outline, size: 16),
                     fullWidth: true,
-                    onPressed: () {},
+                    onPressed: () => _getInTouch(context),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
-          Text('Ranking System', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
+          Text(t.helpRankingSystem, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
           const SizedBox(height: 4),
-          Text('Earn badges by donating food or rescuing meals. Higher tiers unlock more trust and visibility.', style: TextStyle(fontSize: 12, color: subColor)),
+          Text(t.helpRankingSystemSub, style: TextStyle(fontSize: 12, color: subColor)),
           const SizedBox(height: 14),
           _TierSection(
-            title: 'Donor Tiers',
+            title: t.helpDonorTiers,
             icon: Icons.volunteer_activism_outlined,
             color: const Color(0xFF16A34A),
             tiers: [
-              ('Novice', 'Default starting rank upon registration.'),
-              ('Contributor', '5+ listings created OR 25+ kg saved (≥80% fulfillment).'),
-              ('Provider', '20+ listings OR 100+ kg saved (≥85% fulfillment, ≥3.8★, 3+ reviews).'),
-              ('Patron', '50+ listings OR 300+ kg saved (≥90% fulfillment, ≥4.2★, 5+ reviews).'),
-              ('Master', '120+ listings OR 750+ kg saved (≥95% fulfillment, ≥4.5★, 10+ reviews).'),
-              ('Legend', '250+ listings OR 1,500+ kg saved (top 2% regional, ≥4.7★).'),
+              ('Novice', t.levelNovice, t.tierDonorNoviceDesc),
+              ('Contributor', t.tierContributor, t.tierDonorContributorDesc),
+              ('Provider', t.tierProvider, t.tierDonorProviderDesc),
+              ('Patron', t.tierPatron, t.tierDonorPatronDesc),
+              ('Master', t.tierMaster, t.tierDonorMasterDesc),
+              ('Legend', t.tierLegend, t.tierDonorLegendDesc),
             ],
             isDark: isDark,
             cardColor: cardColor,
@@ -95,16 +168,16 @@ class HelpSupport extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           _TierSection(
-            title: 'Consumer Tiers',
+            title: t.helpConsumerTiers,
             icon: Icons.restaurant_outlined,
             color: const Color(0xFFEA580C),
             tiers: [
-              ('Novice', 'Default starting rank (0–2 meals rescued).'),
-              ('Scout', '3–9 meals rescued/purchased.'),
-              ('Saver', '10–24 meals rescued (≥85% on-time pickup, ≥3.8★, 3+ reviews).'),
-              ('Rescuer', '25–49 meals rescued (≥90% on-time pickup, ≥4.2★, 5+ reviews).'),
-              ('Master', '50–99 meals rescued (≥95% on-time pickup, ≥4.5★, 10+ reviews).'),
-              ('Legend', '100+ meals rescued (≥98% on-time pickup, ≥4.7★).'),
+              ('Novice', t.levelNovice, t.tierConsumerNoviceDesc),
+              ('Scout', t.tierScout, t.tierConsumerScoutDesc),
+              ('Saver', t.tierSaver, t.tierConsumerSaverDesc),
+              ('Rescuer', t.tierRescuer, t.tierConsumerRescuerDesc),
+              ('Master', t.tierMaster, t.tierConsumerMasterDesc),
+              ('Legend', t.tierLegend, t.tierConsumerLegendDesc),
             ],
             isDark: isDark,
             cardColor: cardColor,
@@ -122,7 +195,7 @@ class _TierSection extends StatelessWidget {
   final String title;
   final IconData icon;
   final Color color;
-  final List<(String, String)> tiers;
+  final List<(String, String, String)> tiers;
   final bool isDark;
   final Color cardColor;
   final Color borderColor;
@@ -162,13 +235,13 @@ class _TierSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          for (final (label, desc) in tiers)
+          for (final (colorKey, label, desc) in tiers)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  UserBadge(label: label, isLegend: label == 'Legend', fontSize: 9),
+                  UserBadge(label: label, colorKey: colorKey, isLegend: colorKey == 'Legend', fontSize: 9),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(desc, style: TextStyle(fontSize: 11.5, color: subColor)),
@@ -188,6 +261,7 @@ class _HelpTile extends StatelessWidget {
   final String subtitle;
   final Color textColor;
   final Color subColor;
+  final VoidCallback onTap;
 
   const _HelpTile({
     required this.icon,
@@ -195,6 +269,7 @@ class _HelpTile extends StatelessWidget {
     required this.subtitle,
     required this.textColor,
     required this.subColor,
+    required this.onTap,
   });
 
   @override
@@ -206,7 +281,7 @@ class _HelpTile extends StatelessWidget {
       subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: subColor)),
       trailing: Icon(Icons.arrow_forward_ios, size: 12, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
       dense: true,
-      onTap: () {},
+      onTap: onTap,
     );
   }
 }

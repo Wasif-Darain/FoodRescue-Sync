@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/l10n_ext.dart';
 
 /// Opens a calendar date picker followed by a clock time picker, both
 /// themed with [accent], and returns the combined DateTime (or null if
@@ -68,7 +69,7 @@ class DateTimeField extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    text ?? 'Pick date & time',
+                    text ?? context.l10n.pickDateTime,
                     style: TextStyle(fontSize: 13, color: text == null ? const Color(0xFFBFBFBF) : const Color(0xFF121212)),
                     overflow: TextOverflow.ellipsis,
                   ),

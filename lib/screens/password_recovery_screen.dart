@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../l10n/l10n_ext.dart';
 
 class PasswordRecoveryScreen extends StatefulWidget {
   const PasswordRecoveryScreen({super.key});
@@ -26,18 +27,19 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
   Future<void> _sendResetEmail() async {
     final email = _emailCtrl.text.trim();
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-      _message('Enter a valid email address.');
+      _message(context.l10n.recoveryInvalidEmail);
       return;
     }
     setState(() => _isSending = true);
     final auth = context.read<AuthProvider>();
     await auth.sendPasswordResetEmail(email);
+    if (!mounted) return;
     setState(() => _isSending = false);
     if (auth.errorMessage != null) {
       _message(auth.errorMessage!);
       return;
     }
-    _message('A password reset link was sent to $email.');
+    _message(context.l10n.recoveryLinkSent(email));
     context.go('/login');
   }
 
@@ -48,6 +50,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
   @override
   Widget build(BuildContext context) {
     const green = Color(0xFF16A34A);
+    final t = context.l10n;
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -73,7 +76,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                   top: 8,
                   left: 8,
                   child: IconButton(
-                    tooltip: 'Back to sign in',
+                    tooltip: t.recoveryBackTooltip,
                     onPressed: () => context.go('/login'),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.16),
@@ -95,9 +98,9 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                             height: 64,
                           ),
                           const SizedBox(height: 18),
-                          const Text(
-                            'Account recovery',
-                            style: TextStyle(
+                          Text(
+                            t.recoveryTitle,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 24,
                               fontWeight: FontWeight.w800,
@@ -126,18 +129,18 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                                       size: 32,
                                     ),
                                     const SizedBox(height: 16),
-                                    const Text(
-                                      'Forgot your password?',
-                                      style: TextStyle(
+                                    Text(
+                                      t.recoveryHeading,
+                                      style: const TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.w800,
                                         color: Color(0xFF171717),
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    const Text(
-                                      'Enter your account email and we’ll send you a link to reset your password.',
-                                      style: TextStyle(
+                                    Text(
+                                      t.recoveryBody,
+                                      style: const TextStyle(
                                         color: Color(0xFF525252),
                                         height: 1.4,
                                       ),
@@ -145,15 +148,15 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                                     const SizedBox(height: 24),
                                     _input(
                                       controller: _emailCtrl,
-                                      label: 'Email address',
+                                      label: t.recoveryEmailLabel,
                                       hint: 'you@example.com',
                                       keyboardType: TextInputType.emailAddress,
                                     ),
                                     const SizedBox(height: 20),
                                     _button(
                                       _isSending
-                                          ? 'Sending…'
-                                          : 'Send reset link',
+                                          ? t.recoverySending
+                                          : t.recoverySendLink,
                                       _isSending ? null : _sendResetEmail,
                                     ),
                                     const SizedBox(height: 12),
@@ -163,7 +166,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                                         style: TextButton.styleFrom(
                                           foregroundColor: green,
                                         ),
-                                        child: const Text('Back to sign in'),
+                                        child: Text(t.recoveryBackToSignIn),
                                       ),
                                     ),
                                   ],

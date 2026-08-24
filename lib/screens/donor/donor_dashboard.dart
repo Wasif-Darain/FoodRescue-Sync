@@ -10,6 +10,7 @@ import '../../widgets/ui/countdown_timer.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
+import '../../l10n/l10n_ext.dart';
 
 class DonorDashboard extends StatelessWidget {
   const DonorDashboard({super.key});
@@ -19,6 +20,7 @@ class DonorDashboard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = context.watch<AuthProvider>().user!;
     final donor = context.watch<DonorProvider>();
+    final t = context.l10n;
 
     return StreamBuilder<List<InventoryItem>>(
       stream: donor.inventoryStream,
@@ -45,8 +47,8 @@ class DonorDashboard extends StatelessWidget {
             );
 
             return AppLayout(
-              title: 'Donor Dashboard',
-              subtitle: 'Manage your inventory, listings, and track donations',
+              title: t.donorDashTitle,
+              subtitle: t.donorDashSubtitle,
               currentRoute: '/donor',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,17 +70,17 @@ class DonorDashboard extends StatelessWidget {
                               Row(
                                 children: [
                                   Flexible(
-                                    child: Text('Hi, ${user.name.split(' ').first}!', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                                    child: Text(t.donorDashGreeting(user.name.split(' ').first), style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                                   ),
                                   const SizedBox(width: 8),
-                                  const UserBadge(label: 'Contributor', isLegend: false, fontSize: 9),
+                                  UserBadge(label: t.donorDashContributor, isLegend: false, fontSize: 9),
                                 ],
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 surplusItems.isEmpty
-                                    ? 'Your inventory is in great shape today.'
-                                    : '${surplusItems.length} item${surplusItems.length == 1 ? '' : 's'} ready to redistribute today.',
+                                    ? t.donorDashInventoryGreatShape
+                                    : t.donorDashItemsReady(surplusItems.length),
                                 style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
                               ),
                             ],
@@ -97,30 +99,30 @@ class DonorDashboard extends StatelessWidget {
                   ResponsiveGrid(
                     children: [
                       StatCard(
-                        label: 'Total Items',
+                        label: t.donorDashTotalItems,
                         value: inventory.length,
                         icon: const Icon(Icons.inventory_2_outlined),
                         color: 'blue',
                       ),
                       StatCard(
-                        label: 'Surplus Tagged',
+                        label: t.donorDashSurplusTagged,
                         value: surplusItems.length,
                         icon: const Icon(Icons.warning_amber_outlined),
                         color: 'orange',
-                        subtitle: 'Need redistribution',
+                        subtitle: t.donorDashNeedRedistribution,
                       ),
                       StatCard(
-                        label: 'Active Listings',
+                        label: t.donorDashActiveListings,
                         value: listings.where((l) => l.status == ListingStatus.active).length,
                         icon: const Icon(Icons.trending_up),
                         color: 'green',
                       ),
                       StatCard(
-                        label: 'Food Saved (kg)',
+                        label: t.donorDashFoodSavedKg,
                         value: totalDonatedKg.toStringAsFixed(1),
                         icon: const Icon(Icons.favorite_outlined),
                         color: 'red',
-                        subtitle: 'Estimated',
+                        subtitle: t.donorDashEstimated,
                       ),
                     ],
                   ),
@@ -132,12 +134,12 @@ class DonorDashboard extends StatelessWidget {
                       children: [
                         if (expiringToday.isNotEmpty) ...[
                           _SectionCard(
-                            title: 'Expiring Today',
+                            title: t.donorDashExpiringToday,
                             icon: Icons.timer_outlined,
                             titleColor: const Color(0xFFEF4444),
                             action: TextButton(
                               onPressed: () => context.go('/donor/expiry'),
-                              child: const Text('View all'),
+                              child: Text(t.commonViewAll),
                             ),
                             child: Column(
                               children: expiringToday
@@ -148,11 +150,11 @@ class DonorDashboard extends StatelessWidget {
                           const SizedBox(height: 20),
                         ],
                         _SectionCard(
-                          title: 'Active Listings',
+                          title: t.donorDashActiveListings,
                           icon: Icons.storefront_outlined,
                           action: TextButton(
                             onPressed: () => context.go('/donor/create-listing'),
-                            child: const Text('Create new'),
+                            child: Text(t.donorDashCreateNew),
                           ),
                           child: Column(
                             children: activeListings
@@ -166,31 +168,31 @@ class DonorDashboard extends StatelessWidget {
                     final rightColumn = Column(
                       children: [
                         _SectionCard(
-                          title: 'Quick Actions',
+                          title: t.donorDashQuickActions,
                           icon: Icons.bolt_outlined,
                           child: Column(
                             children: [
                               _QuickAction(
                                 icon: Icons.timer_outlined,
-                                label: 'Check Expiry',
+                                label: t.donorDashCheckExpiry,
                                 color: const Color(0xFFEA580C),
                                 onTap: () => context.go('/donor/expiry'),
                               ),
                               _QuickAction(
                                 icon: Icons.receipt_long_outlined,
-                                label: 'Donation Log',
+                                label: t.donorDashDonationLog,
                                 color: const Color(0xFF16A34A),
                                 onTap: () => context.go('/donor/donation-log'),
                               ),
                               _QuickAction(
                                 icon: Icons.emoji_events_outlined,
-                                label: 'Rewards',
+                                label: t.donorDashRewards,
                                 color: const Color(0xFFF59E0B),
                                 onTap: () => context.go('/rewards'),
                               ),
                               _QuickAction(
                                 icon: Icons.leaderboard_outlined,
-                                label: 'Leaderboard',
+                                label: t.donorDashLeaderboard,
                                 color: const Color(0xFF6B7280),
                                 onTap: () => context.go('/leaderboard'),
                               ),
@@ -199,11 +201,11 @@ class DonorDashboard extends StatelessWidget {
                         ),
                         const SizedBox(height: 20),
                         _SectionCard(
-                          title: 'Recent Donations',
+                          title: t.donorDashRecentDonations,
                           icon: Icons.volunteer_activism_outlined,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8),
-                            child: Text('Donation history will appear here once you complete donations.', style: TextStyle(fontSize: 12, color: Color(0xFF757575))),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text(t.donorDashNoDonationHistory, style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
                           ),
                         ),
                       ],
@@ -308,13 +310,13 @@ class _InventoryRow extends StatelessWidget {
                 ),
               ),
               Text(
-                '${item.category} · Qty: ${item.quantity}',
+                context.l10n.donorDashQtyLabel(item.category, item.quantity),
                 style: const TextStyle(fontSize: 11, color: Color(0xFF757575)),
               ),
             ],
           ),
         ),
-        AppBadge(label: 'Expires today', variant: BadgeVariant.red),
+        AppBadge(label: context.l10n.donorDashExpiresToday, variant: BadgeVariant.red),
       ],
     ),
   );
@@ -341,7 +343,7 @@ class _ListingRow extends StatelessWidget {
                 ),
               ),
               Text(
-                '${listing.category} · Qty: ${listing.quantity}',
+                context.l10n.donorDashQtyLabel(listing.category, listing.quantity),
                 style: const TextStyle(fontSize: 11, color: Color(0xFF757575)),
               ),
               const SizedBox(height: 4),
@@ -351,7 +353,7 @@ class _ListingRow extends StatelessWidget {
         ),
         AppBadge(
           label: listing.listingType == ListingType.donation
-              ? 'FREE'
+              ? context.l10n.commonFree
               : '৳${listing.price.toInt()}',
           variant: listing.listingType == ListingType.donation
               ? BadgeVariant.green
@@ -413,46 +415,6 @@ class _QuickAction extends StatelessWidget {
           ),
         ),
       ),
-    ),
-  );
-}
-
-class _DonationRow extends StatelessWidget {
-  final DonationLog log;
-  const _DonationRow({required this.log});
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6),
-    child: Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                log.itemName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
-              ),
-              Text(
-                log.recipientOrg,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF757575)),
-              ),
-            ],
-          ),
-        ),
-        Text(
-          '×${log.quantity}',
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF525252),
-          ),
-        ),
-      ],
     ),
   );
 }
