@@ -45,7 +45,12 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
     return StreamBuilder<List<ListingModel>>(
       stream: consumer.availableListingsStream,
       builder: (context, snapshot) {
-        final listings = snapshot.data ?? [];
+        final listings = (snapshot.data ?? [])
+            .where((l) =>
+                l.status == ListingStatusModel.active &&
+                l.quantity > 0 &&
+                (l.claimDeadline == null || l.claimDeadline!.isAfter(now)))
+            .toList();
         final filtered = listings.map((l) => Listing(
           id: int.tryParse(l.id) ?? 0,
           docId: l.id,

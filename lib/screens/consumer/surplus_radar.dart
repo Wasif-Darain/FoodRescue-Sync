@@ -90,7 +90,14 @@ class _SurplusRadarState extends State<SurplusRadar> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final t = context.l10n;
     final now = DateTime.now();
-    final listings = context.watch<DonorProvider>().allListings.where((l) => l.pickupEnd.isAfter(now)).toList();
+    final listings = context
+        .watch<DonorProvider>()
+        .allListings
+        .where((l) =>
+            l.status == ListingStatus.active &&
+            l.quantity > 0 &&
+            l.pickupEnd.isAfter(now))
+        .toList();
 
     // Resolve the current consumer's own position so the "You" marker and
     // live distances are based on a real location when one has been set

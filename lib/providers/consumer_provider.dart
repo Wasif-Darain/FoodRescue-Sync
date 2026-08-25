@@ -151,20 +151,29 @@ class ConsumerProvider extends ChangeNotifier {
     try {
       late final double lat;
       late final double lng;
+      var claimed = false;
       await _firestore.runTransaction((transaction) async {
         final listingRef = _firestore.collection('listings').doc(listingId);
         final snapshot = await transaction.get(listingRef);
         if (!snapshot.exists) return;
         final data = snapshot.data() as Map<String, dynamic>;
+        final currentStatus = data['status'] as String? ?? ListingStatusModel.active.name;
+        if (currentStatus != ListingStatusModel.active.name) return;
         final currentQty = (data['quantity'] as num?)?.toDouble() ?? 0;
+        if (currentQty < claimQuantity) return;
+        claimed = true;
         final remaining = currentQty - claimQuantity;
         lat = (data['latitude'] as num?)?.toDouble() ?? 0;
         lng = (data['longitude'] as num?)?.toDouble() ?? 0;
         transaction.update(listingRef, {
           'quantity': remaining,
-          if (remaining <= 0) 'status': ListingStatusModel.claimed.name,
+          'claimedBy': uid,
+          'status': remaining <= 0
+              ? ListingStatusModel.claimed.name
+              : ListingStatusModel.active.name,
         });
       });
+      if (!claimed) return false;
       await _firestore.collection('pickups').add({
         'consumerId': uid,
         'requestId': listingId,
