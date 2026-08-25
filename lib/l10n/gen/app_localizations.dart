@@ -2918,6 +2918,18 @@ abstract class AppLocalizations {
   /// **'Completed'**
   String get pickupStatusCompleted;
 
+  /// No description provided for @pickupStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get pickupStatusCancelled;
+
+  /// No description provided for @pickupCancelClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Claim'**
+  String get pickupCancelClaim;
+
   /// No description provided for @pickupActivePickups.
   ///
   /// In en, this message translates to:

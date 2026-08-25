@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum ListingStatusModel { active, claimed, expired }
+enum ListingStatusModel { active, claimed, completed, expired }
 
 class ListingModel {
   final String id;
@@ -18,6 +18,7 @@ class ListingModel {
   final double latitude;
   final double longitude;
   final String? address;
+  final String? claimedBy;
   final DateTime createdAt;
 
   ListingModel({
@@ -36,6 +37,7 @@ class ListingModel {
     required this.latitude,
     required this.longitude,
     this.address,
+    this.claimedBy,
     required this.createdAt,
   });
 
@@ -62,6 +64,7 @@ class ListingModel {
       latitude: (data['latitude'] as num?)?.toDouble() ?? 0,
       longitude: (data['longitude'] as num?)?.toDouble() ?? 0,
       address: data['address'] as String?,
+      claimedBy: data['claimedBy'] as String?,
       createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
     );
   }
@@ -82,6 +85,7 @@ class ListingModel {
       'latitude': latitude,
       'longitude': longitude,
       'address': address,
+      'claimedBy': claimedBy,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }

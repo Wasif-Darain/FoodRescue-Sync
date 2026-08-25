@@ -294,22 +294,30 @@ class ConsumerProvider extends ChangeNotifier {
       late final double lat;
       late final double lng;
       late final Map<String, dynamic> listingData;
+      var claimed = false;
       await _firestore.runTransaction((transaction) async {
         final listingRef = _firestore.collection('listings').doc(listingId);
         final snapshot = await transaction.get(listingRef);
         if (!snapshot.exists) return;
-        listingData = snapshot.data() as Map<String, dynamic>;
-        final currentQty = (listingData['quantity'] as num?)?.toDouble() ?? 0;
+        final data = snapshot.data() as Map<String, dynamic>;
+        final currentStatus = data['status'] as String? ?? ListingStatusModel.active.name;
+        if (currentStatus != ListingStatusModel.active.name) return;
+        final currentQty = (data['quantity'] as num?)?.toDouble() ?? 0;
+        if (currentQty < claimQuantity) return;
+        claimed = true;
+        listingData = data;
         final remaining = currentQty - claimQuantity;
         lat = (listingData['latitude'] as num?)?.toDouble() ?? 0;
         lng = (listingData['longitude'] as num?)?.toDouble() ?? 0;
         transaction.update(listingRef, {
           'quantity': remaining,
-          if (remaining <= 0) 'status': ListingStatusModel.claimed.name,
+          'claimedBy': uid,
+          'status': remaining <= 0
+              ? ListingStatusModel.claimed.name
+              : ListingStatusModel.active.name,
         });
       });
-      // Record the claim as an ordinary (non-bulk) request so it shows up in
-      // the consumer's request tracker and the donor's logs.
+      if (!claimed) return false;
       final requestRef = await _firestore.collection('requests').add({
         'consumerId': uid,
         'listingId': listingId,
@@ -325,6 +333,7 @@ class ConsumerProvider extends ChangeNotifier {
         'requestId': requestRef.id,
         'listingId': listingId,
         'isBulk': false,
+        'quantity': claimQuantity,
         'donorName': listingData['donorName'] as String? ?? '',
         'listingTitle': listingData['title'] as String? ?? '',
         'status': PickupStatusModel.scheduled.name,
@@ -346,6 +355,60 @@ class ConsumerProvider extends ChangeNotifier {
           'createdAt': FieldValue.serverTimestamp(),
         });
       }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> cancelClaim(String pickupId) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return false;
+    try {
+      String? donorId;
+      String? listingTitle;
+      await _firestore.runTransaction((transaction) async {
+        final pickupRef = _firestore.collection('pickups').doc(pickupId);
+        final pickupSnap = await transaction.get(pickupRef);
+        if (!pickupSnap.exists) return;
+        final pickupData = pickupSnap.data() as Map<String, dynamic>;
+        if (pickupData['consumerId'] != uid) return;
+        final status = pickupData['status'] as String?;
+        if (status != PickupStatusModel.scheduled.name &&
+            status != PickupStatusModel.enRoute.name) {
+          return;
+        }
+        final listingId = pickupData['listingId'] as String? ??
+            pickupData['requestId'] as String? ??
+            '';
+        final restoredQty = (pickupData['quantity'] as num?)?.toDouble() ?? 0;
+        final listingRef = _firestore.collection('listings').doc(listingId);
+        final listingSnap = await transaction.get(listingRef);
+        transaction.update(pickupRef, {
+          'status': PickupStatusModel.cancelled.name,
+          'cancelledAt': FieldValue.serverTimestamp(),
+        });
+        if (!listingSnap.exists) return;
+        final listingData = listingSnap.data() as Map<String, dynamic>;
+        donorId = listingData['donorId'] as String?;
+        listingTitle = listingData['title'] as String? ?? 'a listing';
+        final currentQty = (listingData['quantity'] as num?)?.toDouble() ?? 0;
+        transaction.update(listingRef, {
+          'quantity': currentQty + restoredQty,
+          'status': ListingStatusModel.active.name,
+          'claimedBy': FieldValue.delete(),
+        });
+      });
+      if (donorId == null) return false;
+      await _firestore.collection('notifications').add({
+        'recipientUid': donorId,
+        'payloadType': 'cancellation',
+        'listingId': pickupId,
+        'message':
+            'A consumer cancelled their claim on "$listingTitle". The listing is available again.',
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
       return true;
     } catch (_) {
       return false;

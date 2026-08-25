@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum PickupStatusModel { scheduled, enRoute, completed }
+enum PickupStatusModel { scheduled, enRoute, completed, cancelled }
 
 class PickupModel {
   final String id;

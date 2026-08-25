@@ -548,6 +548,8 @@
   "pickupStatusScheduled": "নির্ধারিত",
   "pickupStatusEnRoute": "পথে আছে",
   "pickupStatusCompleted": "সম্পন্ন",
+  "pickupStatusCancelled": "বাতিল",
+  "pickupCancelClaim": "ক্লেইম বাতিল করুন",
   "pickupActivePickups": "সক্রিয় পিকআপ",
   "pickupNoneScheduled": "কোনো পিকআপ নির্ধারিত নেই",
   "pickupHashId": "পিকআপ #{id}",
