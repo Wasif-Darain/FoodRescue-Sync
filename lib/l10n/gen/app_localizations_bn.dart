@@ -1570,6 +1570,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get pickupStatusCompleted => 'সম্পন্ন';
 
   @override
+  String get pickupStatusCancelled => 'বাতিল';
+
+  @override
+  String get pickupCancelClaim => 'ক্লেইম বাতিল করুন';
+
+  @override
   String get pickupActivePickups => 'সক্রিয় পিকআপ';
 
   @override

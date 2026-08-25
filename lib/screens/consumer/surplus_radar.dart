@@ -137,7 +137,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
                   children: [
                     TileLayer(
                       urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.foodrescue.sync',
+                      userAgentPackageName: 'com.foodrescue.foodrescue_sync',
                     ),
                     RichAttributionWidget(
                       attributions: [TextSourceAttribution('OpenStreetMap contributors')],

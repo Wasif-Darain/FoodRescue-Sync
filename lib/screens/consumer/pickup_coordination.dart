@@ -1,12 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/rating_stars.dart';
 import '../../widgets/ui/countdown_timer.dart';
 import '../../widgets/ui/detail_sheet.dart';
 import '../../models/pickup.dart';
+import '../../providers/consumer_provider.dart';
 import '../../l10n/l10n_ext.dart';
 
 class PickupCoordination extends StatelessWidget {
@@ -100,6 +102,7 @@ class _PickupStat extends StatelessWidget {
       PickupStatusModel.scheduled => (t.pickupStatusScheduled, Icons.schedule, const Color(0xFF2563EB)),
       PickupStatusModel.enRoute   => (t.pickupStatusEnRoute,  Icons.directions_car, const Color(0xFFEA580C)),
       PickupStatusModel.completed => (t.pickupStatusCompleted, Icons.check_circle_outline, const Color(0xFF16A34A)),
+      PickupStatusModel.cancelled => (t.pickupStatusCancelled, Icons.cancel_outlined, const Color(0xFFDC2626)),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
@@ -141,6 +144,7 @@ class _PickupCard extends StatelessWidget {
       PickupStatusModel.scheduled => (t.pickupStatusScheduled, BadgeVariant.blue,   const Color(0xFF2563EB)),
       PickupStatusModel.enRoute   => (t.pickupStatusEnRoute,  BadgeVariant.orange, const Color(0xFFEA580C)),
       PickupStatusModel.completed => (t.pickupStatusCompleted, BadgeVariant.green,  const Color(0xFF16A34A)),
+      PickupStatusModel.cancelled => (t.pickupStatusCancelled, BadgeVariant.red, const Color(0xFFDC2626)),
     };
 
     return InkWell(
@@ -178,6 +182,40 @@ class _PickupCard extends StatelessWidget {
             '${pickup.scheduledTime!.hour.toString().padLeft(2, '0')}:${pickup.scheduledTime!.minute.toString().padLeft(2, '0')} — ${pickup.scheduledTime!.day}/${pickup.scheduledTime!.month}/${pickup.scheduledTime!.year}'),
         ],
         if (pickup.status == PickupStatusModel.scheduled || pickup.status == PickupStatusModel.enRoute) ...[
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final consumer = context.read<ConsumerProvider>();
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: Text(t.pickupCancelClaim),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        child: Text(t.commonClose),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        child: Text(t.pickupCancelClaim),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true) {
+                  await consumer.cancelClaim(pickup.id);
+                }
+              },
+              icon: const Icon(Icons.cancel_outlined, size: 18),
+              label: Text(t.pickupCancelClaim),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFDC2626),
+                side: const BorderSide(color: Color(0xFFDC2626)),
+              ),
+            ),
+          ),
           const SizedBox(height: 10),
           Align(
             alignment: Alignment.centerLeft,

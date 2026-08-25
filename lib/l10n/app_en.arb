@@ -548,6 +548,8 @@
   "pickupStatusScheduled": "Scheduled",
   "pickupStatusEnRoute": "En Route",
   "pickupStatusCompleted": "Completed",
+  "pickupStatusCancelled": "Cancelled",
+  "pickupCancelClaim": "Cancel Claim",
   "pickupActivePickups": "Active Pickups",
   "pickupNoneScheduled": "No pickups scheduled",
   "pickupHashId": "Pickup #{id}",

@@ -1561,6 +1561,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pickupStatusCompleted => 'Completed';
 
   @override
+  String get pickupStatusCancelled => 'Cancelled';
+
+  @override
+  String get pickupCancelClaim => 'Cancel Claim';
+
+  @override
   String get pickupActivePickups => 'Active Pickups';
 
   @override
