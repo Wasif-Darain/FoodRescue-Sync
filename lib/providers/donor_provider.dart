@@ -330,18 +330,19 @@ class DonorProvider extends ChangeNotifier {
       'status': DonationScheduleStatus.scheduled.name,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    await _firestore.collection('notifications').add({
-      'recipientUid': consumerId,
-      'payloadType': 'pickup',
-      'message':
-          '$donorName offered you a direct donation: $itemName. Open Requests to accept or reject it.',
-      'isRead': false,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+    await _notifyConsumerUid(
+      consumerId,
+      '$donorName offered you a direct donation: $itemName. Open Requests to accept or reject it.',
+    );
   }
 
   Future<void> _notifyConsumerUid(String? uid, String message) async {
-    if (uid == null || uid.isEmpty || uid == '0') return;
+    if (uid == null ||
+        uid.isEmpty ||
+        uid == '0' ||
+        uid == _auth.currentUser?.uid) {
+      return;
+    }
     await _firestore.collection('notifications').add({
       'recipientUid': uid,
       'payloadType': 'pickup',

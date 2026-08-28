@@ -232,3 +232,23 @@ The app targets Android, iOS, and Web. After linking Firebase with `flutterfire 
 ## Support
 
 For technical assistance, refer to the docs or open an issue on the GitHub repository.
+
+## Versioning
+
+This project follows [Semantic Versioning](https://semver.org/) in the form `MAJOR.MINOR.PATCH`, starting from **`0.1.0`**:
+
+- **MAJOR** — breaking changes (e.g., incompatible schema/API changes)
+- **MINOR** — new features, backward compatible
+- **PATCH** — bug fixes and small improvements
+
+While the project is in `0.x` (pre-1.0), the API and data schemas are considered unstable and the **MINOR** number may include breaking changes.
+
+The current version is tracked in:
+
+- `pubspec.yaml` → `version: 0.1.0+1` (the `+1` is the Flutter build number)
+
+Each release is tagged on GitHub as `v<version>` (e.g., `v0.1.0`).
+
+| Version | Status |
+|---------|--------|
+| 0.1.0 | Initial versioned release |

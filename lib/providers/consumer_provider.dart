@@ -105,6 +105,27 @@ class ConsumerProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> _notifyUser(
+    String? recipientUid, {
+    required String payloadType,
+    String? listingId,
+    required String message,
+  }) async {
+    if (recipientUid == null ||
+        recipientUid.isEmpty ||
+        recipientUid == _auth.currentUser?.uid) {
+      return;
+    }
+    await _firestore.collection('notifications').add({
+      'recipientUid': recipientUid,
+      'payloadType': payloadType,
+      ...?(listingId != null ? {'listingId': listingId} : null),
+      'message': message,
+      'isRead': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   double _haversineKm(double lat1, double lon1, double lat2, double lon2) {
     const r = 6371.0;
     final dLat = _degToRad(lat2 - lat1);
@@ -203,26 +224,18 @@ class ConsumerProvider extends ChangeNotifier {
         'address': location,
         'createdAt': FieldValue.serverTimestamp(),
       });
-      if (donorId != null && donorId.isNotEmpty) {
-        await _firestore.collection('notifications').add({
-          'recipientUid': donorId,
-          'payloadType': 'request',
-          'message': 'A consumer accepted your direct donation: $itemName.',
-          'isRead': false,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      }
+      await _notifyUser(
+        donorId,
+        payloadType: 'request',
+        message: 'A consumer accepted your direct donation: $itemName.',
+      );
     } else {
       await ref.update({'status': 'cancelled'});
-      if (donorId != null && donorId.isNotEmpty) {
-        await _firestore.collection('notifications').add({
-          'recipientUid': donorId,
-          'payloadType': 'request',
-          'message': 'A consumer rejected your direct donation: $itemName.',
-          'isRead': false,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      }
+      await _notifyUser(
+        donorId,
+        payloadType: 'request',
+        message: 'A consumer rejected your direct donation: $itemName.',
+      );
     }
   }
 
@@ -258,27 +271,19 @@ class ConsumerProvider extends ChangeNotifier {
         });
       }
       final donorId = listingSnap.data()?['donorId'] as String?;
-      if (donorId != null && donorId.isNotEmpty) {
-        await _firestore.collection('notifications').add({
-          'recipientUid': donorId,
-          'payloadType': 'request',
-          'message': 'A consumer accepted the request for "${listingSnap.data()?['title'] ?? 'your listing'}".',
-          'isRead': false,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      }
+      await _notifyUser(
+        donorId,
+        payloadType: 'request',
+        message: 'A consumer accepted the request for "${listingSnap.data()?['title'] ?? 'your listing'}".',
+      );
     } else if (!accept && listingId.isNotEmpty) {
       final listingSnap = await _firestore.collection('listings').doc(listingId).get();
       final donorId = listingSnap.data()?['donorId'] as String?;
-      if (donorId != null && donorId.isNotEmpty) {
-        await _firestore.collection('notifications').add({
-          'recipientUid': donorId,
-          'payloadType': 'request',
-          'message': 'A consumer rejected the request for "${listingSnap.data()?['title'] ?? 'your listing'}".',
-          'isRead': false,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      }
+      await _notifyUser(
+        donorId,
+        payloadType: 'request',
+        message: 'A consumer rejected the request for "${listingSnap.data()?['title'] ?? 'your listing'}".',
+      );
     }
   }
 
@@ -343,18 +348,13 @@ class ConsumerProvider extends ChangeNotifier {
         'address': deliveryAddress,
         'createdAt': FieldValue.serverTimestamp(),
       });
-      // Notify the donor that their listing was claimed.
       final donorId = listingData['donorId'] as String?;
-      if (donorId != null && donorId.isNotEmpty) {
-        await _firestore.collection('notifications').add({
-          'recipientUid': donorId,
-          'payloadType': 'request',
-          'message':
-              'Your listing "${listingData['title'] ?? 'a listing'}" was claimed by a consumer.',
-          'isRead': false,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      }
+      await _notifyUser(
+        donorId,
+        payloadType: 'request',
+        message:
+            'Your listing "${listingData['title'] ?? 'a listing'}" was claimed by a consumer.',
+      );
       return true;
     } catch (_) {
       return false;
@@ -400,15 +400,13 @@ class ConsumerProvider extends ChangeNotifier {
         });
       });
       if (donorId == null) return false;
-      await _firestore.collection('notifications').add({
-        'recipientUid': donorId,
-        'payloadType': 'cancellation',
-        'listingId': pickupId,
-        'message':
+      await _notifyUser(
+        donorId,
+        payloadType: 'cancellation',
+        listingId: pickupId,
+        message:
             'A consumer cancelled their claim on "$listingTitle". The listing is available again.',
-        'isRead': false,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      );
       return true;
     } catch (_) {
       return false;
