@@ -8,6 +8,8 @@ import '../../widgets/ui/rating_stars.dart';
 import '../../models/donation_log.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/ui/block_button.dart';
+import '../../widgets/ui/detail_sheet.dart';
 import '../../l10n/l10n_ext.dart';
 
 class DonationLogScreen extends StatelessWidget {
@@ -123,7 +125,41 @@ class _LogRow extends StatelessWidget {
     final isDonor = context.watch<AuthProvider>().user?.mode == UserMode.donor;
     final t = context.l10n;
     final date = '${log.completedAt.year}-${log.completedAt.month.toString().padLeft(2, '0')}-${log.completedAt.day.toString().padLeft(2, '0')}';
-    return Container(
+    final otherId = isDonor ? log.recipientId : log.donorId;
+    final itemSummary = log.itemSummary.entries
+        .map((e) => '${e.key} (${e.value.toStringAsFixed(1)} kg)')
+        .join(', ');
+    return InkWell(
+      onTap: () => showListingDetailSheet(
+        context,
+        title: '${log.totalWeightKg.toStringAsFixed(1)} kg',
+        subtitle: date,
+        donorId: otherId,
+        rows: [
+          DetailRow(
+            Icons.person_outline,
+            isDonor ? 'Recipient' : 'Donor',
+            otherId.isEmpty ? '-' : otherId,
+          ),
+          if (itemSummary.isNotEmpty)
+            DetailRow(Icons.inventory_2_outlined, 'Items', itemSummary),
+          DetailRow(
+            Icons.check_circle_outline,
+            'Status',
+            t.donationLogCompleted,
+          ),
+        ],
+        menuActions: otherId.isEmpty
+            ? const <SheetMenuItem>[]
+            : <SheetMenuItem>[
+                blockSheetMenuItem(
+                  context,
+                  targetUid: otherId,
+                  targetLabel: otherId,
+                ),
+              ],
+      ),
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(border: Border(top: BorderSide(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)))),
       child: Column(
@@ -150,6 +186,7 @@ class _LogRow extends StatelessWidget {
           const SizedBox(height: 12),
           RatingStars(reviewLabel: t.donationLogRateThis),
         ],
+      ),
       ),
     );
   }

@@ -1,6 +1,14 @@
 import 'dart:typed_data';
 
-enum AccountType { restaurant, caterer, store, ngo, foodBank, shelter, individual }
+enum AccountType {
+  restaurant,
+  caterer,
+  store,
+  ngo,
+  foodBank,
+  shelter,
+  individual,
+}
 
 enum UserMode { donor, consumer, admin }
 
@@ -37,8 +45,13 @@ class AppUser {
     required this.mode,
   });
 
-  AppUser copyWith({UserMode? mode, String? name}) =>
-      AppUser(id: id, name: name ?? this.name, email: email, accountType: accountType, mode: mode ?? this.mode);
+  AppUser copyWith({UserMode? mode, String? name}) => AppUser(
+    id: id,
+    name: name ?? this.name,
+    email: email,
+    accountType: accountType,
+    mode: mode ?? this.mode,
+  );
 }
 
 class InventoryItem {
@@ -72,6 +85,7 @@ class Listing {
   final String? docId;
   final int donorId;
   final String donorName;
+  final String donorUid;
   final String title;
   final String description;
   final double price;
@@ -94,6 +108,7 @@ class Listing {
     this.docId,
     required this.donorId,
     required this.donorName,
+    this.donorUid = '',
     required this.title,
     required this.description,
     required this.price,
@@ -117,6 +132,7 @@ class Listing {
     docId: docId,
     donorId: donorId,
     donorName: donorName,
+    donorUid: donorUid,
     title: title,
     description: description,
     price: price,
@@ -294,6 +310,7 @@ class ScheduledDonation {
   final int id;
   final String? docId;
   final int consumerId;
+  final String consumerUid;
   final String consumerName;
   final String donorName;
   final String itemName;
@@ -310,6 +327,7 @@ class ScheduledDonation {
     required this.id,
     this.docId,
     required this.consumerId,
+    this.consumerUid = '',
     required this.consumerName,
     required this.donorName,
     required this.itemName,
@@ -332,6 +350,7 @@ class ScheduledDonation {
     id: id,
     docId: docId,
     consumerId: consumerId,
+    consumerUid: consumerUid,
     consumerName: consumerName,
     donorName: donorName,
     itemName: itemName,

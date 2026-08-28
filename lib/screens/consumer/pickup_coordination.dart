@@ -10,6 +10,7 @@ import '../../widgets/ui/countdown_timer.dart';
 import '../../widgets/ui/detail_sheet.dart';
 import '../../models/pickup.dart';
 import '../../providers/consumer_provider.dart';
+import '../../widgets/ui/block_button.dart';
 import '../../l10n/l10n_ext.dart';
 
 class PickupCoordination extends StatelessWidget {
@@ -170,6 +171,15 @@ class _PickupCard extends StatelessWidget {
             DetailRow(Icons.check_circle_outline, t.pickupDetailCompleted, '${pickup.completedAt!.day}/${pickup.completedAt!.month}/${pickup.completedAt!.year}'),
           if (pickup.address != null) DetailRow(Icons.location_on_outlined, t.pickupDetailAddress, pickup.address!),
         ],
+        menuActions: matched == null
+            ? const <SheetMenuItem>[]
+            : <SheetMenuItem>[
+                blockSheetMenuItem(
+                  context,
+                  targetUid: matched.donorUid,
+                  targetLabel: matched.donorName,
+                ),
+              ],
       ),
       child: Container(
       padding: const EdgeInsets.all(20),

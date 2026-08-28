@@ -8,6 +8,7 @@ import '../../widgets/ui/detail_sheet.dart';
 import '../../models/request.dart';
 import '../../providers/consumer_provider.dart';
 import '../../providers/donor_provider.dart';
+import '../../widgets/ui/block_button.dart';
 import '../../l10n/l10n_ext.dart';
 
 class RequestStatusTracker extends StatelessWidget {
@@ -227,7 +228,17 @@ class _RequestRow extends StatelessWidget {
           DetailRow(Icons.calendar_today_outlined, t.reqDetailCreated, date),
           if (request.updatedAt != null)
             DetailRow(Icons.update_outlined, t.reqDetailLastUpdated, '${request.updatedAt!.day}/${request.updatedAt!.month}/${request.updatedAt!.year}'),
+          if (matched != null) DetailRow(Icons.storefront_outlined, 'Donor', matched.donorName),
         ],
+        menuActions: matched == null
+            ? const <SheetMenuItem>[]
+            : <SheetMenuItem>[
+                blockSheetMenuItem(
+                  context,
+                  targetUid: matched.donorUid,
+                  targetLabel: matched.donorName,
+                ),
+              ],
       ),
       child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -7,9 +9,13 @@ import '../../widgets/ui/responsive_grid.dart';
 import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/user_badge.dart';
 import '../../widgets/ui/countdown_timer.dart';
+import '../../widgets/ui/detail_sheet.dart';
+import '../../widgets/ui/block_button.dart';
+import '../../models/donation_log.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
+import '../../providers/block_provider.dart';
 import '../../l10n/l10n_ext.dart';
 
 class DonorDashboard extends StatelessWidget {
@@ -21,6 +27,20 @@ class DonorDashboard extends StatelessWidget {
     final user = context.watch<AuthProvider>().user!;
     final donor = context.watch<DonorProvider>();
     final t = context.l10n;
+    final blocked = context.watch<BlockProvider>().blockedUids;
+    final myUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final recentDonationsStream = myUid.isEmpty
+        ? Stream<List<DonationLogModel>>.value([])
+        : FirebaseFirestore.instance
+            .collection('donation_logs')
+            .where('donorId', isEqualTo: myUid)
+            .snapshots()
+            .map((snap) => (snap.docs
+                    .map((doc) => DonationLogModel.fromFirestore(doc))
+                    .toList()
+                  ..sort((a, b) => b.completedAt.compareTo(a.completedAt)))
+                .take(5)
+                .toList());
 
     return StreamBuilder<List<InventoryItem>>(
       stream: donor.inventoryStream,
@@ -203,9 +223,37 @@ class DonorDashboard extends StatelessWidget {
                         _SectionCard(
                           title: t.donorDashRecentDonations,
                           icon: Icons.volunteer_activism_outlined,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Text(t.donorDashNoDonationHistory, style: const TextStyle(fontSize: 12, color: Color(0xFF757575))),
+                          child: StreamBuilder<List<DonationLogModel>>(
+                            stream: recentDonationsStream,
+                            builder: (context, snap) {
+                              final logs = snap.data ?? [];
+                              if (logs.isEmpty) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  child: Text(
+                                    t.donorDashNoDonationHistory,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF757575),
+                                    ),
+                                  ),
+                                );
+                              }
+                              return Column(
+                                children: logs
+                                    .map(
+                                      (l) => _RecentDonationRow(
+                                        log: l,
+                                        isBlocked: blocked.contains(
+                                          l.recipientId,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -417,4 +465,93 @@ class _QuickAction extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _RecentDonationRow extends StatelessWidget {
+  final DonationLogModel log;
+  final bool isBlocked;
+  const _RecentDonationRow({required this.log, required this.isBlocked});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
+    final date =
+        '${log.completedAt.day}/${log.completedAt.month}/${log.completedAt.year}';
+    final items = log.itemSummary.entries
+        .map((e) => '${e.key} (${e.value.toStringAsFixed(1)} kg)')
+        .join(', ');
+    return InkWell(
+      onTap: () => showListingDetailSheet(
+        context,
+        title: '${log.totalWeightKg.toStringAsFixed(1)} kg',
+        subtitle: date,
+        donorId: log.recipientId,
+        rows: [
+          DetailRow(
+            Icons.person_outline,
+            'Recipient',
+            log.recipientId.isEmpty ? '-' : log.recipientId,
+          ),
+          if (items.isNotEmpty)
+            DetailRow(Icons.inventory_2_outlined, 'Items', items),
+          DetailRow(
+            Icons.check_circle_outline,
+            'Status',
+            t.donationLogCompleted,
+          ),
+        ],
+        menuActions: log.recipientId.isEmpty
+            ? const <SheetMenuItem>[]
+            : <SheetMenuItem>[
+                blockSheetMenuItem(
+                  context,
+                  targetUid: log.recipientId,
+                  targetLabel: log.recipientId,
+                ),
+              ],
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2),
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${log.totalWeightKg.toStringAsFixed(1)} kg → ${log.recipientId}',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white : const Color(0xFF121212),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    date,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF757575),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isBlocked)
+              AppBadge(label: t.blockBlocked, variant: BadgeVariant.red),
+          ],
+        ),
+      ),
+    );
+  }
 }

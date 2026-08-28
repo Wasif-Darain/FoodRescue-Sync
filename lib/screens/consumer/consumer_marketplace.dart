@@ -10,7 +10,9 @@ import '../../widgets/ui/detail_sheet.dart';
 import '../../models/listing.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/block_provider.dart';
 import '../../providers/consumer_provider.dart';
+import '../../widgets/ui/block_button.dart';
 import '../../l10n/l10n_ext.dart';
 import '../../l10n/gen/app_localizations.dart';
 
@@ -42,40 +44,55 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
     final t = context.l10n;
 
     final now = DateTime.now();
+    final blocked = context.watch<BlockProvider>().blockedUids;
     return StreamBuilder<List<ListingModel>>(
       stream: consumer.availableListingsStream,
       builder: (context, snapshot) {
         final listings = (snapshot.data ?? [])
-            .where((l) =>
-                l.status == ListingStatusModel.active &&
-                l.quantity > 0 &&
-                (l.claimDeadline == null || l.claimDeadline!.isAfter(now)))
+            .where(
+              (l) =>
+                  l.status == ListingStatusModel.active &&
+                  l.quantity > 0 &&
+                  !blocked.contains(l.donorId) &&
+                  (l.claimDeadline == null || l.claimDeadline!.isAfter(now)),
+            )
             .toList();
-        final filtered = listings.map((l) => Listing(
-          id: int.tryParse(l.id) ?? 0,
-          docId: l.id,
-          donorId: int.tryParse(l.donorId) ?? 0,
-          donorName: l.donorId,
-          title: l.title,
-          description: l.description,
-          price: l.price,
-          quantity: l.quantity.toInt(),
-          listingType: ListingType.donation,
-          pickupStart: l.claimDeadline ?? now,
-          pickupEnd: l.claimDeadline ?? now.add(const Duration(hours: 4)),
-          latitude: l.latitude,
-          longitude: l.longitude,
-          status: ListingStatus.active,
-          category: l.category,
-          imageUrl: l.photoUrls.isNotEmpty ? l.photoUrls.first : null,
-          imageCount: l.photoUrls.length,
-          address: l.address,
-        )).where((l) {
-          final catMatch = _selectedCategory == 'All' || l.category == _selectedCategory;
-          final typeMatch = _filter == 'All' ||
-              (_filter == 'Free' && l.listingType == ListingType.donation);
-          return catMatch && typeMatch && l.pickupEnd.isAfter(now) && l.status == ListingStatus.active;
-        }).toList();
+        final filtered = listings
+            .map(
+              (l) => Listing(
+                id: int.tryParse(l.id) ?? 0,
+                docId: l.id,
+                donorId: int.tryParse(l.donorId) ?? 0,
+                donorName: l.donorId,
+                donorUid: l.donorId,
+                title: l.title,
+                description: l.description,
+                price: l.price,
+                quantity: l.quantity.toInt(),
+                listingType: ListingType.donation,
+                pickupStart: l.claimDeadline ?? now,
+                pickupEnd: l.claimDeadline ?? now.add(const Duration(hours: 4)),
+                latitude: l.latitude,
+                longitude: l.longitude,
+                status: ListingStatus.active,
+                category: l.category,
+                imageUrl: l.photoUrls.isNotEmpty ? l.photoUrls.first : null,
+                imageCount: l.photoUrls.length,
+                address: l.address,
+              ),
+            )
+            .where((l) {
+              final catMatch =
+                  _selectedCategory == 'All' || l.category == _selectedCategory;
+              final typeMatch =
+                  _filter == 'All' ||
+                  (_filter == 'Free' && l.listingType == ListingType.donation);
+              return catMatch &&
+                  typeMatch &&
+                  l.pickupEnd.isAfter(now) &&
+                  l.status == ListingStatus.active;
+            })
+            .toList();
 
         return AppLayout(
           title: t.mktTitle,
@@ -88,9 +105,19 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+                  color: isDark
+                      ? const Color(0xFF1E1E1E)
+                      : const Color(0xFFFFFFFF),
                   borderRadius: BorderRadius.circular(18),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.35 : 0.14,
+                      ),
+                      offset: const Offset(0, 4),
+                      blurRadius: 0,
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -98,11 +125,25 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(t.mktGreeting(user.name.split(' ').first), style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(
+                            t.mktGreeting(user.name.split(' ').first),
+                            style: TextStyle(
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF121212),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 6),
                           Text(
                             t.mktListingsNear(listings.length),
-                            style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13),
+                            style: TextStyle(
+                              color: isDark
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF757575),
+                              fontSize: 13,
+                            ),
                           ),
                         ],
                       ),
@@ -110,8 +151,17 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                     Container(
                       width: 52,
                       height: 52,
-                      decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.all(Radius.circular(14))),
-                      child: const Icon(Icons.restaurant_outlined, color: Color(0xFFEA580C), size: 26),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF2A2A2A)
+                            : const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.all(Radius.circular(14)),
+                      ),
+                      child: const Icon(
+                        Icons.restaurant_outlined,
+                        color: Color(0xFFEA580C),
+                        size: 26,
+                      ),
                     ),
                   ],
                 ),
@@ -158,65 +208,144 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
               ),
               const SizedBox(height: 20),
 
-              Builder(builder: (context) {
-                final searchBox = Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(10), border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
-                  child: Row(children: [
-                    Icon(Icons.search, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                    const SizedBox(width: 8),
-                    Expanded(child: TextField(
-                      decoration: InputDecoration(hintText: t.mktSearchHint, border: InputBorder.none, hintStyle: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFFBFBFBF))),
-                    )),
-                  ]),
-                );
-
-                final filterChips = [
-                  ('All', t.mktFilterAll, Icons.grid_view_outlined),
-                  ('Free', t.mktFilterFree, Icons.favorite_outline),
-                  ('Sale', t.mktFilterSale, Icons.local_offer_outlined)
-                ].map((f) {
-                  final isSelected = _filter == f.$1;
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: _HoverScale(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _filter = f.$1),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isSelected ? (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7)) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)), width: isSelected ? 2 : 1),
-                          ),
-                          child: Row(children: [
-                            Icon(f.$3, size: 14, color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
-                            const SizedBox(width: 4),
-                            Text(f.$2, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
-                          ]),
-                        ),
+              Builder(
+                builder: (context) {
+                  final searchBox = Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF2A2A2A)
+                          : const Color(0xFFFFFFFF),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF3F3F46)
+                            : const Color(0xFFE2E2E2),
                       ),
                     ),
-                  );
-                }).toList();
-
-                return LayoutBuilder(builder: (context, constraints) {
-                  if (constraints.maxWidth < 480) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        searchBox,
-                        const SizedBox(height: 10),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(children: filterChips),
+                        Icon(
+                          Icons.search,
+                          size: 18,
+                          color: isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF757575),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            decoration: InputDecoration(
+                              hintText: t.mktSearchHint,
+                              border: InputBorder.none,
+                              hintStyle: TextStyle(
+                                fontSize: 13,
+                                color: isDark
+                                    ? const Color(0xFF9CA3AF)
+                                    : const Color(0xFFBFBFBF),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
-                    );
-                  }
-                  return Row(children: [Expanded(child: searchBox), ...filterChips]);
-                });
-              }),
+                    ),
+                  );
+
+                  final filterChips =
+                      [
+                        ('All', t.mktFilterAll, Icons.grid_view_outlined),
+                        ('Free', t.mktFilterFree, Icons.favorite_outline),
+                        ('Sale', t.mktFilterSale, Icons.local_offer_outlined),
+                      ].map((f) {
+                        final isSelected = _filter == f.$1;
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: _HoverScale(
+                            child: GestureDetector(
+                              onTap: () => setState(() => _filter = f.$1),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? (isDark
+                                            ? const Color(0xFF0D2818)
+                                            : const Color(0xFFDCFCE7))
+                                      : (isDark
+                                            ? const Color(0xFF2A2A2A)
+                                            : const Color(0xFFFFFFFF)),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? const Color(0xFF16A34A)
+                                        : (isDark
+                                              ? const Color(0xFF3F3F46)
+                                              : const Color(0xFFE2E2E2)),
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      f.$3,
+                                      size: 14,
+                                      color: isSelected
+                                          ? const Color(0xFF16A34A)
+                                          : (isDark
+                                                ? const Color(0xFF9CA3AF)
+                                                : const Color(0xFF757575)),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      f.$2,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: isSelected
+                                            ? const Color(0xFF16A34A)
+                                            : (isDark
+                                                  ? const Color(0xFF9CA3AF)
+                                                  : const Color(0xFF525252)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList();
+
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth < 480) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            searchBox,
+                            const SizedBox(height: 10),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(children: filterChips),
+                            ),
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(child: searchBox),
+                          ...filterChips,
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
               const SizedBox(height: 14),
 
               SingleChildScrollView(
@@ -228,15 +357,40 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                       padding: const EdgeInsets.only(right: 8),
                       child: _HoverScale(
                         child: GestureDetector(
-                          onTap: () => setState(() => _selectedCategory = cat.$1),
+                          onTap: () =>
+                              setState(() => _selectedCategory = cat.$1),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                            decoration: BoxDecoration(
-                              color: isSelected ? const Color(0xFFE53238) : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFFFFF)),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: isSelected ? const Color(0xFFE53238) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 7,
                             ),
-                            child: Text(cat.$2, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252)))),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? const Color(0xFFE53238)
+                                  : (isDark
+                                        ? const Color(0xFF2A2A2A)
+                                        : const Color(0xFFFFFFFF)),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFFE53238)
+                                    : (isDark
+                                          ? const Color(0xFF3F3F46)
+                                          : const Color(0xFFE2E2E2)),
+                              ),
+                            ),
+                            child: Text(
+                              cat.$2,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: isSelected
+                                    ? Colors.white
+                                    : (isDark
+                                          ? const Color(0xFF9CA3AF)
+                                          : const Color(0xFF525252)),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -250,17 +404,46 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                 Container(
                   padding: const EdgeInsets.all(40),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+                    color: isDark
+                        ? const Color(0xFF1E1E1E)
+                        : const Color(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFF3F3F46)
+                          : const Color(0xFFE2E2E2),
+                    ),
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.storefront_outlined, size: 48, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
+                      Icon(
+                        Icons.storefront_outlined,
+                        size: 48,
+                        color: isDark
+                            ? const Color(0xFF3F3F46)
+                            : const Color(0xFFBFBFBF),
+                      ),
                       const SizedBox(height: 12),
-                      Text(t.mktNoListings, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      Text(
+                        t.mktNoListings,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF121212),
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text(t.mktCheckBackSoon, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                      Text(
+                        t.mktCheckBackSoon,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF757575),
+                        ),
+                      ),
                     ],
                   ),
                 )
@@ -270,7 +453,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                     maxCrossAxisExtent: 320,
-                    mainAxisExtent: 380,
+                    mainAxisExtent: 250,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
@@ -303,154 +486,13 @@ class _ListingCard extends StatelessWidget {
   final Listing listing;
   const _ListingCard({required this.listing});
 
-  void _showClaimSheet(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final consumer = context.read<ConsumerProvider>();
-    final t = context.l10n;
-    String? deliveryAddress = context.read<AuthProvider>().address;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (sheetContext, setSheetState) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(20),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(listing.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.close, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                    onPressed: () => Navigator.pop(sheetContext),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(listing.donorName, style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
-              const SizedBox(height: 4),
-              Text(listing.description, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
-              const SizedBox(height: 12),
-              Row(children: [
-                AppBadge(label: t.commonFree, variant: BadgeVariant.green),
-                const SizedBox(width: 8),
-                AppBadge(label: t.mktQtyBadge(listing.quantity), variant: BadgeVariant.blue),
-                const SizedBox(width: 8),
-                AppBadge(label: t.mktKmBadge(listing.distance.toString()), variant: BadgeVariant.gray),
-              ]),
-              const SizedBox(height: 8),
-              Row(children: [
-                const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF757575)),
-                const SizedBox(width: 4),
-                Text(t.mktPickupBy(
-                    '${listing.pickupEnd.hour.toString().padLeft(2, '0')}:${listing.pickupEnd.minute.toString().padLeft(2, '0')}',
-                    '${listing.pickupEnd.day}/${listing.pickupEnd.month}/${listing.pickupEnd.year}'),
-                  style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
-              ]),
-              const SizedBox(height: 12),
-              InkWell(
-                borderRadius: BorderRadius.circular(8),
-                onTap: () async {
-                  final picked = await pickLocation(sheetContext);
-                  if (picked == null) return;
-                  setSheetState(() => deliveryAddress = picked.address);
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
-                  ),
-                  child: Row(children: [
-                    Icon(Icons.local_shipping_outlined, size: 15, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        deliveryAddress ?? t.mktDeliveryAddressHint,
-                        style: TextStyle(fontSize: 12.5, color: deliveryAddress == null ? const Color(0xFFBFBFBF) : (isDark ? Colors.white : const Color(0xFF121212))),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Icon(Icons.edit_outlined, size: 14, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                  ]),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final success = await consumer.claimListing(listing.docId ?? '', listing.quantity, deliveryAddress: deliveryAddress);
-                    if (!context.mounted) return;
-                    Navigator.pop(sheetContext);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(success ? t.mktClaimedMsg(listing.title) : t.mktClaimFailedMsg(listing.title)),
-                      backgroundColor: success ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
-                    ));
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF16A34A),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: Text(t.mktClaimNow, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final picked = await pickDateTime(sheetContext, initial: DateTime.now().add(const Duration(hours: 1)));
-                    if (picked == null) return;
-                    if (!context.mounted) return;
-                    final success = await consumer.claimListing(listing.docId ?? '', listing.quantity, scheduledTime: picked, deliveryAddress: deliveryAddress);
-                    if (!context.mounted) return;
-                    Navigator.pop(sheetContext);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(success ? t.mktScheduledMsg(listing.title) : t.mktClaimFailedMsg(listing.title)),
-                      backgroundColor: success ? const Color(0xFF2563EB) : const Color(0xFFDC2626),
-                    ));
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: Text(t.mktSchedulePickup, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-        ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final t = context.l10n;
 
-    final imageUrl = listing.imageUrl ??
+    final imageUrl =
+        listing.imageUrl ??
         'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80';
 
     return _HoverScale(
@@ -459,162 +501,247 @@ class _ListingCard extends StatelessWidget {
           context,
           title: listing.title,
           subtitle: t.mktListedBy(listing.donorName),
-          donorId: listing.donorName,
+          donorId: listing.donorUid.isNotEmpty ? listing.donorUid : listing.donorName,
           rows: [
             DetailRow(Icons.category_outlined, t.mktDetailCategory, ''),
-            DetailRow(Icons.inventory_2_outlined, t.mktDetailQuantity, '${listing.quantity}'),
-            DetailRow(Icons.payments_outlined, t.mktDetailPrice, listing.listingType == ListingType.donation ? t.commonFreeLabel : '৳${listing.price.toStringAsFixed(0)}'),
-            DetailRow(Icons.schedule_outlined, t.mktDetailPickupWindow, '${listing.pickupStart.hour.toString().padLeft(2, '0')}:${listing.pickupStart.minute.toString().padLeft(2, '0')} – ${listing.pickupEnd.hour.toString().padLeft(2, '0')}:${listing.pickupEnd.minute.toString().padLeft(2, '0')} · ${listing.pickupEnd.day}/${listing.pickupEnd.month}/${listing.pickupEnd.year}'),
-            if (listing.address != null) DetailRow(Icons.location_on_outlined, t.mktDetailAddress, listing.address!),
+            DetailRow(
+              Icons.inventory_2_outlined,
+              t.mktDetailQuantity,
+              '${listing.quantity}',
+            ),
+            DetailRow(
+              Icons.payments_outlined,
+              t.mktDetailPrice,
+              listing.listingType == ListingType.donation
+                  ? t.commonFreeLabel
+                  : '৳${listing.price.toStringAsFixed(0)}',
+            ),
+            DetailRow(
+              Icons.schedule_outlined,
+              t.mktDetailPickupWindow,
+              '${listing.pickupStart.hour.toString().padLeft(2, '0')}:${listing.pickupStart.minute.toString().padLeft(2, '0')} – ${listing.pickupEnd.hour.toString().padLeft(2, '0')}:${listing.pickupEnd.minute.toString().padLeft(2, '0')} · ${listing.pickupEnd.day}/${listing.pickupEnd.month}/${listing.pickupEnd.year}',
+            ),
+            if (listing.address != null)
+              DetailRow(
+                Icons.location_on_outlined,
+                t.mktDetailAddress,
+                listing.address!,
+              ),
           ],
+          actions: [if (!listing.pickupEnd.isBefore(DateTime.now())) _ClaimActions(listing: listing)],
+          menuActions: listing.donorUid.isEmpty
+              ? const <SheetMenuItem>[]
+              : <SheetMenuItem>[
+                  blockSheetMenuItem(
+                    context,
+                    targetUid: listing.donorUid,
+                    targetLabel: listing.donorName,
+                  ),
+                ],
         ),
         child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05), blurRadius: 10, offset: const Offset(0, 3))],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 120,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFDCFCE7), Color(0xFFDCFCE7)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
-              child: Stack(children: [
-                Positioned.fill(
-                  child: listing.imageBytes != null
-                      ? Image.memory(listing.imageBytes!, fit: BoxFit.cover)
-                      : Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Center(
-                            child: Icon(Icons.favorite_outline, size: 40, color: Color(0xFF059669)),
-                          ),
-                        ),
-                ),
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.black.withValues(alpha: 0.15),
-                          Colors.black.withValues(alpha: 0.5),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 120,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFDCFCE7), Color(0xFFDCFCE7)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
                 ),
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  child: Row(children: [
-                    AppBadge(label: t.commonFree, variant: BadgeVariant.green),
-                    if (listing.imageCount > 1) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: listing.imageBytes != null
+                          ? Image.memory(listing.imageBytes!, fit: BoxFit.cover)
+                          : Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Center(
+                                    child: Icon(
+                                      Icons.favorite_outline,
+                                      size: 40,
+                                      color: Color(0xFF059669),
+                                    ),
+                                  ),
+                            ),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.black.withValues(alpha: 0.15),
+                              Colors.black.withValues(alpha: 0.5),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Row(
+                        children: [
+                          AppBadge(
+                            label: t.commonFree,
+                            variant: BadgeVariant.green,
+                          ),
+                          if (listing.imageCount > 1) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.55),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.photo_library_outlined,
+                                    size: 10,
+                                    color: Colors.white70,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '${listing.imageCount}',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.55),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Row(children: [
-                          const Icon(Icons.photo_library_outlined, size: 10, color: Colors.white70),
-                          const SizedBox(width: 3),
-                          Text('${listing.imageCount}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.white)),
-                        ]),
-                      ),
-                    ],
-                  ]),
-                ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(children: [
-                      const Icon(Icons.location_on, size: 10, color: Colors.white70),
-                      const SizedBox(width: 2),
-                      Text(
-                        t.mktKmBadge(listing.distance.toString()),
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.white),
-                      ),
-                    ]),
-                  ),
-                ),
-              ]),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(listing.title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 2, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 4),
-                    Text(listing.donorName, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        const Icon(Icons.place_outlined, size: 11, color: Color(0xFFBFBFBF)),
-                        const SizedBox(width: 3),
-                        Expanded(
-                          child: Text(
-                            listing.address ?? _dummyAreaFor(t, listing.donorName),
-                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF)),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: CountdownTimer(expiry: listing.pickupEnd),
-                    ),
-                    const Spacer(),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: listing.pickupEnd.isBefore(DateTime.now())
-                            ? null
-                            : () => _showClaimSheet(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF16A34A),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        child: Text(
-                          listing.pickupEnd.isBefore(DateTime.now())
-                              ? t.mktExpired
-                              : t.mktClaimFree,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 10,
+                              color: Colors.white70,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              t.mktKmBadge(listing.distance.toString()),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        listing.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF121212),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        listing.donorName,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF757575),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.place_outlined,
+                            size: 11,
+                            color: Color(0xFFBFBFBF),
+                          ),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              listing.address ??
+                                  _dummyAreaFor(t, listing.donorName),
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: CountdownTimer(expiry: listing.pickupEnd),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -656,11 +783,7 @@ class _SectionCard extends StatelessWidget {
   final IconData? icon;
   final Widget child;
 
-  const _SectionCard({
-    required this.title,
-    required this.child,
-    this.icon,
-  });
+  const _SectionCard({required this.title, required this.child, this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -690,7 +813,11 @@ class _SectionCard extends StatelessWidget {
               ],
               Text(
                 title,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: color),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: color,
+                ),
               ),
             ],
           ),
@@ -717,43 +844,203 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(icon, color: color, size: 16),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const Icon(
-                    Icons.arrow_forward_ios,
-                    size: 12,
-                    color: Color(0xFFBFBFBF),
-                  ),
-                ],
+    padding: const EdgeInsets.symmetric(vertical: 2),
+    child: Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 16),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 12,
+                color: Color(0xFFBFBFBF),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _ClaimActions extends StatefulWidget {
+  final Listing listing;
+  const _ClaimActions({required this.listing});
+
+  @override
+  State<_ClaimActions> createState() => _ClaimActionsState();
+}
+
+class _ClaimActionsState extends State<_ClaimActions> {
+  String? _deliveryAddress;
+
+  @override
+  void initState() {
+    super.initState();
+    _deliveryAddress = context.read<AuthProvider>().address;
+  }
+
+  Future<void> _claim({DateTime? scheduledTime}) async {
+    final consumer = context.read<ConsumerProvider>();
+    final t = context.l10n;
+    final success = await consumer.claimListing(
+      widget.listing.docId ?? '',
+      widget.listing.quantity,
+      scheduledTime: scheduledTime,
+      deliveryAddress: _deliveryAddress,
+    );
+    if (!mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? (scheduledTime == null
+                    ? t.mktClaimedMsg(widget.listing.title)
+                    : t.mktScheduledMsg(widget.listing.title))
+              : t.mktClaimFailedMsg(widget.listing.title),
+        ),
+        backgroundColor: success
+            ? (scheduledTime == null
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFF2563EB))
+            : const Color(0xFFDC2626),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          t.mktYourAddress,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252),
+          ),
+        ),
+        const SizedBox(height: 6),
+        InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () async {
+            final picked = await pickLocation(context);
+            if (picked == null) return;
+            setState(() => _deliveryAddress = picked.address);
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.local_shipping_outlined,
+                  size: 15,
+                  color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _deliveryAddress ?? t.mktDeliveryAddressHint,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: _deliveryAddress == null
+                          ? const Color(0xFFBFBFBF)
+                          : (isDark ? Colors.white : const Color(0xFF121212)),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  Icons.edit_outlined,
+                  size: 14,
+                  color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575),
+                ),
+              ],
             ),
           ),
         ),
-      );
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => _claim(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(
+              t.mktClaimNow,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () async {
+              final picked = await pickDateTime(
+                context,
+                initial: DateTime.now().add(const Duration(hours: 1)),
+              );
+              if (picked == null || !mounted) return;
+              await _claim(scheduledTime: picked);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(
+              t.mktSchedulePickup,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
