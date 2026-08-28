@@ -587,6 +587,7 @@
   "radarLive": "Live Radar",
   "radarYou": "You",
   "radarNearestFirst": "Nearest first",
+  "radarClaimed": "Claimed",
   "radarKmAway": "{km} km away",
   "@radarKmAway": {"placeholders": {"km": {"type": "String"}}},
   "radarFindingRoute": "Finding route...",

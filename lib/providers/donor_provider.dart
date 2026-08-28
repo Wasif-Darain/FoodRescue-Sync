@@ -116,14 +116,19 @@ class DonorProvider extends ChangeNotifier {
 
   Listing _listingFromDoc(QueryDocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    final start = data['pickupStart'];
-    final end = data['pickupEnd'];
+    final created = data['createdAt'] is Timestamp
+        ? (data['createdAt'] as Timestamp).toDate()
+        : DateTime.now();
+    final deadline = data['claimDeadline'];
+    final end = deadline is Timestamp
+        ? deadline.toDate()
+        : created.add(const Duration(hours: 4));
     final photoUrls = (data['photoUrls'] as List?)?.cast<String>() ?? const <String>[];
     return Listing(
       id: int.tryParse(doc.id) ?? 0,
       docId: doc.id,
       donorId: 0,
-      donorName: data['donorName'] as String? ?? '',
+      donorName: (data['donorName'] as String?) ?? (data['donorId'] as String?) ?? '',
       title: data['title'] as String? ?? '',
       description: data['description'] as String? ?? '',
       price: (data['price'] as num?)?.toDouble() ?? 0,
@@ -131,8 +136,8 @@ class DonorProvider extends ChangeNotifier {
       listingType: data['listingType'] == 'flashSale'
           ? ListingType.flashSale
           : ListingType.donation,
-      pickupStart: start is Timestamp ? start.toDate() : DateTime.now(),
-      pickupEnd: end is Timestamp ? end.toDate() : DateTime.now(),
+      pickupStart: created,
+      pickupEnd: end,
       latitude: (data['latitude'] as num?)?.toDouble() ?? 0,
       longitude: (data['longitude'] as num?)?.toDouble() ?? 0,
       status: ListingStatus.values.firstWhere(

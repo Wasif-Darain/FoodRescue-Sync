@@ -587,6 +587,7 @@
   "radarLive": "লাইভ রাডার",
   "radarYou": "আপনি",
   "radarNearestFirst": "নিকটতম প্রথমে",
+  "radarClaimed": "ক্লেইম করা",
   "radarKmAway": "{km} কিমি দূরে",
   "@radarKmAway": {"placeholders": {"km": {"type": "String"}}},
   "radarFindingRoute": "রুট খোঁজা হচ্ছে...",

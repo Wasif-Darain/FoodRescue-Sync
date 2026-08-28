@@ -3122,6 +3122,12 @@ abstract class AppLocalizations {
   /// **'Nearest first'**
   String get radarNearestFirst;
 
+  /// No description provided for @radarClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Claimed'**
+  String get radarClaimed;
+
   /// No description provided for @radarKmAway.
   ///
   /// In en, this message translates to:

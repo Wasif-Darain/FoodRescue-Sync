@@ -1678,6 +1678,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get radarNearestFirst => 'নিকটতম প্রথমে';
 
   @override
+  String get radarClaimed => 'ক্লেইম করা';
+
+  @override
   String radarKmAway(String km) {
     return '$km কিমি দূরে';
   }

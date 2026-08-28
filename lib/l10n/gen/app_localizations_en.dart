@@ -1669,6 +1669,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get radarNearestFirst => 'Nearest first';
 
   @override
+  String get radarClaimed => 'Claimed';
+
+  @override
   String radarKmAway(String km) {
     return '$km km away';
   }
