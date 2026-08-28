@@ -9,15 +9,14 @@ import 'providers/donor_provider.dart';
 import 'providers/consumer_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/block_provider.dart';
 import 'l10n/gen/app_localizations.dart';
 import 'router.dart';
 import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const FoodRescueApp());
 }
 
@@ -36,7 +35,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
   late final ThemeProvider _theme;
   late final NotificationService _notifications;
   late final LocaleProvider _localeProvider;
-
+  late final BlockProvider _blocks;
 
   @override
   void initState() {
@@ -51,6 +50,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
     _notifications = NotificationService();
     _notifications.initialize();
     _localeProvider = LocaleProvider();
+    _blocks = BlockProvider();
   }
 
   @override
@@ -69,6 +69,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
         ChangeNotifierProvider.value(value: _consumer),
         ChangeNotifierProvider.value(value: _theme),
         ChangeNotifierProvider.value(value: _localeProvider),
+        ChangeNotifierProvider.value(value: _blocks),
       ],
       child: Builder(
         builder: (context) {
@@ -100,7 +101,10 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
 /// (GlassContainer) so the base theme only sets the tint + material tokens.
 ThemeData _lightGlassTheme() {
   const seed = Color(0xFF16A34A);
-  final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light);
+  final scheme = ColorScheme.fromSeed(
+    seedColor: seed,
+    brightness: Brightness.light,
+  );
   return ThemeData(
     useMaterial3: true,
     fontFamily: 'Roboto',
@@ -127,13 +131,19 @@ ThemeData _lightGlassTheme() {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     ),
-    bottomAppBarTheme: const BottomAppBarThemeData(color: Colors.transparent, elevation: 0),
+    bottomAppBarTheme: const BottomAppBarThemeData(
+      color: Colors.transparent,
+      elevation: 0,
+    ),
   );
 }
 
 ThemeData _darkGlassTheme() {
   const seed = Color(0xFF16A34A);
-  final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark);
+  final scheme = ColorScheme.fromSeed(
+    seedColor: seed,
+    brightness: Brightness.dark,
+  );
   return ThemeData(
     useMaterial3: true,
     fontFamily: 'Roboto',
@@ -160,6 +170,9 @@ ThemeData _darkGlassTheme() {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     ),
-    bottomAppBarTheme: const BottomAppBarThemeData(color: Colors.transparent, elevation: 0),
+    bottomAppBarTheme: const BottomAppBarThemeData(
+      color: Colors.transparent,
+      elevation: 0,
+    ),
   );
 }

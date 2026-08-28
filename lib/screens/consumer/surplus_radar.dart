@@ -12,6 +12,7 @@ import '../../widgets/ui/location_picker.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
+import '../../providers/block_provider.dart';
 import '../../l10n/l10n_ext.dart';
 
 // Map-style screen showing nearby surplus food listings as pins on a real
@@ -114,6 +115,7 @@ class _SurplusRadarState extends State<SurplusRadar> {
     // (Profile > Edit Profile > Location), falling back to the old Dhaka
     // reference point otherwise.
     final maxRadiusKm = context.watch<AuthProvider>().maxRadiusKm;
+    final blocked = context.watch<BlockProvider>().blockedUids;
     final youLat = context.watch<AuthProvider>().latitude ?? 23.81;
     final youLng = context.watch<AuthProvider>().longitude ?? 90.41;
     final youPoint = LatLng(youLat, youLng);
@@ -142,8 +144,9 @@ class _SurplusRadarState extends State<SurplusRadar> {
         final visible = sorted
             .where(
               (l) =>
-                  l.status != ListingStatus.claimed ||
-                  !enRouteListingIds.contains(l.docId),
+                  (l.status != ListingStatus.claimed ||
+                      !enRouteListingIds.contains(l.docId)) &&
+                  !blocked.contains(l.donorUid),
             )
             .toList();
 

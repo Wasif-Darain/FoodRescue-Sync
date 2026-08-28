@@ -778,6 +778,9 @@ class AppLocalizationsBn extends AppLocalizations {
       'ডেলিভারি ঠিকানা — ম্যাপে ট্যাপ করে বেছে নিন';
 
   @override
+  String get mktYourAddress => 'আপনার ঠিকানা';
+
+  @override
   String get mktClaimNow => 'এখনই দাবি করুন';
 
   @override
@@ -1679,6 +1682,41 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get radarClaimed => 'ক্লেইম করা';
+
+  @override
+  String get blockBlock => 'ব্লক';
+
+  @override
+  String get blockUnblock => 'আনব্লক';
+
+  @override
+  String get blockBlocked => 'ব্লকড';
+
+  @override
+  String get blockBlockedAccounts => 'ব্লক করা অ্যাকাউন্ট';
+
+  @override
+  String get blockBlockedEmpty => 'আপনি কাউকে ব্লক করেননি।';
+
+  @override
+  String blockBlockBody(String name) {
+    return '$name এর সব লিস্টিং ও নোটিফিকেশন লুকিয়ে ফেলবেন?';
+  }
+
+  @override
+  String blockUnblockBody(String name) {
+    return '$name কে আনব্লক করবেন যাতে তাদের লিস্টিং ও নোটিফিকেশন আবার দেখা যায়?';
+  }
+
+  @override
+  String blockBlockedSnack(String name) {
+    return '$name ব্লক করা হয়েছে। তাদের লিস্টিং ও নোটিফিকেশন লুকানো হয়েছে।';
+  }
+
+  @override
+  String blockUnblockedSnack(String name) {
+    return '$name আনব্লক করা হয়েছে।';
+  }
 
   @override
   String radarKmAway(String km) {

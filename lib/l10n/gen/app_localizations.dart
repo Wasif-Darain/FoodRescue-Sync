@@ -1514,6 +1514,12 @@ abstract class AppLocalizations {
   /// **'Delivery address — tap to pick on map'**
   String get mktDeliveryAddressHint;
 
+  /// No description provided for @mktYourAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Address'**
+  String get mktYourAddress;
+
   /// No description provided for @mktClaimNow.
   ///
   /// In en, this message translates to:
@@ -3127,6 +3133,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Claimed'**
   String get radarClaimed;
+
+  /// No description provided for @blockBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Block'**
+  String get blockBlock;
+
+  /// No description provided for @blockUnblock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unblock'**
+  String get blockUnblock;
+
+  /// No description provided for @blockBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get blockBlocked;
+
+  /// No description provided for @blockBlockedAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked accounts'**
+  String get blockBlockedAccounts;
+
+  /// No description provided for @blockBlockedEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t blocked anyone.'**
+  String get blockBlockedEmpty;
+
+  /// No description provided for @blockBlockBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide all listings and notifications from {name}?'**
+  String blockBlockBody(String name);
+
+  /// No description provided for @blockUnblockBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Unblock {name} so their listings and notifications show again?'**
+  String blockUnblockBody(String name);
+
+  /// No description provided for @blockBlockedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is blocked. Their listings and notifications are hidden.'**
+  String blockBlockedSnack(String name);
+
+  /// No description provided for @blockUnblockedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is unblocked.'**
+  String blockUnblockedSnack(String name);
 
   /// No description provided for @radarKmAway.
   ///

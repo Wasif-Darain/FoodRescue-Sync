@@ -774,6 +774,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mktDeliveryAddressHint => 'Delivery address — tap to pick on map';
 
   @override
+  String get mktYourAddress => 'Your Address';
+
+  @override
   String get mktClaimNow => 'Claim Now';
 
   @override
@@ -1670,6 +1673,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get radarClaimed => 'Claimed';
+
+  @override
+  String get blockBlock => 'Block';
+
+  @override
+  String get blockUnblock => 'Unblock';
+
+  @override
+  String get blockBlocked => 'Blocked';
+
+  @override
+  String get blockBlockedAccounts => 'Blocked accounts';
+
+  @override
+  String get blockBlockedEmpty => 'You haven\'t blocked anyone.';
+
+  @override
+  String blockBlockBody(String name) {
+    return 'Hide all listings and notifications from $name?';
+  }
+
+  @override
+  String blockUnblockBody(String name) {
+    return 'Unblock $name so their listings and notifications show again?';
+  }
+
+  @override
+  String blockBlockedSnack(String name) {
+    return '$name is blocked. Their listings and notifications are hidden.';
+  }
+
+  @override
+  String blockUnblockedSnack(String name) {
+    return '$name is unblocked.';
+  }
 
   @override
   String radarKmAway(String km) {

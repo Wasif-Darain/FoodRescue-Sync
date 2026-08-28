@@ -30,9 +30,10 @@ class DonorProvider extends ChangeNotifier {
         .collection('inventory_items')
         .where('donorId', isEqualTo: uid)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => _inventoryItemFromDoc(doc))
-            .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => _inventoryItemFromDoc(doc)).toList(),
+        );
   }
 
   Stream<List<Listing>> get listingsStream {
@@ -42,9 +43,10 @@ class DonorProvider extends ChangeNotifier {
         .collection('listings')
         .where('donorId', isEqualTo: uid)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => _listingFromDoc(doc))
-            .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => _listingFromDoc(doc)).toList(),
+        );
   }
 
   DonorProvider() {
@@ -80,22 +82,20 @@ class DonorProvider extends ChangeNotifier {
         .where('donorId', isEqualTo: uid)
         .snapshots()
         .listen((snapshot) {
-      _inventory = snapshot.docs
-          .map((doc) => _inventoryItemFromDoc(doc))
-          .toList();
-      _isLoading = false;
-      notifyListeners();
-    });
+          _inventory = snapshot.docs
+              .map((doc) => _inventoryItemFromDoc(doc))
+              .toList();
+          _isLoading = false;
+          notifyListeners();
+        });
     _listingsSub = _firestore
         .collection('listings')
         .where('donorId', isEqualTo: uid)
         .snapshots()
         .listen((snapshot) {
-      _listings = snapshot.docs
-          .map((doc) => _listingFromDoc(doc))
-          .toList();
-      notifyListeners();
-    });
+          _listings = snapshot.docs.map((doc) => _listingFromDoc(doc)).toList();
+          notifyListeners();
+        });
   }
 
   InventoryItem _inventoryItemFromDoc(QueryDocumentSnapshot doc) {
@@ -123,12 +123,15 @@ class DonorProvider extends ChangeNotifier {
     final end = deadline is Timestamp
         ? deadline.toDate()
         : created.add(const Duration(hours: 4));
-    final photoUrls = (data['photoUrls'] as List?)?.cast<String>() ?? const <String>[];
+    final photoUrls =
+        (data['photoUrls'] as List?)?.cast<String>() ?? const <String>[];
     return Listing(
       id: int.tryParse(doc.id) ?? 0,
       docId: doc.id,
       donorId: 0,
-      donorName: (data['donorName'] as String?) ?? (data['donorId'] as String?) ?? '',
+      donorName:
+          (data['donorName'] as String?) ?? (data['donorId'] as String?) ?? '',
+      donorUid: data['donorId'] as String? ?? '',
       title: data['title'] as String? ?? '',
       description: data['description'] as String? ?? '',
       price: (data['price'] as num?)?.toDouble() ?? 0,
@@ -235,7 +238,10 @@ class DonorProvider extends ChangeNotifier {
     return docRef.id;
   }
 
-  Future<void> updateListingPhotoUrls(String listingId, List<String> photoUrls) async {
+  Future<void> updateListingPhotoUrls(
+    String listingId,
+    List<String> photoUrls,
+  ) async {
     await _firestore.collection('listings').doc(listingId).update({
       'photoUrls': photoUrls,
     });
@@ -275,12 +281,14 @@ class DonorProvider extends ChangeNotifier {
         .where('donorId', isEqualTo: uid)
         .snapshots()
         .listen((snapshot) {
-      _scheduledDonations
-        ..clear()
-        ..addAll(snapshot.docs.map(_directDonationFromDoc).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
-      notifyListeners();
-    });
+          _scheduledDonations
+            ..clear()
+            ..addAll(
+              snapshot.docs.map(_directDonationFromDoc).toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+            );
+          notifyListeners();
+        });
   }
 
   ScheduledDonation _directDonationFromDoc(QueryDocumentSnapshot doc) {
@@ -291,13 +299,16 @@ class DonorProvider extends ChangeNotifier {
       id: doc.id.hashCode,
       docId: doc.id,
       consumerId: 0,
+      consumerUid: data['consumerId'] as String? ?? '',
       consumerName: data['consumerName'] as String? ?? '',
       donorName: data['donorName'] as String? ?? '',
       itemName: data['itemName'] as String? ?? '',
       description: data['description'] as String? ?? '',
       category: data['category'] as String? ?? '',
       quantity: (data['quantity'] as num?)?.toInt() ?? 0,
-      scheduledTime: scheduled is Timestamp ? scheduled.toDate() : DateTime.now(),
+      scheduledTime: scheduled is Timestamp
+          ? scheduled.toDate()
+          : DateTime.now(),
       location: data['location'] as String? ?? '',
       status: DonationScheduleStatus.values.firstWhere(
         (e) => e.name == (data['status'] as String? ?? 'scheduled'),
@@ -351,6 +362,7 @@ class DonorProvider extends ChangeNotifier {
     await _firestore.collection('notifications').add({
       'recipientUid': uid,
       'payloadType': 'pickup',
+      'senderUid': _auth.currentUser?.uid ?? '',
       'message': message,
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),

@@ -43,7 +43,8 @@ class ConsumerProvider extends ChangeNotifier {
       _latitude = (data['latitude'] as num?)?.toDouble();
       _longitude = (data['longitude'] as num?)?.toDouble();
       _maxRadiusKm = (data['maxRadiusKm'] as num?)?.toDouble() ?? 10;
-      _unattendedAfterHours = (data['unattendedAfterHours'] as num?)?.toInt() ?? 24;
+      _unattendedAfterHours =
+          (data['unattendedAfterHours'] as num?)?.toInt() ?? 24;
       final notified = data['notifiedListingIds'];
       if (notified is List) {
         _notifiedListingIds.addAll(notified.cast<String>());
@@ -58,35 +59,45 @@ class ConsumerProvider extends ChangeNotifier {
         .where('status', isEqualTo: ListingStatusModel.active.name)
         .snapshots()
         .listen((snapshot) {
-      final now = DateTime.now();
-      for (final doc in snapshot.docs) {
-        final listing = ListingModel.fromFirestore(doc);
-        if (_notifiedListingIds.contains(listing.id)) continue;
-        if (listing.donorId == uid) continue;
-        if (listing.claimDeadline != null && listing.claimDeadline!.isBefore(now)) {
-          continue;
-        }
-        final ageHours = now.difference(listing.createdAt).inHours;
-        final distanceKm = (_latitude != null && _longitude != null)
-            ? _haversineKm(_latitude!, _longitude!, listing.latitude, listing.longitude)
-            : null;
+          final now = DateTime.now();
+          for (final doc in snapshot.docs) {
+            final listing = ListingModel.fromFirestore(doc);
+            if (_notifiedListingIds.contains(listing.id)) continue;
+            if (listing.donorId == uid) continue;
+            if (listing.claimDeadline != null &&
+                listing.claimDeadline!.isBefore(now)) {
+              continue;
+            }
+            final ageHours = now.difference(listing.createdAt).inHours;
+            final distanceKm = (_latitude != null && _longitude != null)
+                ? _haversineKm(
+                    _latitude!,
+                    _longitude!,
+                    listing.latitude,
+                    listing.longitude,
+                  )
+                : null;
 
-        String? message;
-        if (distanceKm != null && distanceKm <= _maxRadiusKm) {
-          message =
-              'New listing "${listing.title}" is available ${distanceKm.toStringAsFixed(1)} km away from you.';
-        } else if (ageHours >= _unattendedAfterHours) {
-          message =
-              'Listing "${listing.title}" has been unattended for over $_unattendedAfterHours hours and is still available.';
-        }
-        if (message != null) {
-          _notifyListing(uid, listing.id, message);
-        }
-      }
-    });
+            String? message;
+            if (distanceKm != null && distanceKm <= _maxRadiusKm) {
+              message =
+                  'New listing "${listing.title}" is available ${distanceKm.toStringAsFixed(1)} km away from you.';
+            } else if (ageHours >= _unattendedAfterHours) {
+              message =
+                  'Listing "${listing.title}" has been unattended for over $_unattendedAfterHours hours and is still available.';
+            }
+            if (message != null) {
+              _notifyListing(uid, listing.id, message);
+            }
+          }
+        });
   }
 
-  Future<void> _notifyListing(String uid, String listingId, String message) async {
+  Future<void> _notifyListing(
+    String uid,
+    String listingId,
+    String message,
+  ) async {
     _notifiedListingIds.add(listingId);
     try {
       await _firestore.collection('notifications').add({
@@ -119,6 +130,7 @@ class ConsumerProvider extends ChangeNotifier {
     await _firestore.collection('notifications').add({
       'recipientUid': recipientUid,
       'payloadType': payloadType,
+      'senderUid': _auth.currentUser?.uid ?? '',
       ...?(listingId != null ? {'listingId': listingId} : null),
       'message': message,
       'isRead': false,
@@ -130,8 +142,12 @@ class ConsumerProvider extends ChangeNotifier {
     const r = 6371.0;
     final dLat = _degToRad(lat2 - lat1);
     final dLon = _degToRad(lon2 - lon1);
-    final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_degToRad(lat1)) * cos(_degToRad(lat2)) * sin(dLon / 2) * sin(dLon / 2);
+    final a =
+        sin(dLat / 2) * sin(dLat / 2) +
+        cos(_degToRad(lat1)) *
+            cos(_degToRad(lat2)) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
     return r * 2 * atan2(sqrt(a), sqrt(1 - a));
   }
 
@@ -142,11 +158,17 @@ class ConsumerProvider extends ChangeNotifier {
         .collection('listings')
         .where('status', isEqualTo: ListingStatusModel.active.name)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ListingModel.fromFirestore(doc))
-            .where((l) => l.quantity > 0)
-            .where((l) => l.claimDeadline == null || l.claimDeadline!.isAfter(DateTime.now()))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => ListingModel.fromFirestore(doc))
+              .where((l) => l.quantity > 0)
+              .where(
+                (l) =>
+                    l.claimDeadline == null ||
+                    l.claimDeadline!.isAfter(DateTime.now()),
+              )
+              .toList(),
+        );
   }
 
   Stream<List<RequestModel>> get myRequestsStream {
@@ -156,10 +178,13 @@ class ConsumerProvider extends ChangeNotifier {
         .collection('requests')
         .where('consumerId', isEqualTo: uid)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => RequestModel.fromFirestore(doc))
-            .toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+        .map(
+          (snapshot) =>
+              snapshot.docs
+                  .map((doc) => RequestModel.fromFirestore(doc))
+                  .toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+        );
   }
 
   Stream<List<ScheduledDonation>> get myDirectDonationsStream {
@@ -169,31 +194,36 @@ class ConsumerProvider extends ChangeNotifier {
         .collection('direct_donations')
         .where('consumerId', isEqualTo: uid)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              final data = doc.data();
-              final scheduled = data['scheduledTime'];
-              final created = data['createdAt'];
-              return ScheduledDonation(
-                id: doc.id.hashCode,
-                docId: doc.id,
-                consumerId: 0,
-                consumerName: '',
-                donorName: data['donorName'] as String? ?? '',
-                itemName: data['itemName'] as String? ?? '',
-                description: data['description'] as String? ?? '',
-                category: data['category'] as String? ?? '',
-                quantity: (data['quantity'] as num?)?.toInt() ?? 0,
-                scheduledTime: scheduled is Timestamp ? scheduled.toDate() : DateTime.now(),
-                location: data['location'] as String? ?? '',
-                status: DonationScheduleStatus.values.firstWhere(
-                  (e) => e.name == (data['status'] as String? ?? 'scheduled'),
-                  orElse: () => DonationScheduleStatus.scheduled,
-                ),
-                createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
-                lastModifiedAt: DateTime.now(),
-              );
-            }).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+        .map(
+          (snapshot) => snapshot.docs.map((doc) {
+            final data = doc.data();
+            final scheduled = data['scheduledTime'];
+            final created = data['createdAt'];
+            return ScheduledDonation(
+              id: doc.id.hashCode,
+              docId: doc.id,
+              consumerId: 0,
+              consumerName: '',
+              donorName: data['donorName'] as String? ?? '',
+              itemName: data['itemName'] as String? ?? '',
+              description: data['description'] as String? ?? '',
+              category: data['category'] as String? ?? '',
+              quantity: (data['quantity'] as num?)?.toInt() ?? 0,
+              scheduledTime: scheduled is Timestamp
+                  ? scheduled.toDate()
+                  : DateTime.now(),
+              location: data['location'] as String? ?? '',
+              status: DonationScheduleStatus.values.firstWhere(
+                (e) => e.name == (data['status'] as String? ?? 'scheduled'),
+                orElse: () => DonationScheduleStatus.scheduled,
+              ),
+              createdAt: created is Timestamp
+                  ? created.toDate()
+                  : DateTime.now(),
+              lastModifiedAt: DateTime.now(),
+            );
+          }).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+        );
   }
 
   Future<void> respondDirectDonation(String docId, bool accept) async {
@@ -247,12 +277,17 @@ class ConsumerProvider extends ChangeNotifier {
     if (!snap.exists) return;
     final data = snap.data() as Map<String, dynamic>;
     await ref.update({
-      'status': accept ? RequestStatusModel.accepted.name : RequestStatusModel.rejected.name,
+      'status': accept
+          ? RequestStatusModel.accepted.name
+          : RequestStatusModel.rejected.name,
       'updatedAt': FieldValue.serverTimestamp(),
     });
     final listingId = data['listingId'] as String? ?? '';
     if (accept && listingId.isNotEmpty) {
-      final listingSnap = await _firestore.collection('listings').doc(listingId).get();
+      final listingSnap = await _firestore
+          .collection('listings')
+          .doc(listingId)
+          .get();
       if (listingSnap.exists) {
         final listingData = listingSnap.data() as Map<String, dynamic>;
         await _firestore.collection('pickups').add({
@@ -274,15 +309,20 @@ class ConsumerProvider extends ChangeNotifier {
       await _notifyUser(
         donorId,
         payloadType: 'request',
-        message: 'A consumer accepted the request for "${listingSnap.data()?['title'] ?? 'your listing'}".',
+        message:
+            'A consumer accepted the request for "${listingSnap.data()?['title'] ?? 'your listing'}".',
       );
     } else if (!accept && listingId.isNotEmpty) {
-      final listingSnap = await _firestore.collection('listings').doc(listingId).get();
+      final listingSnap = await _firestore
+          .collection('listings')
+          .doc(listingId)
+          .get();
       final donorId = listingSnap.data()?['donorId'] as String?;
       await _notifyUser(
         donorId,
         payloadType: 'request',
-        message: 'A consumer rejected the request for "${listingSnap.data()?['title'] ?? 'your listing'}".',
+        message:
+            'A consumer rejected the request for "${listingSnap.data()?['title'] ?? 'your listing'}".',
       );
     }
   }
@@ -305,7 +345,8 @@ class ConsumerProvider extends ChangeNotifier {
         final snapshot = await transaction.get(listingRef);
         if (!snapshot.exists) return;
         final data = snapshot.data() as Map<String, dynamic>;
-        final currentStatus = data['status'] as String? ?? ListingStatusModel.active.name;
+        final currentStatus =
+            data['status'] as String? ?? ListingStatusModel.active.name;
         if (currentStatus != ListingStatusModel.active.name) return;
         final currentQty = (data['quantity'] as num?)?.toDouble() ?? 0;
         if (currentQty < claimQuantity) return;
@@ -342,7 +383,9 @@ class ConsumerProvider extends ChangeNotifier {
         'donorName': listingData['donorName'] as String? ?? '',
         'listingTitle': listingData['title'] as String? ?? '',
         'status': PickupStatusModel.scheduled.name,
-        'scheduledTime': scheduledTime == null ? null : Timestamp.fromDate(scheduledTime),
+        'scheduledTime': scheduledTime == null
+            ? null
+            : Timestamp.fromDate(scheduledTime),
         'latitude': lat,
         'longitude': lng,
         'address': deliveryAddress,
@@ -378,7 +421,8 @@ class ConsumerProvider extends ChangeNotifier {
             status != PickupStatusModel.enRoute.name) {
           return;
         }
-        final listingId = pickupData['listingId'] as String? ??
+        final listingId =
+            pickupData['listingId'] as String? ??
             pickupData['requestId'] as String? ??
             '';
         final restoredQty = (pickupData['quantity'] as num?)?.toDouble() ?? 0;

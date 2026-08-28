@@ -10,6 +10,88 @@ class DetailRow {
   const DetailRow(this.icon, this.label, this.value);
 }
 
+class SheetMenuItem {
+  final IconData icon;
+  final String label;
+  final String? subtitle;
+  final Color color;
+  final VoidCallback onTap;
+  const SheetMenuItem({
+    required this.icon,
+    required this.label,
+    this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+}
+
+void _showSheetMenu(
+  BuildContext context,
+  String title,
+  List<SheetMenuItem> menuActions,
+) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (menuContext) => Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF121212),
+                ),
+              ),
+            ),
+            for (final item in menuActions)
+              ListTile(
+                leading: Icon(item.icon, size: 20, color: item.color),
+                title: Text(
+                  item.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white : const Color(0xFF121212),
+                  ),
+                ),
+                subtitle: item.subtitle != null
+                    ? Text(
+                        item.subtitle!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF757575),
+                        ),
+                      )
+                    : null,
+                onTap: () {
+                  Navigator.pop(menuContext);
+                  item.onTap();
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 /// Bottom sheet showing all public info about an entity, with clickable
 /// phone (tel:) and email (mailto:) actions when provided.
 Future<void> showDetailSheet(
@@ -20,13 +102,17 @@ Future<void> showDetailSheet(
   required List<DetailRow> rows,
   String? phone,
   String? email,
+  List<Widget> actions = const [],
+  List<SheetMenuItem> menuActions = const [],
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   return showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
     builder: (sheetContext) => Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
@@ -34,75 +120,145 @@ Future<void> showDetailSheet(
       ),
       padding: const EdgeInsets.all(20),
       child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(title, style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
-                ),
-                IconButton(
-                  icon: Icon(Icons.close, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                  onPressed: () => Navigator.pop(sheetContext),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                ),
-              ],
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 4),
-              Text(subtitle, style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
-            ],
-            const SizedBox(height: 14),
-            for (final row in rows) ...[
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(row.icon, size: 16, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
-                  const SizedBox(width: 10),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(row.label, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF9CA3AF))),
-                        const SizedBox(height: 2),
-                        Text(row.value, style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212))),
-                      ],
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF121212),
+                      ),
+                    ),
+                  ),
+                  if (menuActions.isNotEmpty)
+                    IconButton(
+                      icon: Icon(
+                        Icons.more_vert,
+                        size: 20,
+                        color: isDark
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF757575),
+                      ),
+                      onPressed: () =>
+                          _showSheetMenu(context, title, menuActions),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
+                    ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.close,
+                      size: 18,
+                      color: isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF757575),
+                    ),
+                    onPressed: () => Navigator.pop(sheetContext),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-            ],
-            if (phone != null || email != null) ...[
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  if (phone != null)
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF757575),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              for (final row in rows) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      row.icon,
+                      size: 16,
+                      color: isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF757575),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: _ContactButton(
-                        icon: Icons.phone_outlined,
-                        label: sheetContext.l10n.commonCall,
-                        color: const Color(0xFF16A34A),
-                        onTap: () => launchUrl(Uri.parse('tel:$phone')),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            row.label,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF9CA3AF),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            row.value,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF121212),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  if (phone != null && email != null) const SizedBox(width: 10),
-                  if (email != null)
-                    Expanded(
-                      child: _ContactButton(
-                        icon: Icons.mail_outline,
-                        label: sheetContext.l10n.commonEmail,
-                        color: const Color(0xFF2563EB),
-                        onTap: () => launchUrl(Uri.parse('mailto:$email')),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (phone != null || email != null) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    if (phone != null)
+                      Expanded(
+                        child: _ContactButton(
+                          icon: Icons.phone_outlined,
+                          label: sheetContext.l10n.commonCall,
+                          color: const Color(0xFF16A34A),
+                          onTap: () => launchUrl(Uri.parse('tel:$phone')),
+                        ),
                       ),
-                    ),
-                ],
-              ),
+                    if (phone != null && email != null)
+                      const SizedBox(width: 10),
+                    if (email != null)
+                      Expanded(
+                        child: _ContactButton(
+                          icon: Icons.mail_outline,
+                          label: sheetContext.l10n.commonEmail,
+                          color: const Color(0xFF2563EB),
+                          onTap: () => launchUrl(Uri.parse('mailto:$email')),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+              for (final action in actions) ...[
+                const SizedBox(height: 12),
+                action,
+              ],
             ],
-          ],
+          ),
         ),
       ),
     ),
@@ -114,14 +270,22 @@ class _ContactButton extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
-  const _ContactButton({required this.icon, required this.label, required this.color, required this.onTap});
+  const _ContactButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 16),
-      label: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+      label: Text(
+        label,
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+      ),
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         foregroundColor: Colors.white,
@@ -141,18 +305,34 @@ Future<void> showListingDetailSheet(
   String? subtitle,
   required String donorId,
   required List<DetailRow> rows,
+  List<Widget> actions = const [],
+  List<SheetMenuItem> menuActions = const [],
 }) async {
   String? phone;
   String? email;
   try {
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(donorId).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(donorId)
+        .get();
     email = userDoc.data()?['email'] as String?;
     final profileRef = userDoc.data()?['profileRef'] as DocumentReference?;
     if (profileRef != null) {
       final profile = await profileRef.get();
-      phone = profile.data() != null ? (profile.data() as Map<String, dynamic>)['contactPhone'] as String? : null;
+      phone = profile.data() != null
+          ? (profile.data() as Map<String, dynamic>)['contactPhone'] as String?
+          : null;
     }
   } catch (_) {}
   if (!context.mounted) return;
-  await showDetailSheet(context, title: title, subtitle: subtitle, rows: rows, phone: phone, email: email);
+  await showDetailSheet(
+    context,
+    title: title,
+    subtitle: subtitle,
+    rows: rows,
+    phone: phone,
+    email: email,
+    actions: actions,
+    menuActions: menuActions,
+  );
 }

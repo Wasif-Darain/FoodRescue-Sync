@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../models/notification_model.dart';
+import '../../providers/block_provider.dart';
 import '../../l10n/l10n_ext.dart';
 
 class NotificationCenter extends StatelessWidget {
@@ -27,7 +29,10 @@ class NotificationCenter extends StatelessWidget {
     return StreamBuilder<List<NotificationModel>>(
       stream: stream,
       builder: (context, snapshot) {
-        final notifications = snapshot.data ?? [];
+        final blocked = context.watch<BlockProvider>().blockedUids;
+        final notifications = (snapshot.data ?? [])
+            .where((n) => n.senderUid.isEmpty || !blocked.contains(n.senderUid))
+            .toList();
         final unread = notifications.where((n) => !n.isRead).length;
         final t = context.l10n;
 
