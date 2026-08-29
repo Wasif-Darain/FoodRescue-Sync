@@ -1810,6 +1810,52 @@ class AppLocalizationsBn extends AppLocalizations {
   String get locPickerConfirm => 'অবস্থান নিশ্চিত করুন';
 
   @override
+  String get dcLocationNotSet => 'অবস্থান সেট করা হয়নি';
+
+  @override
+  String get dcDescription => 'বিবরণ';
+
+  @override
+  String get dcDescriptionHint =>
+      'সতেজতা, অ্যালার্জেন, প্যাকেজিং সম্পর্কিত বিবরণ...';
+
+  @override
+  String get reqDirectOffers => 'সরাসরি দানের প্রস্তাব';
+
+  @override
+  String reqOfferItemQty(String item, int quantity) {
+    return '$item · পরিমাণ $quantity';
+  }
+
+  @override
+  String get reqOffer => 'প্রস্তাব';
+
+  @override
+  String reqFromDonorCategory(String donorName, String category) {
+    return '$donorName থেকে · $category';
+  }
+
+  @override
+  String get reqAccept => 'গ্রহণ করুন';
+
+  @override
+  String get reqReject => 'প্রত্যাখ্যান করুন';
+
+  @override
+  String get reqKindBulk => 'বাল্ক অনুরোধ';
+
+  @override
+  String get reqKindSingle => 'অনুরোধ';
+
+  @override
+  String reqFromDonorTitle(String donorName, String title) {
+    return '$donorName থেকে · $title';
+  }
+
+  @override
+  String get reqDetailDonor => 'ডোনার';
+
+  @override
   String get tierDonorNoviceDesc => 'নিবন্ধনের পর ডিফল্ট শুরুর র‍্যাংক।';
 
   @override
@@ -1854,4 +1900,120 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get tierConsumerLegendDesc =>
       '১০০+টি খাবার উদ্ধার (≥৯৮% সময়মতো পিকআপ, ≥৪.৭★)।';
+
+  @override
+  String get accountTypeRider => 'রাইডার';
+
+  @override
+  String get accountTypeNameRider => 'পুরো নাম';
+
+  @override
+  String get riderDashTitle => 'রাইডার ড্যাশবোর্ড';
+
+  @override
+  String get riderDashSubtitle =>
+      'আপনার কাছাকাছি পিকআপ দাবি করুন ও ডেলিভারি দিন';
+
+  @override
+  String riderDashGreeting(String firstName) {
+    return 'হাই, $firstName!';
+  }
+
+  @override
+  String get riderDashTagline => 'আজ কিছু দান ডেলিভারি করতে প্রস্তুত?';
+
+  @override
+  String get riderStatAvailable => 'উপলব্ধ';
+
+  @override
+  String get riderStatActive => 'সক্রিয়';
+
+  @override
+  String get riderStatCompleted => 'সম্পন্ন';
+
+  @override
+  String get riderAvailablePickups => 'উপলব্ধ পিকআপ';
+
+  @override
+  String get riderMyDeliveries => 'আমার ডেলিভারি';
+
+  @override
+  String get riderNoAvailable => 'এখন কোনো পিকআপ অপেক্ষমান নেই।';
+
+  @override
+  String get riderNoDeliveries => 'আপনি এখনো কোনো ডেলিভারি দাবি করেননি।';
+
+  @override
+  String riderPickupFrom(String donorName) {
+    return '$donorName-এর কাছ থেকে পিকআপ';
+  }
+
+  @override
+  String get riderClaim => 'দাবি করুন';
+
+  @override
+  String get riderStartDelivery => 'ডেলিভারি শুরু করুন';
+
+  @override
+  String get riderMarkDelivered => 'ডেলিভার্ড চিহ্নিত করুন';
+
+  @override
+  String get riderClaimFailed =>
+      'এই পিকআপ দাবি করা যায়নি — সম্ভবত অন্য কেউ নিয়ে নিয়েছে।';
+
+  @override
+  String get riderClaimedMsg =>
+      'পিকআপ দাবি করা হয়েছে! এটি এখন আমার ডেলিভারি-তে দেখাবে।';
+
+  @override
+  String riderDeliverTo(String name) {
+    return '$name-কে ডেলিভারি দিন';
+  }
+
+  @override
+  String get riderStatusClaimed => 'দাবিকৃত';
+
+  @override
+  String get riderNoAddress => 'কোনো ঠিকানা দেওয়া হয়নি';
+
+  @override
+  String get acctMgmtRider => 'রাইডার';
+
+  @override
+  String get pickupDetailFrom => 'থেকে';
+
+  @override
+  String get pickupDetailItem => 'আইটেম';
+
+  @override
+  String pickupFromSender(String name) {
+    return '$name থেকে';
+  }
+
+  @override
+  String get pickupAssignRider => 'রাইডার নির্ধারণ করুন';
+
+  @override
+  String get pickupReassignRider => 'রাইডার পুনঃনির্ধারণ করুন';
+
+  @override
+  String get pickupUnassign => 'বাতিল করুন';
+
+  @override
+  String pickupAssignedTo(String name) {
+    return '$name-কে দেওয়া হয়েছে';
+  }
+
+  @override
+  String get pickupChooseRider => 'একজন রাইডার বেছে নিন';
+
+  @override
+  String get pickupNoRidersAvailable => 'এখনো কোনো রাইডার উপলব্ধ নেই।';
+
+  @override
+  String get pickupAssignedSnack => 'রাইডার নির্ধারণ করা হয়েছে!';
+
+  @override
+  String get pickupUnassignedSnack =>
+      'রাইডার বাতিল করা হয়েছে — আবার উন্মুক্ত তালিকায় ফিরে গেছে।';
 }

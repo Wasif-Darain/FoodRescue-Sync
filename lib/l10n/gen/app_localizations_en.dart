@@ -1800,6 +1800,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locPickerConfirm => 'Confirm Location';
 
   @override
+  String get dcLocationNotSet => 'Location not set';
+
+  @override
+  String get dcDescription => 'Description';
+
+  @override
+  String get dcDescriptionHint => 'Freshness, allergens, packaging details...';
+
+  @override
+  String get reqDirectOffers => 'Direct Donation Offers';
+
+  @override
+  String reqOfferItemQty(String item, int quantity) {
+    return '$item · Qty $quantity';
+  }
+
+  @override
+  String get reqOffer => 'Offer';
+
+  @override
+  String reqFromDonorCategory(String donorName, String category) {
+    return 'From $donorName · $category';
+  }
+
+  @override
+  String get reqAccept => 'Accept';
+
+  @override
+  String get reqReject => 'Reject';
+
+  @override
+  String get reqKindBulk => 'Bulk Request';
+
+  @override
+  String get reqKindSingle => 'Request';
+
+  @override
+  String reqFromDonorTitle(String donorName, String title) {
+    return 'From $donorName · $title';
+  }
+
+  @override
+  String get reqDetailDonor => 'Donor';
+
+  @override
   String get tierDonorNoviceDesc => 'Default starting rank upon registration.';
 
   @override
@@ -1844,4 +1889,119 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tierConsumerLegendDesc =>
       '100+ meals rescued (≥98% on-time pickup, ≥4.7★).';
+
+  @override
+  String get accountTypeRider => 'Rider';
+
+  @override
+  String get accountTypeNameRider => 'Full Name';
+
+  @override
+  String get riderDashTitle => 'Rider Dashboard';
+
+  @override
+  String get riderDashSubtitle => 'Claim and deliver pickups near you';
+
+  @override
+  String riderDashGreeting(String firstName) {
+    return 'Hi, $firstName!';
+  }
+
+  @override
+  String get riderDashTagline => 'Ready to deliver some donations today?';
+
+  @override
+  String get riderStatAvailable => 'Available';
+
+  @override
+  String get riderStatActive => 'Active';
+
+  @override
+  String get riderStatCompleted => 'Completed';
+
+  @override
+  String get riderAvailablePickups => 'Available Pickups';
+
+  @override
+  String get riderMyDeliveries => 'My Deliveries';
+
+  @override
+  String get riderNoAvailable => 'No pickups waiting right now.';
+
+  @override
+  String get riderNoDeliveries => 'You haven\'t claimed any deliveries yet.';
+
+  @override
+  String riderPickupFrom(String donorName) {
+    return 'Pickup from $donorName';
+  }
+
+  @override
+  String get riderClaim => 'Claim';
+
+  @override
+  String get riderStartDelivery => 'Start Delivery';
+
+  @override
+  String get riderMarkDelivered => 'Mark Delivered';
+
+  @override
+  String get riderClaimFailed =>
+      'Could not claim this pickup — it may have just been taken.';
+
+  @override
+  String get riderClaimedMsg =>
+      'Pickup claimed! It now shows under My Deliveries.';
+
+  @override
+  String riderDeliverTo(String name) {
+    return 'Deliver to $name';
+  }
+
+  @override
+  String get riderStatusClaimed => 'Claimed';
+
+  @override
+  String get riderNoAddress => 'No address given';
+
+  @override
+  String get acctMgmtRider => 'Rider';
+
+  @override
+  String get pickupDetailFrom => 'From';
+
+  @override
+  String get pickupDetailItem => 'Item';
+
+  @override
+  String pickupFromSender(String name) {
+    return 'From $name';
+  }
+
+  @override
+  String get pickupAssignRider => 'Assign Rider';
+
+  @override
+  String get pickupReassignRider => 'Reassign Rider';
+
+  @override
+  String get pickupUnassign => 'Unassign';
+
+  @override
+  String pickupAssignedTo(String name) {
+    return 'Assigned to $name';
+  }
+
+  @override
+  String get pickupChooseRider => 'Choose a rider';
+
+  @override
+  String get pickupNoRidersAvailable => 'No riders available yet.';
+
+  @override
+  String get pickupAssignedSnack => 'Rider assigned!';
+
+  @override
+  String get pickupUnassignedSnack =>
+      'Rider unassigned — back in the open pool.';
 }

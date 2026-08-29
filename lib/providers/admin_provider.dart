@@ -10,12 +10,17 @@ class AdminProvider extends ChangeNotifier {
       return snapshot.docs.map((doc) {
         final data = doc.data();
         final role = data['role'] as String? ?? 'consumer';
+        final (accountType, mode) = switch (role) {
+          'donor' => (AccountType.restaurant, UserMode.donor),
+          'rider' => (AccountType.rider, UserMode.rider),
+          _ => (AccountType.ngo, UserMode.consumer),
+        };
         return RegisteredAccount(
           id: 0,
           name: data['name'] as String? ?? '',
           email: data['email'] as String? ?? '',
-          accountType: role == 'donor' ? AccountType.restaurant : AccountType.ngo,
-          mode: role == 'donor' ? UserMode.donor : UserMode.consumer,
+          accountType: accountType,
+          mode: mode,
           status: _statusFromString(data['status'] as String?),
           joinedAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
           isAvailable: data['isAvailable'] as bool? ?? true,

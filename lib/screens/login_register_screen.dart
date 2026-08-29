@@ -261,6 +261,7 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
     AccountType.foodBank => t.accountTypeNameFoodBank,
     AccountType.shelter => t.accountTypeNameShelter,
     AccountType.individual => t.accountTypeNameIndividual,
+    AccountType.rider => t.accountTypeNameRider,
   };
 }
 
@@ -353,6 +354,7 @@ class _AccountTypeGrid extends StatelessWidget {
     (AccountType.foodBank, t.accountTypeFoodBank, Icons.favorite_outline),
     (AccountType.shelter, t.accountTypeShelter, Icons.home_outlined),
     (AccountType.individual, t.accountTypeIndividual, Icons.person_outline),
+    (AccountType.rider, t.accountTypeRider, Icons.moped_outlined),
   ];
 
   @override

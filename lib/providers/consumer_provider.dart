@@ -457,6 +457,47 @@ class ConsumerProvider extends ChangeNotifier {
     }
   }
 
+  /// Directly assigns [riderUid] to [pickupId] instead of leaving it in the
+  /// open pool for any rider to self-claim. Only the owning consumer can do
+  /// this, and only before the rider has started (still `scheduled`).
+  Future<String?> assignRider(String pickupId, String riderUid) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return 'Not signed in.';
+    final ref = _firestore.collection('pickups').doc(pickupId);
+    try {
+      await _firestore.runTransaction((tx) async {
+        final snap = await tx.get(ref);
+        if (!snap.exists) throw StateError('Pickup not found.');
+        final data = snap.data() as Map<String, dynamic>;
+        if (data['consumerId'] != uid) throw StateError('Not your pickup.');
+        if (data['status'] != PickupStatusModel.scheduled.name) {
+          throw StateError('This pickup already has a rider on the way.');
+        }
+        tx.update(ref, {'volunteerDriverId': riderUid});
+      });
+      await _notifyUser(
+        riderUid,
+        payloadType: 'pickup',
+        listingId: pickupId,
+        message: 'You were assigned a pickup to deliver.',
+      );
+      return null;
+    } catch (_) {
+      return 'Could not assign this rider. Please try again.';
+    }
+  }
+
+  /// Releases the rider from [pickupId] so it goes back to the open pool
+  /// for any rider to self-claim.
+  Future<void> unassignRider(String pickupId) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    final ref = _firestore.collection('pickups').doc(pickupId);
+    final snap = await ref.get();
+    if (!snap.exists || snap.data()?['consumerId'] != uid) return;
+    await ref.update({'volunteerDriverId': FieldValue.delete()});
+  }
+
   Future<String?> submitBulkRequest({
     required String orgName,
     required String contactPerson,

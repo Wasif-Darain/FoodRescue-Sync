@@ -10,6 +10,7 @@ import 'providers/consumer_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/block_provider.dart';
+import 'providers/rider_provider.dart';
 import 'l10n/gen/app_localizations.dart';
 import 'router.dart';
 import 'services/notification_service.dart';
@@ -36,6 +37,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
   late final NotificationService _notifications;
   late final LocaleProvider _localeProvider;
   late final BlockProvider _blocks;
+  late final RiderProvider _rider;
 
   @override
   void initState() {
@@ -51,6 +53,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
     _notifications.initialize();
     _localeProvider = LocaleProvider();
     _blocks = BlockProvider();
+    _rider = RiderProvider();
   }
 
   @override
@@ -70,6 +73,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
         ChangeNotifierProvider.value(value: _theme),
         ChangeNotifierProvider.value(value: _localeProvider),
         ChangeNotifierProvider.value(value: _blocks),
+        ChangeNotifierProvider.value(value: _rider),
       ],
       child: Builder(
         builder: (context) {

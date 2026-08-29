@@ -111,6 +111,8 @@ class AuthProvider extends ChangeNotifier {
         return UserMode.admin;
       case 'donor':
         return UserMode.donor;
+      case 'rider':
+        return UserMode.rider;
       default:
         return UserMode.consumer;
     }
@@ -122,6 +124,8 @@ class AuthProvider extends ChangeNotifier {
         return AccountType.individual;
       case 'donor':
         return AccountType.restaurant;
+      case 'rider':
+        return AccountType.rider;
       default:
         return AccountType.ngo;
     }
@@ -161,7 +165,11 @@ class AuthProvider extends ChangeNotifier {
         password: password,
       );
       final uid = userCredential.user!.uid;
-      final role = accountType == AccountType.individual ? 'consumer' : 'donor';
+      final role = switch (accountType) {
+        AccountType.individual => 'consumer',
+        AccountType.rider => 'rider',
+        _ => 'donor',
+      };
       final orgId = _firestore.collection('organization_profiles').doc().id;
 
       await _firestore.runTransaction((transaction) async {

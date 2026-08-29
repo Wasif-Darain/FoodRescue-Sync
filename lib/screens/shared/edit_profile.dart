@@ -16,6 +16,7 @@ Map<AccountType, String> _accountTypeLabel(AppLocalizations t) => {
   AccountType.foodBank: t.accountTypeFoodBank,
   AccountType.shelter: t.accountTypeShelter,
   AccountType.individual: t.accountTypeIndividual,
+  AccountType.rider: t.accountTypeRider,
 };
 
 class _SettingSlider extends StatelessWidget {

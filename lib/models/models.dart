@@ -8,9 +8,10 @@ enum AccountType {
   foodBank,
   shelter,
   individual,
+  rider,
 }
 
-enum UserMode { donor, consumer, admin }
+enum UserMode { donor, consumer, admin, rider }
 
 enum AccountStatus { pending, approved, suspended }
 

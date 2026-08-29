@@ -16,6 +16,14 @@ Map<AccountType, String> _accountTypeLabel(AppLocalizations t) => {
   AccountType.foodBank: t.accountTypeFoodBank,
   AccountType.shelter: t.accountTypeShelter,
   AccountType.individual: t.accountTypeIndividual,
+  AccountType.rider: t.accountTypeRider,
+};
+
+String _roleLabel(AppLocalizations t, UserMode mode) => switch (mode) {
+  UserMode.donor => t.acctMgmtDonor,
+  UserMode.rider => t.acctMgmtRider,
+  UserMode.admin => t.navAdministrator,
+  UserMode.consumer => t.acctMgmtConsumer,
 };
 
 class AccountManagement extends StatefulWidget {
@@ -140,7 +148,7 @@ class _AccountCard extends StatelessWidget {
         subtitle: t.acctMgmtAccountDetails,
         email: account.email,
         rows: [
-          DetailRow(Icons.badge_outlined, t.acctMgmtRole, account.mode == UserMode.donor ? t.acctMgmtDonor : t.acctMgmtConsumer),
+          DetailRow(Icons.badge_outlined, t.acctMgmtRole, _roleLabel(t, account.mode)),
           DetailRow(Icons.category_outlined, t.acctMgmtAccountType, _accountTypeLabel(t)[account.accountType] ?? ''),
           DetailRow(Icons.calendar_today_outlined, t.acctMgmtJoined, '${account.joinedAt.day}/${account.joinedAt.month}/${account.joinedAt.year}'),
           DetailRow(Icons.verified_outlined, t.acctMgmtStatus, label),
@@ -192,7 +200,7 @@ class _AccountCard extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _Tag(text: account.mode == UserMode.donor ? t.acctMgmtDonor : t.acctMgmtConsumer),
+              _Tag(text: _roleLabel(t, account.mode)),
               _Tag(text: _accountTypeLabel(t)[account.accountType] ?? ''),
               _Tag(text: t.acctMgmtJoinedTag('${account.joinedAt.year}-${account.joinedAt.month.toString().padLeft(2, '0')}-${account.joinedAt.day.toString().padLeft(2, '0')}')),
             ],

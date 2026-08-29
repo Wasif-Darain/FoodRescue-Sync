@@ -3350,6 +3350,84 @@ abstract class AppLocalizations {
   /// **'Confirm Location'**
   String get locPickerConfirm;
 
+  /// No description provided for @dcLocationNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Location not set'**
+  String get dcLocationNotSet;
+
+  /// No description provided for @dcDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get dcDescription;
+
+  /// No description provided for @dcDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Freshness, allergens, packaging details...'**
+  String get dcDescriptionHint;
+
+  /// No description provided for @reqDirectOffers.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct Donation Offers'**
+  String get reqDirectOffers;
+
+  /// No description provided for @reqOfferItemQty.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} · Qty {quantity}'**
+  String reqOfferItemQty(String item, int quantity);
+
+  /// No description provided for @reqOffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer'**
+  String get reqOffer;
+
+  /// No description provided for @reqFromDonorCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'From {donorName} · {category}'**
+  String reqFromDonorCategory(String donorName, String category);
+
+  /// No description provided for @reqAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get reqAccept;
+
+  /// No description provided for @reqReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get reqReject;
+
+  /// No description provided for @reqKindBulk.
+  ///
+  /// In en, this message translates to:
+  /// **'Bulk Request'**
+  String get reqKindBulk;
+
+  /// No description provided for @reqKindSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request'**
+  String get reqKindSingle;
+
+  /// No description provided for @reqFromDonorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'From {donorName} · {title}'**
+  String reqFromDonorTitle(String donorName, String title);
+
+  /// No description provided for @reqDetailDonor.
+  ///
+  /// In en, this message translates to:
+  /// **'Donor'**
+  String get reqDetailDonor;
+
   /// No description provided for @tierDonorNoviceDesc.
   ///
   /// In en, this message translates to:
@@ -3421,6 +3499,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'100+ meals rescued (≥98% on-time pickup, ≥4.7★).'**
   String get tierConsumerLegendDesc;
+
+  /// No description provided for @accountTypeRider.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider'**
+  String get accountTypeRider;
+
+  /// No description provided for @accountTypeNameRider.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get accountTypeNameRider;
+
+  /// No description provided for @riderDashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider Dashboard'**
+  String get riderDashTitle;
+
+  /// No description provided for @riderDashSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim and deliver pickups near you'**
+  String get riderDashSubtitle;
+
+  /// No description provided for @riderDashGreeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi, {firstName}!'**
+  String riderDashGreeting(String firstName);
+
+  /// No description provided for @riderDashTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to deliver some donations today?'**
+  String get riderDashTagline;
+
+  /// No description provided for @riderStatAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get riderStatAvailable;
+
+  /// No description provided for @riderStatActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get riderStatActive;
+
+  /// No description provided for @riderStatCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get riderStatCompleted;
+
+  /// No description provided for @riderAvailablePickups.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Pickups'**
+  String get riderAvailablePickups;
+
+  /// No description provided for @riderMyDeliveries.
+  ///
+  /// In en, this message translates to:
+  /// **'My Deliveries'**
+  String get riderMyDeliveries;
+
+  /// No description provided for @riderNoAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No pickups waiting right now.'**
+  String get riderNoAvailable;
+
+  /// No description provided for @riderNoDeliveries.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t claimed any deliveries yet.'**
+  String get riderNoDeliveries;
+
+  /// No description provided for @riderPickupFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup from {donorName}'**
+  String riderPickupFrom(String donorName);
+
+  /// No description provided for @riderClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim'**
+  String get riderClaim;
+
+  /// No description provided for @riderStartDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Delivery'**
+  String get riderStartDelivery;
+
+  /// No description provided for @riderMarkDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark Delivered'**
+  String get riderMarkDelivered;
+
+  /// No description provided for @riderClaimFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not claim this pickup — it may have just been taken.'**
+  String get riderClaimFailed;
+
+  /// No description provided for @riderClaimedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup claimed! It now shows under My Deliveries.'**
+  String get riderClaimedMsg;
+
+  /// No description provided for @riderDeliverTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver to {name}'**
+  String riderDeliverTo(String name);
+
+  /// No description provided for @riderStatusClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Claimed'**
+  String get riderStatusClaimed;
+
+  /// No description provided for @riderNoAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'No address given'**
+  String get riderNoAddress;
+
+  /// No description provided for @acctMgmtRider.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider'**
+  String get acctMgmtRider;
+
+  /// No description provided for @pickupDetailFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get pickupDetailFrom;
+
+  /// No description provided for @pickupDetailItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get pickupDetailItem;
+
+  /// No description provided for @pickupFromSender.
+  ///
+  /// In en, this message translates to:
+  /// **'From {name}'**
+  String pickupFromSender(String name);
+
+  /// No description provided for @pickupAssignRider.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign Rider'**
+  String get pickupAssignRider;
+
+  /// No description provided for @pickupReassignRider.
+  ///
+  /// In en, this message translates to:
+  /// **'Reassign Rider'**
+  String get pickupReassignRider;
+
+  /// No description provided for @pickupUnassign.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassign'**
+  String get pickupUnassign;
+
+  /// No description provided for @pickupAssignedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to {name}'**
+  String pickupAssignedTo(String name);
+
+  /// No description provided for @pickupChooseRider.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a rider'**
+  String get pickupChooseRider;
+
+  /// No description provided for @pickupNoRidersAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No riders available yet.'**
+  String get pickupNoRidersAvailable;
+
+  /// No description provided for @pickupAssignedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider assigned!'**
+  String get pickupAssignedSnack;
+
+  /// No description provided for @pickupUnassignedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider unassigned — back in the open pool.'**
+  String get pickupUnassignedSnack;
 }
 
 class _AppLocalizationsDelegate

@@ -51,6 +51,10 @@ List<_NavItem> _adminNav(AppLocalizations t) => [
   _NavItem('/admin/accounts', Icons.people_outline, t.navAccounts),
 ];
 
+List<_NavItem> _riderNav(AppLocalizations t) => [
+  _NavItem('/rider', Icons.dashboard_outlined, t.navDashboard),
+];
+
 Map<AccountType, String> _accountTypeLabel(AppLocalizations t) => {
   AccountType.restaurant: t.accountTypeRestaurant,
   AccountType.caterer: t.accountTypeCaterer,
@@ -59,6 +63,7 @@ Map<AccountType, String> _accountTypeLabel(AppLocalizations t) => {
   AccountType.foodBank: t.accountTypeFoodBank,
   AccountType.shelter: t.accountTypeShelter,
   AccountType.individual: t.accountTypeIndividual,
+  AccountType.rider: t.accountTypeRider,
 };
 
 bool _isActive(String currentRoute, String route) =>
@@ -126,7 +131,7 @@ class NavFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mode = context.watch<AuthProvider>().user!.mode;
-    if (mode == UserMode.admin) return const SizedBox.shrink();
+    if (mode == UserMode.admin || mode == UserMode.rider) return const SizedBox.shrink();
     final isDonor = mode == UserMode.donor;
     final isPlusPage = currentRoute == '/donor/create-listing' || currentRoute == '/consumer/bulk-request';
 
@@ -176,13 +181,13 @@ class BottomNavBar extends StatelessWidget {
     final isDark = context.watch<ThemeProvider>().isDark;
     final t = context.l10n;
 
-    if (mode == UserMode.admin) {
+    if (mode == UserMode.admin || mode == UserMode.rider) {
       return _GlassBottomBar(
         isDark: isDark,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            for (final item in _adminNav(t))
+            for (final item in mode == UserMode.admin ? _adminNav(t) : _riderNav(t))
               _NavIconButton(
                 icon: item.icon,
                 label: item.label,
@@ -304,6 +309,7 @@ void showNavMenuSheet(BuildContext context) {
   final user = auth.user!;
   final isAdmin = user.mode == UserMode.admin;
   final isDonor = user.mode == UserMode.donor;
+  final isRider = user.mode == UserMode.rider;
   final t = context.l10n;
   final menu = isAdmin ? const <_NavItem>[] : (isDonor ? _donorMenu(t) : _consumerMenu(t));
   final accountTypeLabel = _accountTypeLabel(t);
@@ -379,7 +385,7 @@ void showNavMenuSheet(BuildContext context) {
               ),
             ),
             const SizedBox(height: 8),
-            if (!isAdmin)
+            if (!isAdmin && !isRider)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Material(

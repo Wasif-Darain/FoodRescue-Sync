@@ -24,6 +24,7 @@ import 'screens/shared/language_region.dart';
 import 'screens/shared/help_support.dart';
 import 'screens/admin/admin_dashboard.dart';
 import 'screens/admin/account_management.dart';
+import 'screens/rider/rider_dashboard.dart';
 import 'screens/rewards/rewards_screen.dart';
 import 'screens/leaderboard/leaderboard_screen.dart';
 import 'models/models.dart';
@@ -70,6 +71,7 @@ GoRouter buildRouter(AuthProvider auth) => GoRouter(
         UserMode.donor => '/donor',
         UserMode.consumer => '/consumer',
         UserMode.admin => '/admin',
+        UserMode.rider => '/rider',
       };
     }
     return null;
@@ -187,6 +189,11 @@ GoRouter buildRouter(AuthProvider auth) => GoRouter(
     GoRoute(
       path: '/admin/accounts',
       pageBuilder: (_, state) => _fadeThrough(state, const AccountManagement()),
+    ),
+    // Rider
+    GoRoute(
+      path: '/rider',
+      pageBuilder: (_, state) => _fadeThrough(state, const RiderDashboard()),
     ),
   ],
 );

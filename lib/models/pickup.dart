@@ -6,6 +6,7 @@ class PickupModel {
   final String id;
   final String requestId;
   final String? listingId;
+  final String? consumerId;
   final String? donorName;
   final String? listingTitle;
   final String? volunteerDriverId;
@@ -20,6 +21,7 @@ class PickupModel {
     required this.id,
     required this.requestId,
     this.listingId,
+    this.consumerId,
     this.donorName,
     this.listingTitle,
     this.volunteerDriverId,
@@ -39,6 +41,7 @@ class PickupModel {
       id: doc.id,
       requestId: data['requestId'] as String? ?? '',
       listingId: data['listingId'] as String?,
+      consumerId: data['consumerId'] as String?,
       donorName: data['donorName'] as String?,
       listingTitle: data['listingTitle'] as String?,
       volunteerDriverId: data['volunteerDriverId'] as String?,
@@ -57,6 +60,7 @@ class PickupModel {
   Map<String, dynamic> toMap() {
     return {
       'requestId': requestId,
+      'consumerId': consumerId,
       'volunteerDriverId': volunteerDriverId,
       'scheduledTime': scheduledTime == null ? null : Timestamp.fromDate(scheduledTime!),
       'completedAt': completedAt == null ? null : Timestamp.fromDate(completedAt!),

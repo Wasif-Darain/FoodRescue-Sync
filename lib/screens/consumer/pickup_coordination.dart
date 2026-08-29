@@ -13,6 +13,84 @@ import '../../providers/consumer_provider.dart';
 import '../../widgets/ui/block_button.dart';
 import '../../l10n/l10n_ext.dart';
 
+/// Bottom sheet listing every registered rider so a consumer can directly
+/// assign one to [pickupId] instead of leaving it for self-claim.
+void _showAssignRiderSheet(BuildContext rootContext, String pickupId) {
+  final t = rootContext.l10n;
+  final consumer = rootContext.read<ConsumerProvider>();
+  showModalBottomSheet(
+    context: rootContext,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (sheetContext) {
+      final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+      return Container(
+        constraints: const BoxConstraints(maxHeight: 480),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Expanded(child: Text(t.pickupChooseRider, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212)))),
+                IconButton(
+                  icon: Icon(Icons.close, size: 18, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                  onPressed: () => Navigator.pop(sheetContext),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+              ]),
+              const SizedBox(height: 8),
+              Flexible(
+                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'rider').snapshots(),
+                  builder: (context, snap) {
+                    final riders = snap.data?.docs ?? [];
+                    if (riders.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Text(t.pickupNoRidersAvailable, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                      );
+                    }
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: riders.length,
+                      itemBuilder: (context, i) {
+                        final doc = riders[i];
+                        final name = doc.data()['name'] as String? ?? '';
+                        return ListTile(
+                          leading: const Icon(Icons.moped_outlined, color: Color(0xFF2563EB)),
+                          title: Text(name, style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212))),
+                          onTap: () async {
+                            final error = await consumer.assignRider(pickupId, doc.id);
+                            if (!sheetContext.mounted) return;
+                            Navigator.pop(sheetContext);
+                            if (!rootContext.mounted) return;
+                            ScaffoldMessenger.of(rootContext).showSnackBar(SnackBar(
+                              content: Text(error ?? t.pickupAssignedSnack),
+                              backgroundColor: error == null ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                            ));
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
 class PickupCoordination extends StatelessWidget {
   const PickupCoordination({super.key});
 
@@ -163,8 +241,8 @@ class _PickupCard extends StatelessWidget {
         subtitle: t.pickupDetails,
         rows: [
           DetailRow(Icons.local_shipping_outlined, t.pickupDetailStatus, label),
-          if (senderName.isNotEmpty) DetailRow(Icons.storefront_outlined, 'From', senderName),
-          if (itemTitle.isNotEmpty) DetailRow(Icons.inventory_2_outlined, 'Item', itemTitle),
+          if (senderName.isNotEmpty) DetailRow(Icons.storefront_outlined, t.pickupDetailFrom, senderName),
+          if (itemTitle.isNotEmpty) DetailRow(Icons.inventory_2_outlined, t.pickupDetailItem, itemTitle),
           if (pickup.scheduledTime != null)
             DetailRow(Icons.access_time, t.pickupDetailScheduled, '${pickup.scheduledTime!.day}/${pickup.scheduledTime!.month}/${pickup.scheduledTime!.year} at ${pickup.scheduledTime!.hour.toString().padLeft(2, '0')}:${pickup.scheduledTime!.minute.toString().padLeft(2, '0')}'),
           if (pickup.completedAt != null)
@@ -202,7 +280,7 @@ class _PickupCard extends StatelessWidget {
         ]),
         if (senderName.isNotEmpty) ...[
           const SizedBox(height: 4),
-          _InfoRow(icon: Icons.storefront_outlined, label: 'From $senderName'),
+          _InfoRow(icon: Icons.storefront_outlined, label: t.pickupFromSender(senderName)),
         ],
         const SizedBox(height: 12),
         _InfoRow(icon: Icons.location_on_outlined, label: pickup.address ?? t.pickupNoAddress),
@@ -210,6 +288,57 @@ class _PickupCard extends StatelessWidget {
           const SizedBox(height: 6),
           _InfoRow(icon: Icons.access_time, label:
             '${pickup.scheduledTime!.hour.toString().padLeft(2, '0')}:${pickup.scheduledTime!.minute.toString().padLeft(2, '0')} — ${pickup.scheduledTime!.day}/${pickup.scheduledTime!.month}/${pickup.scheduledTime!.year}'),
+        ],
+        if (pickup.status == PickupStatusModel.scheduled) ...[
+          const SizedBox(height: 12),
+          if (pickup.volunteerDriverId == null || pickup.volunteerDriverId!.isEmpty)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _showAssignRiderSheet(context, pickup.id),
+                icon: const Icon(Icons.person_add_alt_outlined, size: 16),
+                label: Text(t.pickupAssignRider),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF2563EB),
+                  side: const BorderSide(color: Color(0xFF2563EB)),
+                ),
+              ),
+            )
+          else
+            StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance.collection('users').doc(pickup.volunteerDriverId).snapshots(),
+              builder: (context, riderSnap) {
+                final riderName = riderSnap.data?.data()?['name'] as String? ?? '…';
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _InfoRow(icon: Icons.moped_outlined, label: t.pickupAssignedTo(riderName)),
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _showAssignRiderSheet(context, pickup.id),
+                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF2563EB), side: const BorderSide(color: Color(0xFF2563EB))),
+                          child: Text(t.pickupReassignRider, style: const TextStyle(fontSize: 12)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            await context.read<ConsumerProvider>().unassignRider(pickup.id);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.pickupUnassignedSnack)));
+                          },
+                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFDC2626), side: const BorderSide(color: Color(0xFFDC2626))),
+                          child: Text(t.pickupUnassign, style: const TextStyle(fontSize: 12)),
+                        ),
+                      ),
+                    ]),
+                  ],
+                );
+              },
+            ),
         ],
         if (pickup.status == PickupStatusModel.scheduled || pickup.status == PickupStatusModel.enRoute) ...[
           const SizedBox(height: 14),
