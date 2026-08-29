@@ -73,3 +73,5 @@ yarn-error.log*
 *serviceAccountKey.json
 .env
 .env.*
+# Firebase CLI debug logs
+firebase-debug.log
