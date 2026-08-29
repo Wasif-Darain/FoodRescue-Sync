@@ -88,6 +88,7 @@ class _DirectOffersSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final consumer = context.watch<ConsumerProvider>();
+    final t = context.l10n;
     return StreamBuilder<List<ScheduledDonation>>(
       stream: consumer.myDirectDonationsStream,
       builder: (context, snapshot) {
@@ -98,7 +99,7 @@ class _DirectOffersSection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Direct Donation Offers', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+            Text(t.reqDirectOffers, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
             const SizedBox(height: 12),
             ...offers.map((d) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -112,11 +113,11 @@ class _DirectOffersSection extends StatelessWidget {
                 ),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
-                    Expanded(child: Text('${d.itemName} · Qty ${d.quantity}', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)))),
-                    AppBadge(label: 'Offer', variant: BadgeVariant.green),
+                    Expanded(child: Text(t.reqOfferItemQty(d.itemName, d.quantity), style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)))),
+                    AppBadge(label: t.reqOffer, variant: BadgeVariant.green),
                   ]),
                   const SizedBox(height: 4),
-                  Text('From ${d.donorName} · ${d.category}', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                  Text(t.reqFromDonorCategory(d.donorName, d.category), style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
                   if (d.description.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(d.description, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -141,7 +142,7 @@ class _DirectOffersSection extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: () => context.read<ConsumerProvider>().respondDirectDonation(d.docId!, true),
                         icon: const Icon(Icons.check, size: 15),
-                        label: const Text('Accept', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                        label: Text(t.reqAccept, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
                         style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0),
                       ),
                     ),
@@ -150,7 +151,7 @@ class _DirectOffersSection extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: () => context.read<ConsumerProvider>().respondDirectDonation(d.docId!, false),
                         icon: const Icon(Icons.close, size: 15),
-                        label: const Text('Reject', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                        label: Text(t.reqReject, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, foregroundColor: const Color(0xFFDC2626), elevation: 0, side: const BorderSide(color: Color(0xFFDC2626))),
                       ),
                     ),
@@ -203,13 +204,13 @@ class _RequestRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final kindLabel = request.isBulk ? 'Bulk Request' : 'Request';
+    final t = context.l10n;
+    final kindLabel = request.isBulk ? t.reqKindBulk : t.reqKindSingle;
     final allListings = context.watch<DonorProvider>().allListings;
     final matched = request.listingId.isEmpty
         ? null
         : allListings.where((l) => l.docId == request.listingId).firstOrNull;
-    final donorInfo = matched == null ? '' : 'From ${matched.donorName} · ${matched.title}';
-    final t = context.l10n;
+    final donorInfo = matched == null ? '' : t.reqFromDonorTitle(matched.donorName, matched.title);
     final (label, variant) = switch (request.status) {
       RequestStatusModel.pending   => (t.reqStatusPending,   BadgeVariant.orange),
       RequestStatusModel.accepted  => (t.reqStatusAccepted,  BadgeVariant.green),
@@ -228,7 +229,7 @@ class _RequestRow extends StatelessWidget {
           DetailRow(Icons.calendar_today_outlined, t.reqDetailCreated, date),
           if (request.updatedAt != null)
             DetailRow(Icons.update_outlined, t.reqDetailLastUpdated, '${request.updatedAt!.day}/${request.updatedAt!.month}/${request.updatedAt!.year}'),
-          if (matched != null) DetailRow(Icons.storefront_outlined, 'Donor', matched.donorName),
+          if (matched != null) DetailRow(Icons.storefront_outlined, t.reqDetailDonor, matched.donorName),
         ],
         menuActions: matched == null
             ? const <SheetMenuItem>[]
@@ -272,7 +273,7 @@ class _RequestRow extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: () => context.read<ConsumerProvider>().respondToRequest(request.id, true),
                   icon: const Icon(Icons.check, size: 15),
-                  label: const Text('Accept', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                  label: Text(t.reqAccept, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0),
                 ),
               ),
@@ -281,7 +282,7 @@ class _RequestRow extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: () => context.read<ConsumerProvider>().respondToRequest(request.id, false),
                   icon: const Icon(Icons.close, size: 15),
-                  label: const Text('Reject', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                  label: Text(t.reqReject, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, foregroundColor: const Color(0xFFDC2626), elevation: 0, side: const BorderSide(color: Color(0xFFDC2626))),
                 ),
               ),

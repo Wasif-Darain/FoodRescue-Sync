@@ -63,7 +63,7 @@ class DonorDashboard extends StatelessWidget {
                 .toList();
             final totalDonatedKg = inventory.fold<double>(
               0,
-              (sum, item) => sum + item.quantity * 0.5,
+              (acc, item) => acc + item.quantity * 0.5,
             );
 
             return AppLayout(

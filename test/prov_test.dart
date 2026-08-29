@@ -6,11 +6,10 @@ import 'package:foodrescue_sync/providers/theme_provider.dart';
 import 'package:foodrescue_sync/providers/locale_provider.dart';
 void main() {
   test('construct providers', () {
-    final b = BlockProvider();
-    final a = AuthProvider();
-    final c = ConsumerProvider();
-    final t = ThemeProvider();
-    final l = LocaleProvider();
-    expect(true, true);
+    expect(BlockProvider.new, returnsNormally);
+    expect(AuthProvider.new, returnsNormally);
+    expect(ConsumerProvider.new, returnsNormally);
+    expect(ThemeProvider.new, returnsNormally);
+    expect(LocaleProvider.new, returnsNormally);
   });
 }

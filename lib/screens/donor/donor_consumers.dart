@@ -6,7 +6,6 @@ import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/user_badge.dart';
 import '../../widgets/ui/countdown_timer.dart';
 import '../../widgets/ui/date_time_field.dart';
-import 'package:latlong2/latlong.dart';
 import '../../widgets/ui/location_picker.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
@@ -38,8 +37,9 @@ class _DonorConsumersState extends State<DonorConsumers> {
       time.hour,
       time.minute,
     );
-    if (!candidate.isAfter(now))
+    if (!candidate.isAfter(now)) {
       candidate = candidate.add(const Duration(days: 1));
+    }
     return candidate;
   }
 
@@ -242,8 +242,9 @@ class _DonorConsumersState extends State<DonorConsumers> {
                           context: context,
                           initialTime: donor.preferredPickupTime,
                         );
-                        if (picked != null)
+                        if (picked != null) {
                           donor.setPreferredPickupTime(picked);
+                        }
                       },
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -723,7 +724,7 @@ void _showDonateSheet(
                       ),
                     ),
                     const SizedBox(height: 12),
-                    label('Description'),
+                    label(t.dcDescription),
                     const SizedBox(height: 4),
                     TextField(
                       controller: descCtrl,
@@ -733,7 +734,7 @@ void _showDonateSheet(
                         color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                       decoration: fieldDecoration().copyWith(
-                        hintText: 'Freshness, allergens, packaging details...',
+                        hintText: t.dcDescriptionHint,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -765,10 +766,11 @@ void _showDonateSheet(
                                     )
                                     .toList(),
                                 onChanged: (value) {
-                                  if (value != null)
+                                  if (value != null) {
                                     setSheetState(
                                       () => selectedCategory = value,
                                     );
+                                  }
                                 },
                               ),
                             ],
@@ -807,8 +809,9 @@ void _showDonateSheet(
                           initial: selectedTime,
                           defaultTime: TimeOfDay.fromDateTime(selectedTime),
                         );
-                        if (picked != null)
+                        if (picked != null) {
                           setSheetState(() => selectedTime = picked);
+                        }
                       },
                     ),
                     const SizedBox(height: 12),
@@ -973,8 +976,9 @@ void _showScheduleSheet(
                         initial: selectedTime,
                         defaultTime: TimeOfDay.fromDateTime(selectedTime),
                       );
-                      if (picked != null)
+                      if (picked != null) {
                         setSheetState(() => selectedTime = picked);
+                      }
                     },
                   ),
                   const SizedBox(height: 12),
@@ -1281,8 +1285,10 @@ class _ConsumerCard extends StatelessWidget {
         account.latitude!,
         account.longitude!,
       );
-      distanceLabel = '${km.toStringAsFixed(1)} km away';
+      distanceLabel = t.radarKmAway(km.toStringAsFixed(1));
     }
+    final locationParts = [?distanceLabel, ?account.address];
+    final locationLine = locationParts.isEmpty ? t.dcLocationNotSet : locationParts.join(' · ');
 
     return _HoverScale(
       child: GestureDetector(
@@ -1441,15 +1447,7 @@ class _ConsumerCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    [
-                          if (distanceLabel != null) distanceLabel,
-                          if (account.address != null) account.address!,
-                        ].join(' · ').isEmpty
-                        ? 'Location not set'
-                        : [
-                            if (distanceLabel != null) distanceLabel,
-                            if (account.address != null) account.address!,
-                          ].join(' · '),
+                    locationLine,
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark
