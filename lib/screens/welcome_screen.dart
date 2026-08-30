@@ -169,32 +169,27 @@ class _HeroVisual extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    _LiveStatPill(
-                      icon: '🍲',
-                      label: t.welcomeMealsPerDay,
-                      stream: FirebaseFirestore.instance.collection('donation_logs').snapshots(),
-                      reduce: (docs) {
-                        final total = docs.fold<double>(0, (acc, d) => acc + ((d.data()['totalWeight'] as num?)?.toDouble() ?? 0));
-                        return '${total.round()}+';
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    _LiveStatPill(
-                      icon: '🤝',
-                      label: t.welcomeDonors,
-                      stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'donor').snapshots(),
-                      reduce: (docs) => '${docs.length}+',
-                    ),
-                    const SizedBox(width: 8),
-                    _LiveStatPill(
-                      icon: '❤️',
-                      label: t.welcomePartners,
-                      stream: FirebaseFirestore.instance.collection('organization_profiles').snapshots(),
-                      reduce: (docs) => '${docs.length}+',
-                    ),
-                  ],
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance.collection('stats').doc('summary').snapshots(),
+                  builder: (context, snapshot) {
+                    final data = snapshot.data?.data();
+                    String field(String key) {
+                      final value = data?[key];
+                      if (value == null) return '…';
+                      final n = value is num ? value : 0;
+                      return '${n.round()}+';
+                    }
+
+                    return Row(
+                      children: [
+                        _StatPill(icon: '🍲', value: field('totalWeightKg'), label: t.welcomeMealsPerDay),
+                        const SizedBox(width: 8),
+                        _StatPill(icon: '🤝', value: field('donorsCount'), label: t.welcomeDonors),
+                        const SizedBox(width: 8),
+                        _StatPill(icon: '❤️', value: field('partnersCount'), label: t.welcomePartners),
+                      ],
+                    );
+                  },
                 ),
                 const Spacer(),
                 RichText(
@@ -256,30 +251,6 @@ class _HighlightWord extends StatelessWidget {
       ),
     ),
   );
-}
-
-class _LiveStatPill extends StatelessWidget {
-  final String icon;
-  final String label;
-  final Stream<QuerySnapshot<Map<String, dynamic>>> stream;
-  final String Function(List<QueryDocumentSnapshot<Map<String, dynamic>>>) reduce;
-  const _LiveStatPill({
-    required this.icon,
-    required this.label,
-    required this.stream,
-    required this.reduce,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: stream,
-      builder: (context, snapshot) {
-        final value = snapshot.hasData ? reduce(snapshot.data!.docs) : '…';
-        return _StatPill(icon: icon, value: value, label: label);
-      },
-    );
-  }
 }
 
 class _StatPill extends StatelessWidget {

@@ -2,6 +2,9 @@
   "projects": {
     "default": "foodrescue-sync"
   },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
   "functions": {
     "source": "functions"
   },
