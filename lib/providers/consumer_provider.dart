@@ -241,6 +241,7 @@ class ConsumerProvider extends ChangeNotifier {
       await ref.update({'status': 'accepted'});
       await _firestore.collection('pickups').add({
         'consumerId': uid,
+        'donorId': donorId,
         'requestId': '',
         'listingId': '',
         'isBulk': false,
@@ -292,6 +293,7 @@ class ConsumerProvider extends ChangeNotifier {
         final listingData = listingSnap.data() as Map<String, dynamic>;
         await _firestore.collection('pickups').add({
           'consumerId': uid,
+          'donorId': listingData['donorId'] as String?,
           'requestId': requestId,
           'listingId': listingId,
           'isBulk': false,
@@ -376,6 +378,7 @@ class ConsumerProvider extends ChangeNotifier {
       });
       await _firestore.collection('pickups').add({
         'consumerId': uid,
+        'donorId': listingData['donorId'] as String?,
         'requestId': requestRef.id,
         'listingId': listingId,
         'isBulk': false,

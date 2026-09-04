@@ -30,6 +30,8 @@
 	<string>FoodRescue Sync uses the camera to let you take a photo of food items when adding them to inventory.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>FoodRescue Sync needs access to your photos so you can attach a picture to a food item.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>FoodRescue Sync uses your location to share live pickup tracking with donors and consumers while you're delivering.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

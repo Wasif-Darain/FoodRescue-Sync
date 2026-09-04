@@ -626,6 +626,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get donorDashActiveListings => 'Active Listings';
 
   @override
+  String get donorDashActivePickups => 'Active Pickups';
+
+  @override
+  String get donorDashNoActivePickups => 'No pickups in progress right now.';
+
+  @override
   String get donorDashFoodSavedKg => 'Food Saved (kg)';
 
   @override
@@ -2004,4 +2010,50 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pickupUnassignedSnack =>
       'Rider unassigned — back in the open pool.';
+
+  @override
+  String get trackingTitle => 'Live Tracking';
+
+  @override
+  String get trackingNotFound => 'This pickup could not be found.';
+
+  @override
+  String get trackingPickupPin => 'Pickup';
+
+  @override
+  String get trackingDeliveryPin => 'Delivery';
+
+  @override
+  String get trackingWaitingForRider =>
+      'Waiting for the rider to start the trip...';
+
+  @override
+  String trackingEnRouteTo(String name) {
+    return 'On the way to $name';
+  }
+
+  @override
+  String get trackingEnRoute => 'Rider is on the way';
+
+  @override
+  String trackingLastUpdated(String time) {
+    return 'Location updated $time';
+  }
+
+  @override
+  String trackingSecondsAgo(int seconds) {
+    return '${seconds}s ago';
+  }
+
+  @override
+  String trackingMinutesAgo(int minutes) {
+    return '${minutes}m ago';
+  }
+
+  @override
+  String get trackButton => 'Track';
+
+  @override
+  String get riderLocationPermissionDenied =>
+      'Location permission is off, so donors and consumers can\'t see your live position. Enable it in your device settings to share tracking.';
 }

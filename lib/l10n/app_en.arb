@@ -217,6 +217,8 @@
   "donorDashSurplusTagged": "Surplus Tagged",
   "donorDashNeedRedistribution": "Need redistribution",
   "donorDashActiveListings": "Active Listings",
+  "donorDashActivePickups": "Active Pickups",
+  "donorDashNoActivePickups": "No pickups in progress right now.",
   "donorDashFoodSavedKg": "Food Saved (kg)",
   "donorDashEstimated": "Estimated",
   "donorDashExpiringToday": "Expiring Today",
@@ -709,5 +711,22 @@
   "pickupChooseRider": "Choose a rider",
   "pickupNoRidersAvailable": "No riders available yet.",
   "pickupAssignedSnack": "Rider assigned!",
-  "pickupUnassignedSnack": "Rider unassigned — back in the open pool."
+  "pickupUnassignedSnack": "Rider unassigned — back in the open pool.",
+
+  "trackingTitle": "Live Tracking",
+  "trackingNotFound": "This pickup could not be found.",
+  "trackingPickupPin": "Pickup",
+  "trackingDeliveryPin": "Delivery",
+  "trackingWaitingForRider": "Waiting for the rider to start the trip...",
+  "trackingEnRouteTo": "On the way to {name}",
+  "@trackingEnRouteTo": {"placeholders": {"name": {"type": "String"}}},
+  "trackingEnRoute": "Rider is on the way",
+  "trackingLastUpdated": "Location updated {time}",
+  "@trackingLastUpdated": {"placeholders": {"time": {"type": "String"}}},
+  "trackingSecondsAgo": "{seconds}s ago",
+  "@trackingSecondsAgo": {"placeholders": {"seconds": {"type": "int"}}},
+  "trackingMinutesAgo": "{minutes}m ago",
+  "@trackingMinutesAgo": {"placeholders": {"minutes": {"type": "int"}}},
+  "trackButton": "Track",
+  "riderLocationPermissionDenied": "Location permission is off, so donors and consumers can't see your live position. Enable it in your device settings to share tracking."
 }

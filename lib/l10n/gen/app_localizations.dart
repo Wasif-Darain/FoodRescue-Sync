@@ -1262,6 +1262,18 @@ abstract class AppLocalizations {
   /// **'Active Listings'**
   String get donorDashActiveListings;
 
+  /// No description provided for @donorDashActivePickups.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Pickups'**
+  String get donorDashActivePickups;
+
+  /// No description provided for @donorDashNoActivePickups.
+  ///
+  /// In en, this message translates to:
+  /// **'No pickups in progress right now.'**
+  String get donorDashNoActivePickups;
+
   /// No description provided for @donorDashFoodSavedKg.
   ///
   /// In en, this message translates to:
@@ -3703,6 +3715,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rider unassigned — back in the open pool.'**
   String get pickupUnassignedSnack;
+
+  /// No description provided for @trackingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Tracking'**
+  String get trackingTitle;
+
+  /// No description provided for @trackingNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This pickup could not be found.'**
+  String get trackingNotFound;
+
+  /// No description provided for @trackingPickupPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup'**
+  String get trackingPickupPin;
+
+  /// No description provided for @trackingDeliveryPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get trackingDeliveryPin;
+
+  /// No description provided for @trackingWaitingForRider.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the rider to start the trip...'**
+  String get trackingWaitingForRider;
+
+  /// No description provided for @trackingEnRouteTo.
+  ///
+  /// In en, this message translates to:
+  /// **'On the way to {name}'**
+  String trackingEnRouteTo(String name);
+
+  /// No description provided for @trackingEnRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider is on the way'**
+  String get trackingEnRoute;
+
+  /// No description provided for @trackingLastUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Location updated {time}'**
+  String trackingLastUpdated(String time);
+
+  /// No description provided for @trackingSecondsAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds}s ago'**
+  String trackingSecondsAgo(int seconds);
+
+  /// No description provided for @trackingMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m ago'**
+  String trackingMinutesAgo(int minutes);
+
+  /// No description provided for @trackButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Track'**
+  String get trackButton;
+
+  /// No description provided for @riderLocationPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is off, so donors and consumers can\'t see your live position. Enable it in your device settings to share tracking.'**
+  String get riderLocationPermissionDenied;
 }
 
 class _AppLocalizationsDelegate

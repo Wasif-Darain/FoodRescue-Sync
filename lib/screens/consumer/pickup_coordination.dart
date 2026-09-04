@@ -11,6 +11,7 @@ import '../../widgets/ui/detail_sheet.dart';
 import '../../models/pickup.dart';
 import '../../providers/consumer_provider.dart';
 import '../../widgets/ui/block_button.dart';
+import '../../widgets/ui/live_tracking_map.dart';
 import '../../l10n/l10n_ext.dart';
 
 /// Bottom sheet listing every registered rider so a consumer can directly
@@ -339,6 +340,23 @@ class _PickupCard extends StatelessWidget {
                 );
               },
             ),
+        ],
+        if (pickup.volunteerDriverId != null &&
+            pickup.volunteerDriverId!.isNotEmpty &&
+            (pickup.status == PickupStatusModel.scheduled || pickup.status == PickupStatusModel.enRoute)) ...[
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => showLiveTrackingMap(context, pickup.id),
+              icon: const Icon(Icons.map_outlined, size: 16),
+              label: Text(t.trackButton),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF2563EB),
+                side: const BorderSide(color: Color(0xFF2563EB)),
+              ),
+            ),
+          ),
         ],
         if (pickup.status == PickupStatusModel.scheduled || pickup.status == PickupStatusModel.enRoute) ...[
           const SizedBox(height: 14),

@@ -217,6 +217,8 @@
   "donorDashSurplusTagged": "সারপ্লাস চিহ্নিত",
   "donorDashNeedRedistribution": "বিতরণ প্রয়োজন",
   "donorDashActiveListings": "সক্রিয় লিস্টিং",
+  "donorDashActivePickups": "চলমান পিকআপ",
+  "donorDashNoActivePickups": "এই মুহূর্তে কোনো পিকআপ চলছে না।",
   "donorDashFoodSavedKg": "খাবার বাঁচানো হয়েছে (কেজি)",
   "donorDashEstimated": "আনুমানিক",
   "donorDashExpiringToday": "আজ মেয়াদ শেষ",
@@ -709,5 +711,22 @@
   "pickupChooseRider": "একজন রাইডার বেছে নিন",
   "pickupNoRidersAvailable": "এখনো কোনো রাইডার উপলব্ধ নেই।",
   "pickupAssignedSnack": "রাইডার নির্ধারণ করা হয়েছে!",
-  "pickupUnassignedSnack": "রাইডার বাতিল করা হয়েছে — আবার উন্মুক্ত তালিকায় ফিরে গেছে।"
+  "pickupUnassignedSnack": "রাইডার বাতিল করা হয়েছে — আবার উন্মুক্ত তালিকায় ফিরে গেছে।",
+
+  "trackingTitle": "লাইভ ট্র্যাকিং",
+  "trackingNotFound": "এই পিকআপটি খুঁজে পাওয়া যায়নি।",
+  "trackingPickupPin": "পিকআপ",
+  "trackingDeliveryPin": "ডেলিভারি",
+  "trackingWaitingForRider": "রাইডার যাত্রা শুরু করার অপেক্ষায়...",
+  "trackingEnRouteTo": "{name}-এর দিকে যাচ্ছে",
+  "@trackingEnRouteTo": {"placeholders": {"name": {"type": "String"}}},
+  "trackingEnRoute": "রাইডার পথে আছে",
+  "trackingLastUpdated": "অবস্থান আপডেট {time}",
+  "@trackingLastUpdated": {"placeholders": {"time": {"type": "String"}}},
+  "trackingSecondsAgo": "{seconds} সেকেন্ড আগে",
+  "@trackingSecondsAgo": {"placeholders": {"seconds": {"type": "int"}}},
+  "trackingMinutesAgo": "{minutes} মিনিট আগে",
+  "@trackingMinutesAgo": {"placeholders": {"minutes": {"type": "int"}}},
+  "trackButton": "ট্র্যাক করুন",
+  "riderLocationPermissionDenied": "লোকেশন পারমিশন বন্ধ আছে, তাই ডোনার ও কনজিউমার আপনার লাইভ অবস্থান দেখতে পাবে না। ট্র্যাকিং শেয়ার করতে ডিভাইস সেটিংসে গিয়ে চালু করুন।"
 }

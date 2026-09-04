@@ -629,6 +629,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get donorDashActiveListings => 'সক্রিয় লিস্টিং';
 
   @override
+  String get donorDashActivePickups => 'চলমান পিকআপ';
+
+  @override
+  String get donorDashNoActivePickups => 'এই মুহূর্তে কোনো পিকআপ চলছে না।';
+
+  @override
   String get donorDashFoodSavedKg => 'খাবার বাঁচানো হয়েছে (কেজি)';
 
   @override
@@ -2016,4 +2022,49 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get pickupUnassignedSnack =>
       'রাইডার বাতিল করা হয়েছে — আবার উন্মুক্ত তালিকায় ফিরে গেছে।';
+
+  @override
+  String get trackingTitle => 'লাইভ ট্র্যাকিং';
+
+  @override
+  String get trackingNotFound => 'এই পিকআপটি খুঁজে পাওয়া যায়নি।';
+
+  @override
+  String get trackingPickupPin => 'পিকআপ';
+
+  @override
+  String get trackingDeliveryPin => 'ডেলিভারি';
+
+  @override
+  String get trackingWaitingForRider => 'রাইডার যাত্রা শুরু করার অপেক্ষায়...';
+
+  @override
+  String trackingEnRouteTo(String name) {
+    return '$name-এর দিকে যাচ্ছে';
+  }
+
+  @override
+  String get trackingEnRoute => 'রাইডার পথে আছে';
+
+  @override
+  String trackingLastUpdated(String time) {
+    return 'অবস্থান আপডেট $time';
+  }
+
+  @override
+  String trackingSecondsAgo(int seconds) {
+    return '$seconds সেকেন্ড আগে';
+  }
+
+  @override
+  String trackingMinutesAgo(int minutes) {
+    return '$minutes মিনিট আগে';
+  }
+
+  @override
+  String get trackButton => 'ট্র্যাক করুন';
+
+  @override
+  String get riderLocationPermissionDenied =>
+      'লোকেশন পারমিশন বন্ধ আছে, তাই ডোনার ও কনজিউমার আপনার লাইভ অবস্থান দেখতে পাবে না। ট্র্যাকিং শেয়ার করতে ডিভাইস সেটিংসে গিয়ে চালু করুন।';
 }

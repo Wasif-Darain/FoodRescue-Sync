@@ -13,9 +13,11 @@ import '../../widgets/ui/detail_sheet.dart';
 import '../../widgets/ui/block_button.dart';
 import '../../models/donation_log.dart';
 import '../../models/models.dart';
+import '../../models/pickup.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/donor_provider.dart';
 import '../../providers/block_provider.dart';
+import '../../widgets/ui/live_tracking_map.dart';
 import '../../l10n/l10n_ext.dart';
 
 class DonorDashboard extends StatelessWidget {
@@ -40,6 +42,16 @@ class DonorDashboard extends StatelessWidget {
                     .toList()
                   ..sort((a, b) => b.completedAt.compareTo(a.completedAt)))
                 .take(5)
+                .toList());
+    final activePickupsStream = myUid.isEmpty
+        ? Stream<List<PickupModel>>.value([])
+        : FirebaseFirestore.instance
+            .collection('pickups')
+            .where('donorId', isEqualTo: myUid)
+            .snapshots()
+            .map((snap) => snap.docs
+                .map((doc) => PickupModel.fromFirestore(doc))
+                .where((p) => p.status == PickupStatusModel.scheduled || p.status == PickupStatusModel.enRoute)
                 .toList());
 
     return StreamBuilder<List<InventoryItem>>(
@@ -152,6 +164,27 @@ class DonorDashboard extends StatelessWidget {
 
                     final leftColumn = Column(
                       children: [
+                        StreamBuilder<List<PickupModel>>(
+                          stream: activePickupsStream,
+                          builder: (context, activePickupsSnap) {
+                            final activePickups = activePickupsSnap.data ?? [];
+                            if (activePickups.isEmpty) return const SizedBox.shrink();
+                            return Column(
+                              children: [
+                                _SectionCard(
+                                  title: t.donorDashActivePickups,
+                                  icon: Icons.local_shipping_outlined,
+                                  child: Column(
+                                    children: activePickups
+                                        .map((p) => _ActivePickupRow(pickup: p))
+                                        .toList(),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                            );
+                          },
+                        ),
                         if (expiringToday.isNotEmpty) ...[
                           _SectionCard(
                             title: t.donorDashExpiringToday,
@@ -410,6 +443,67 @@ class _ListingRow extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _ActivePickupRow extends StatelessWidget {
+  final PickupModel pickup;
+  const _ActivePickupRow({required this.pickup});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
+    final hasRider = pickup.volunteerDriverId != null && pickup.volunteerDriverId!.isNotEmpty;
+    final (statusLabel, variant) = switch (pickup.status) {
+      PickupStatusModel.enRoute => (t.pickupStatusEnRoute, BadgeVariant.orange),
+      _ => (t.pickupStatusScheduled, BadgeVariant.blue),
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  pickup.listingTitle?.isNotEmpty == true ? pickup.listingTitle! : t.pickupHashId(pickup.id),
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (hasRider) ...[
+                  const SizedBox(height: 2),
+                  StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                    stream: FirebaseFirestore.instance.collection('users').doc(pickup.volunteerDriverId).snapshots(),
+                    builder: (context, riderSnap) {
+                      final riderName = riderSnap.data?.data()?['name'] as String? ?? '…';
+                      return Text(t.pickupAssignedTo(riderName), style: const TextStyle(fontSize: 11, color: Color(0xFF757575)));
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          AppBadge(label: statusLabel, variant: variant),
+          if (hasRider) ...[
+            const SizedBox(width: 8),
+            OutlinedButton(
+              onPressed: () => showLiveTrackingMap(context, pickup.id),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF2563EB),
+                side: const BorderSide(color: Color(0xFF2563EB)),
+                minimumSize: const Size(0, 32),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+              ),
+              child: Text(t.trackButton, style: const TextStyle(fontSize: 11.5)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 class _QuickAction extends StatelessWidget {

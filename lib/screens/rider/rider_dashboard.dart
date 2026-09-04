@@ -8,6 +8,7 @@ import '../../models/pickup.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/rider_provider.dart';
 import '../../l10n/l10n_ext.dart';
+import '../../widgets/ui/live_tracking_map.dart';
 
 class RiderDashboard extends StatelessWidget {
   const RiderDashboard({super.key});
@@ -33,6 +34,7 @@ class RiderDashboard extends StatelessWidget {
               final mine = mineSnap.data ?? [];
               final active = mine.where((p) => p.status != PickupStatusModel.completed && p.status != PickupStatusModel.cancelled).toList();
               final completed = mine.where((p) => p.status == PickupStatusModel.completed).toList();
+              rider.ensureTracking(mine);
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,6 +68,28 @@ class RiderDashboard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if (rider.permissionDenied) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF3F2A0A) : const Color(0xFFFFF7ED),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFEA580C)),
+                      ),
+                      child: Row(children: [
+                        const Icon(Icons.location_off_outlined, size: 18, color: Color(0xFFEA580C)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            t.riderLocationPermissionDenied,
+                            style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFFFDBA74) : const Color(0xFF9A3412)),
+                          ),
+                        ),
+                      ]),
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   IntrinsicHeight(
                     child: Row(
@@ -293,15 +317,22 @@ class _MyDeliveryCard extends StatelessWidget {
             Align(alignment: Alignment.centerLeft, child: CountdownTimer(expiry: pickup.scheduledTime!, fontSize: 9)),
           ],
           const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _advance(context),
-              icon: Icon(pickup.status == PickupStatusModel.enRoute ? Icons.flag_outlined : Icons.directions_car_outlined, size: 15),
-              label: Text(actionLabel, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0),
+          Row(children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () => _advance(context),
+                icon: Icon(pickup.status == PickupStatusModel.enRoute ? Icons.flag_outlined : Icons.directions_car_outlined, size: 15),
+                label: Text(actionLabel, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0),
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            OutlinedButton(
+              onPressed: () => showLiveTrackingMap(context, pickup.id),
+              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF2563EB), side: const BorderSide(color: Color(0xFF2563EB))),
+              child: const Icon(Icons.map_outlined, size: 18),
+            ),
+          ]),
         ],
       ),
     );
