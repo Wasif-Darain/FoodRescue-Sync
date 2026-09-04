@@ -1,4 +1,12 @@
 {
+  "name": "foodrescue-sync",
+  "version": "0.1.0",
+  "bin": {
+    "food": "scripts/food.js"
+  },
+  "scripts": {
+    "release": "node scripts/food.js run"
+  },
   "dependencies": {
     "firebase-admin": "^14.3.0"
   }
