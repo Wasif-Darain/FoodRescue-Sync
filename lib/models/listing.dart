@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'models.dart' show ListingType;
 
 enum ListingStatusModel { active, claimed, completed, expired }
 
@@ -20,6 +21,7 @@ class ListingModel {
   final String? address;
   final String? claimedBy;
   final DateTime createdAt;
+  final ListingType listingType;
 
   ListingModel({
     required this.id,
@@ -39,6 +41,7 @@ class ListingModel {
     this.address,
     this.claimedBy,
     required this.createdAt,
+    this.listingType = ListingType.donation,
   });
 
   factory ListingModel.fromFirestore(DocumentSnapshot doc) {
@@ -66,6 +69,7 @@ class ListingModel {
       address: data['address'] as String?,
       claimedBy: data['claimedBy'] as String?,
       createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
+      listingType: data['listingType'] == 'flashSale' ? ListingType.flashSale : ListingType.donation,
     );
   }
 
@@ -87,6 +91,7 @@ class ListingModel {
       'address': address,
       'claimedBy': claimedBy,
       'createdAt': Timestamp.fromDate(createdAt),
+      'listingType': listingType.name,
     };
   }
 }
