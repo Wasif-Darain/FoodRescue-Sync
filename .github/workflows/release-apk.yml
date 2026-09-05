@@ -1,0 +1,48 @@
+name: Release APK
+
+# Pushing a version tag (e.g. v0.2.0) builds the Android APK and publishes
+# it as a GitHub Release with the tag's name. Bump the version in
+# pubspec.yaml, commit, then:
+#   git tag vX.Y.Z && git push origin vX.Y.Z
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.2"
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            build/app/outputs/flutter-apk/app-release.apk \
+            --title "FoodRescue-Sync ${{ github.ref_name }}" \
+            --generate-notes
