@@ -1567,6 +1567,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pickupStatusEnRoute => 'En Route';
 
   @override
+  String get pickupStatusPickedUp => 'Picked Up';
+
+  @override
   String get pickupStatusCompleted => 'Completed';
 
   @override
@@ -1946,7 +1949,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get riderClaim => 'Claim';
 
   @override
-  String get riderStartDelivery => 'Start Delivery';
+  String get riderStartDelivery => 'Start';
+
+  @override
+  String get riderResumeNavigation => 'Resume Navigation';
+
+  @override
+  String get riderMarkPickedUp => 'Order Picked Up';
 
   @override
   String get riderMarkDelivered => 'Mark Delivered';
@@ -2028,6 +2037,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Waiting for the rider to start the trip...';
 
   @override
+  String get trackingHeadingToPickup =>
+      'Rider is heading to the pickup location';
+
+  @override
   String trackingEnRouteTo(String name) {
     return 'On the way to $name';
   }
@@ -2056,4 +2069,255 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get riderLocationPermissionDenied =>
       'Location permission is off, so donors and consumers can\'t see your live position. Enable it in your device settings to share tracking.';
+
+  @override
+  String navTurnRight(String road) {
+    return 'Turn right onto $road';
+  }
+
+  @override
+  String navTurnLeft(String road) {
+    return 'Turn left onto $road';
+  }
+
+  @override
+  String navTurnSlightRight(String road) {
+    return 'Bear right onto $road';
+  }
+
+  @override
+  String navTurnSlightLeft(String road) {
+    return 'Bear left onto $road';
+  }
+
+  @override
+  String navTurnSharpRight(String road) {
+    return 'Make a sharp right onto $road';
+  }
+
+  @override
+  String navTurnSharpLeft(String road) {
+    return 'Make a sharp left onto $road';
+  }
+
+  @override
+  String get navUTurn => 'Make a U-turn';
+
+  @override
+  String navContinueStraight(String road) {
+    return 'Continue onto $road';
+  }
+
+  @override
+  String navRoundabout(String road) {
+    return 'At the roundabout, take the exit onto $road';
+  }
+
+  @override
+  String navMerge(String road) {
+    return 'Merge onto $road';
+  }
+
+  @override
+  String navDepart(String road) {
+    return 'Head out onto $road';
+  }
+
+  @override
+  String get navArrive => 'You have arrived at your destination';
+
+  @override
+  String get navUnnamedRoad => 'this road';
+
+  @override
+  String navDistanceMeters(int meters) {
+    return '$meters m';
+  }
+
+  @override
+  String navDistanceKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String navInDistance(String distance) {
+    return 'In $distance';
+  }
+
+  @override
+  String get navRecalculating => 'Recalculating route...';
+
+  @override
+  String navArriveEta(String time) {
+    return 'Arrive $time';
+  }
+
+  @override
+  String navMinLeft(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get navToPickup => 'Navigating to pickup';
+
+  @override
+  String get navToDelivery => 'Navigating to delivery';
+
+  @override
+  String get navExit => 'Exit';
+
+  @override
+  String get navWaitingForGps => 'Waiting for GPS signal...';
+
+  @override
+  String get navDistributing => 'Distributing to the community';
+
+  @override
+  String get mktDeliveryMethodLabel => 'How should this be picked up?';
+
+  @override
+  String get mktSelfPickupOption => 'I\'ll pick it up myself';
+
+  @override
+  String get mktRiderOption => 'Request a rider';
+
+  @override
+  String get mktConfirmPaymentTitle => 'Confirm Payment';
+
+  @override
+  String mktConfirmPaymentBody(String amount) {
+    return 'This is a Flash Sale item. Confirm payment of ৳$amount to complete your claim.';
+  }
+
+  @override
+  String get mktPayNow => 'Pay Now';
+
+  @override
+  String mktPaymentConfirmedMsg(String amount) {
+    return 'Payment of ৳$amount confirmed (demo).';
+  }
+
+  @override
+  String get reqDeliveryChoiceTitle => 'How will you receive this donation?';
+
+  @override
+  String get reqSelfPickupOption => 'I\'ll pick it up myself';
+
+  @override
+  String get reqAssignRiderOption => 'Assign a specific rider';
+
+  @override
+  String get reqPostToPoolOption => 'Post for any rider to claim';
+
+  @override
+  String get riderAssignmentRequests => 'Assignment Requests';
+
+  @override
+  String get riderNoAssignmentRequests => 'No pending assignment requests.';
+
+  @override
+  String get riderAssignedDirectly =>
+      'A consumer assigned this pickup to you directly.';
+
+  @override
+  String get riderDecline => 'Decline';
+
+  @override
+  String get riderAssignmentAcceptedMsg =>
+      'Assignment accepted — it\'s now in your deliveries.';
+
+  @override
+  String get riderAssignmentDeclinedMsg =>
+      'Assignment declined — sent back to the open pool.';
+
+  @override
+  String get selfPickupMarkDistributionComplete => 'Mark Distribution Complete';
+
+  @override
+  String get selfPickupStart => 'Start Pickup';
+
+  @override
+  String get pickupSelfBadge => 'Self Pickup';
+
+  @override
+  String get trackingWaitingForSelf =>
+      'Waiting for the recipient to start the trip...';
+
+  @override
+  String get trackingHeadingToPickupSelf =>
+      'Recipient is heading to the pickup location';
+
+  @override
+  String get trackingEnRouteSelf =>
+      'Recipient is distributing to the community';
+
+  @override
+  String get pickupStatusDelivered => 'Delivered';
+
+  @override
+  String get pickupStatusDistributing => 'Distributing';
+
+  @override
+  String get pickupStartDistribution => 'Start Distribution';
+
+  @override
+  String get pickupDistributionStartedSnack =>
+      'Distribution started — you\'re now visible on the live map.';
+
+  @override
+  String get distributionSubmitTitle => 'Submit Distribution Proof';
+
+  @override
+  String get distributionSubmitBody =>
+      'Take a photo showing the food being distributed, then mark this complete.';
+
+  @override
+  String get distributionPhotoRequiredError =>
+      'Please add a photo before submitting.';
+
+  @override
+  String get distributionSubmitButton => 'Submit & Mark Complete';
+
+  @override
+  String get distributionCompleteSnack =>
+      'Distribution marked complete. Thank you!';
+
+  @override
+  String get distributionUploadError =>
+      'Could not submit the photo. Please try again.';
+
+  @override
+  String get donorDashVerifyDistribution => 'Verify Distribution';
+
+  @override
+  String get donorRateConsumer => 'Rate this consumer\'s distribution';
+
+  @override
+  String get reportButton => 'Report';
+
+  @override
+  String get reportDialogTitle => 'Report a Mismatch';
+
+  @override
+  String reportDialogBody(String name) {
+    return 'Describe what doesn\'t match for $name — e.g. the proof photo looks unrelated, or the distribution wasn\'t completed as claimed.';
+  }
+
+  @override
+  String get reportDialogHint => 'Describe the issue...';
+
+  @override
+  String get reportSubmit => 'Submit Report';
+
+  @override
+  String get reportReasonRequiredError =>
+      'Please describe the issue before submitting.';
+
+  @override
+  String get reportSubmittedSnack =>
+      'Report submitted. Our team will review it.';
+
+  @override
+  String get trackingWaitingForDistribution =>
+      'Delivered — waiting for distribution to start';
 }

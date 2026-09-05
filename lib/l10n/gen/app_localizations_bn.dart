@@ -1576,6 +1576,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get pickupStatusEnRoute => 'পথে আছে';
 
   @override
+  String get pickupStatusPickedUp => 'সংগ্রহ করা হয়েছে';
+
+  @override
   String get pickupStatusCompleted => 'সম্পন্ন';
 
   @override
@@ -1958,7 +1961,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get riderClaim => 'দাবি করুন';
 
   @override
-  String get riderStartDelivery => 'ডেলিভারি শুরু করুন';
+  String get riderStartDelivery => 'শুরু করুন';
+
+  @override
+  String get riderResumeNavigation => 'নেভিগেশন চালিয়ে যান';
+
+  @override
+  String get riderMarkPickedUp => 'অর্ডার সংগ্রহ করা হয়েছে';
 
   @override
   String get riderMarkDelivered => 'ডেলিভার্ড চিহ্নিত করুন';
@@ -2039,6 +2048,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get trackingWaitingForRider => 'রাইডার যাত্রা শুরু করার অপেক্ষায়...';
 
   @override
+  String get trackingHeadingToPickup => 'রাইডার পিকআপ লোকেশনের দিকে যাচ্ছে';
+
+  @override
   String trackingEnRouteTo(String name) {
     return '$name-এর দিকে যাচ্ছে';
   }
@@ -2067,4 +2079,253 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get riderLocationPermissionDenied =>
       'লোকেশন পারমিশন বন্ধ আছে, তাই ডোনার ও কনজিউমার আপনার লাইভ অবস্থান দেখতে পাবে না। ট্র্যাকিং শেয়ার করতে ডিভাইস সেটিংসে গিয়ে চালু করুন।';
+
+  @override
+  String navTurnRight(String road) {
+    return '$road-এ ডানে ঘুরুন';
+  }
+
+  @override
+  String navTurnLeft(String road) {
+    return '$road-এ বামে ঘুরুন';
+  }
+
+  @override
+  String navTurnSlightRight(String road) {
+    return '$road-এর দিকে সামান্য ডানে যান';
+  }
+
+  @override
+  String navTurnSlightLeft(String road) {
+    return '$road-এর দিকে সামান্য বামে যান';
+  }
+
+  @override
+  String navTurnSharpRight(String road) {
+    return '$road-এ তীব্রভাবে ডানে ঘুরুন';
+  }
+
+  @override
+  String navTurnSharpLeft(String road) {
+    return '$road-এ তীব্রভাবে বামে ঘুরুন';
+  }
+
+  @override
+  String get navUTurn => 'ইউ-টার্ন নিন';
+
+  @override
+  String navContinueStraight(String road) {
+    return '$road ধরে সোজা যান';
+  }
+
+  @override
+  String navRoundabout(String road) {
+    return 'রাউন্ডাবাউটে, $road-এর দিকে বের হোন';
+  }
+
+  @override
+  String navMerge(String road) {
+    return '$road-এ মিশে যান';
+  }
+
+  @override
+  String navDepart(String road) {
+    return '$road ধরে রওনা দিন';
+  }
+
+  @override
+  String get navArrive => 'আপনি গন্তব্যে পৌঁছে গেছেন';
+
+  @override
+  String get navUnnamedRoad => 'এই রাস্তা';
+
+  @override
+  String navDistanceMeters(int meters) {
+    return '$meters মি';
+  }
+
+  @override
+  String navDistanceKm(String km) {
+    return '$km কিমি';
+  }
+
+  @override
+  String navInDistance(String distance) {
+    return '$distance পরে';
+  }
+
+  @override
+  String get navRecalculating => 'রুট পুনরায় হিসাব করা হচ্ছে...';
+
+  @override
+  String navArriveEta(String time) {
+    return 'পৌঁছাবে $time';
+  }
+
+  @override
+  String navMinLeft(int minutes) {
+    return '$minutes মিনিট';
+  }
+
+  @override
+  String get navToPickup => 'পিকআপের দিকে যাচ্ছে';
+
+  @override
+  String get navToDelivery => 'ডেলিভারির দিকে যাচ্ছে';
+
+  @override
+  String get navExit => 'বের হোন';
+
+  @override
+  String get navWaitingForGps => 'জিপিএস সিগন্যালের অপেক্ষায়...';
+
+  @override
+  String get navDistributing => 'সম্প্রদায়ে বিতরণ করা হচ্ছে';
+
+  @override
+  String get mktDeliveryMethodLabel => 'এটি কীভাবে সংগ্রহ করা হবে?';
+
+  @override
+  String get mktSelfPickupOption => 'আমি নিজে সংগ্রহ করব';
+
+  @override
+  String get mktRiderOption => 'রাইডার অনুরোধ করুন';
+
+  @override
+  String get mktConfirmPaymentTitle => 'পেমেন্ট নিশ্চিত করুন';
+
+  @override
+  String mktConfirmPaymentBody(String amount) {
+    return 'এটি একটি ফ্ল্যাশ সেল আইটেম। ক্লেইম সম্পন্ন করতে ৳$amount পেমেন্ট নিশ্চিত করুন।';
+  }
+
+  @override
+  String get mktPayNow => 'এখনই পে করুন';
+
+  @override
+  String mktPaymentConfirmedMsg(String amount) {
+    return '৳$amount পেমেন্ট নিশ্চিত হয়েছে (ডেমো)।';
+  }
+
+  @override
+  String get reqDeliveryChoiceTitle => 'আপনি কীভাবে এই দানটি গ্রহণ করবেন?';
+
+  @override
+  String get reqSelfPickupOption => 'আমি নিজে সংগ্রহ করব';
+
+  @override
+  String get reqAssignRiderOption => 'একজন নির্দিষ্ট রাইডার নিয়োগ করুন';
+
+  @override
+  String get reqPostToPoolOption => 'যেকোনো রাইডারের জন্য পোস্ট করুন';
+
+  @override
+  String get riderAssignmentRequests => 'নিয়োগের অনুরোধ';
+
+  @override
+  String get riderNoAssignmentRequests => 'কোনো পেন্ডিং নিয়োগ অনুরোধ নেই।';
+
+  @override
+  String get riderAssignedDirectly =>
+      'একজন গ্রাহক সরাসরি আপনাকে এই পিকআপ নিয়োগ করেছেন।';
+
+  @override
+  String get riderDecline => 'প্রত্যাখ্যান';
+
+  @override
+  String get riderAssignmentAcceptedMsg =>
+      'অ্যাসাইনমেন্ট গৃহীত হয়েছে — এটি এখন আপনার ডেলিভারিতে আছে।';
+
+  @override
+  String get riderAssignmentDeclinedMsg =>
+      'অ্যাসাইনমেন্ট প্রত্যাখ্যাত হয়েছে — ওপেন পুলে ফেরত পাঠানো হয়েছে।';
+
+  @override
+  String get selfPickupMarkDistributionComplete => 'বিতরণ সম্পন্ন চিহ্নিত করুন';
+
+  @override
+  String get selfPickupStart => 'পিকআপ শুরু করুন';
+
+  @override
+  String get pickupSelfBadge => 'নিজে সংগ্রহ';
+
+  @override
+  String get trackingWaitingForSelf => 'গ্রহীতা যাত্রা শুরু করার অপেক্ষায়...';
+
+  @override
+  String get trackingHeadingToPickupSelf =>
+      'গ্রহীতা পিকআপ স্থানের দিকে যাচ্ছেন';
+
+  @override
+  String get trackingEnRouteSelf => 'গ্রহীতা সম্প্রদায়ে বিতরণ করছেন';
+
+  @override
+  String get pickupStatusDelivered => 'ডেলিভার হয়েছে';
+
+  @override
+  String get pickupStatusDistributing => 'বিতরণ চলছে';
+
+  @override
+  String get pickupStartDistribution => 'বিতরণ শুরু করুন';
+
+  @override
+  String get pickupDistributionStartedSnack =>
+      'বিতরণ শুরু হয়েছে — আপনি এখন লাইভ ম্যাপে দৃশ্যমান।';
+
+  @override
+  String get distributionSubmitTitle => 'বিতরণের প্রমাণ জমা দিন';
+
+  @override
+  String get distributionSubmitBody =>
+      'খাবার বিতরণের একটি ছবি তুলুন, তারপর এটি সম্পন্ন হিসেবে চিহ্নিত করুন।';
+
+  @override
+  String get distributionPhotoRequiredError =>
+      'জমা দেওয়ার আগে একটি ছবি যোগ করুন।';
+
+  @override
+  String get distributionSubmitButton => 'জমা দিন ও সম্পন্ন চিহ্নিত করুন';
+
+  @override
+  String get distributionCompleteSnack =>
+      'বিতরণ সম্পন্ন হিসেবে চিহ্নিত হয়েছে। ধন্যবাদ!';
+
+  @override
+  String get distributionUploadError =>
+      'ছবি জমা দেওয়া যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get donorDashVerifyDistribution => 'বিতরণ যাচাই করুন';
+
+  @override
+  String get donorRateConsumer => 'এই গ্রাহকের বিতরণ রেট করুন';
+
+  @override
+  String get reportButton => 'রিপোর্ট';
+
+  @override
+  String get reportDialogTitle => 'গরমিলের রিপোর্ট করুন';
+
+  @override
+  String reportDialogBody(String name) {
+    return '$name-এর ক্ষেত্রে কী গরমিল আছে তা বর্ণনা করুন — যেমন প্রমাণ ছবিটি অপ্রাসঙ্গিক মনে হচ্ছে, অথবা দাবি অনুযায়ী বিতরণ সম্পন্ন হয়নি।';
+  }
+
+  @override
+  String get reportDialogHint => 'সমস্যাটি বর্ণনা করুন...';
+
+  @override
+  String get reportSubmit => 'রিপোর্ট জমা দিন';
+
+  @override
+  String get reportReasonRequiredError =>
+      'জমা দেওয়ার আগে সমস্যাটি বর্ণনা করুন।';
+
+  @override
+  String get reportSubmittedSnack =>
+      'রিপোর্ট জমা হয়েছে। আমাদের টিম এটি পর্যালোচনা করবে।';
+
+  @override
+  String get trackingWaitingForDistribution =>
+      'ডেলিভার হয়েছে — বিতরণ শুরুর অপেক্ষায়';
 }

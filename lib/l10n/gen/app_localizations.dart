@@ -2930,6 +2930,12 @@ abstract class AppLocalizations {
   /// **'En Route'**
   String get pickupStatusEnRoute;
 
+  /// No description provided for @pickupStatusPickedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Picked Up'**
+  String get pickupStatusPickedUp;
+
   /// No description provided for @pickupStatusCompleted.
   ///
   /// In en, this message translates to:
@@ -3605,8 +3611,20 @@ abstract class AppLocalizations {
   /// No description provided for @riderStartDelivery.
   ///
   /// In en, this message translates to:
-  /// **'Start Delivery'**
+  /// **'Start'**
   String get riderStartDelivery;
+
+  /// No description provided for @riderResumeNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume Navigation'**
+  String get riderResumeNavigation;
+
+  /// No description provided for @riderMarkPickedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Picked Up'**
+  String get riderMarkPickedUp;
 
   /// No description provided for @riderMarkDelivered.
   ///
@@ -3746,6 +3764,12 @@ abstract class AppLocalizations {
   /// **'Waiting for the rider to start the trip...'**
   String get trackingWaitingForRider;
 
+  /// No description provided for @trackingHeadingToPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider is heading to the pickup location'**
+  String get trackingHeadingToPickup;
+
   /// No description provided for @trackingEnRouteTo.
   ///
   /// In en, this message translates to:
@@ -3787,6 +3811,408 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Location permission is off, so donors and consumers can\'t see your live position. Enable it in your device settings to share tracking.'**
   String get riderLocationPermissionDenied;
+
+  /// No description provided for @navTurnRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn right onto {road}'**
+  String navTurnRight(String road);
+
+  /// No description provided for @navTurnLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn left onto {road}'**
+  String navTurnLeft(String road);
+
+  /// No description provided for @navTurnSlightRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Bear right onto {road}'**
+  String navTurnSlightRight(String road);
+
+  /// No description provided for @navTurnSlightLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Bear left onto {road}'**
+  String navTurnSlightLeft(String road);
+
+  /// No description provided for @navTurnSharpRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a sharp right onto {road}'**
+  String navTurnSharpRight(String road);
+
+  /// No description provided for @navTurnSharpLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a sharp left onto {road}'**
+  String navTurnSharpLeft(String road);
+
+  /// No description provided for @navUTurn.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a U-turn'**
+  String get navUTurn;
+
+  /// No description provided for @navContinueStraight.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue onto {road}'**
+  String navContinueStraight(String road);
+
+  /// No description provided for @navRoundabout.
+  ///
+  /// In en, this message translates to:
+  /// **'At the roundabout, take the exit onto {road}'**
+  String navRoundabout(String road);
+
+  /// No description provided for @navMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge onto {road}'**
+  String navMerge(String road);
+
+  /// No description provided for @navDepart.
+  ///
+  /// In en, this message translates to:
+  /// **'Head out onto {road}'**
+  String navDepart(String road);
+
+  /// No description provided for @navArrive.
+  ///
+  /// In en, this message translates to:
+  /// **'You have arrived at your destination'**
+  String get navArrive;
+
+  /// No description provided for @navUnnamedRoad.
+  ///
+  /// In en, this message translates to:
+  /// **'this road'**
+  String get navUnnamedRoad;
+
+  /// No description provided for @navDistanceMeters.
+  ///
+  /// In en, this message translates to:
+  /// **'{meters} m'**
+  String navDistanceMeters(int meters);
+
+  /// No description provided for @navDistanceKm.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km'**
+  String navDistanceKm(String km);
+
+  /// No description provided for @navInDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'In {distance}'**
+  String navInDistance(String distance);
+
+  /// No description provided for @navRecalculating.
+  ///
+  /// In en, this message translates to:
+  /// **'Recalculating route...'**
+  String get navRecalculating;
+
+  /// No description provided for @navArriveEta.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrive {time}'**
+  String navArriveEta(String time);
+
+  /// No description provided for @navMinLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String navMinLeft(int minutes);
+
+  /// No description provided for @navToPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigating to pickup'**
+  String get navToPickup;
+
+  /// No description provided for @navToDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigating to delivery'**
+  String get navToDelivery;
+
+  /// No description provided for @navExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get navExit;
+
+  /// No description provided for @navWaitingForGps.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for GPS signal...'**
+  String get navWaitingForGps;
+
+  /// No description provided for @navDistributing.
+  ///
+  /// In en, this message translates to:
+  /// **'Distributing to the community'**
+  String get navDistributing;
+
+  /// No description provided for @mktDeliveryMethodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How should this be picked up?'**
+  String get mktDeliveryMethodLabel;
+
+  /// No description provided for @mktSelfPickupOption.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ll pick it up myself'**
+  String get mktSelfPickupOption;
+
+  /// No description provided for @mktRiderOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Request a rider'**
+  String get mktRiderOption;
+
+  /// No description provided for @mktConfirmPaymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Payment'**
+  String get mktConfirmPaymentTitle;
+
+  /// No description provided for @mktConfirmPaymentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a Flash Sale item. Confirm payment of ৳{amount} to complete your claim.'**
+  String mktConfirmPaymentBody(String amount);
+
+  /// No description provided for @mktPayNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay Now'**
+  String get mktPayNow;
+
+  /// No description provided for @mktPaymentConfirmedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment of ৳{amount} confirmed (demo).'**
+  String mktPaymentConfirmedMsg(String amount);
+
+  /// No description provided for @reqDeliveryChoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How will you receive this donation?'**
+  String get reqDeliveryChoiceTitle;
+
+  /// No description provided for @reqSelfPickupOption.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ll pick it up myself'**
+  String get reqSelfPickupOption;
+
+  /// No description provided for @reqAssignRiderOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign a specific rider'**
+  String get reqAssignRiderOption;
+
+  /// No description provided for @reqPostToPoolOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Post for any rider to claim'**
+  String get reqPostToPoolOption;
+
+  /// No description provided for @riderAssignmentRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignment Requests'**
+  String get riderAssignmentRequests;
+
+  /// No description provided for @riderNoAssignmentRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending assignment requests.'**
+  String get riderNoAssignmentRequests;
+
+  /// No description provided for @riderAssignedDirectly.
+  ///
+  /// In en, this message translates to:
+  /// **'A consumer assigned this pickup to you directly.'**
+  String get riderAssignedDirectly;
+
+  /// No description provided for @riderDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get riderDecline;
+
+  /// No description provided for @riderAssignmentAcceptedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignment accepted — it\'s now in your deliveries.'**
+  String get riderAssignmentAcceptedMsg;
+
+  /// No description provided for @riderAssignmentDeclinedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignment declined — sent back to the open pool.'**
+  String get riderAssignmentDeclinedMsg;
+
+  /// No description provided for @selfPickupMarkDistributionComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark Distribution Complete'**
+  String get selfPickupMarkDistributionComplete;
+
+  /// No description provided for @selfPickupStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Pickup'**
+  String get selfPickupStart;
+
+  /// No description provided for @pickupSelfBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Self Pickup'**
+  String get pickupSelfBadge;
+
+  /// No description provided for @trackingWaitingForSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the recipient to start the trip...'**
+  String get trackingWaitingForSelf;
+
+  /// No description provided for @trackingHeadingToPickupSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipient is heading to the pickup location'**
+  String get trackingHeadingToPickupSelf;
+
+  /// No description provided for @trackingEnRouteSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipient is distributing to the community'**
+  String get trackingEnRouteSelf;
+
+  /// No description provided for @pickupStatusDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get pickupStatusDelivered;
+
+  /// No description provided for @pickupStatusDistributing.
+  ///
+  /// In en, this message translates to:
+  /// **'Distributing'**
+  String get pickupStatusDistributing;
+
+  /// No description provided for @pickupStartDistribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Distribution'**
+  String get pickupStartDistribution;
+
+  /// No description provided for @pickupDistributionStartedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribution started — you\'re now visible on the live map.'**
+  String get pickupDistributionStartedSnack;
+
+  /// No description provided for @distributionSubmitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Distribution Proof'**
+  String get distributionSubmitTitle;
+
+  /// No description provided for @distributionSubmitBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo showing the food being distributed, then mark this complete.'**
+  String get distributionSubmitBody;
+
+  /// No description provided for @distributionPhotoRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add a photo before submitting.'**
+  String get distributionPhotoRequiredError;
+
+  /// No description provided for @distributionSubmitButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit & Mark Complete'**
+  String get distributionSubmitButton;
+
+  /// No description provided for @distributionCompleteSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribution marked complete. Thank you!'**
+  String get distributionCompleteSnack;
+
+  /// No description provided for @distributionUploadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not submit the photo. Please try again.'**
+  String get distributionUploadError;
+
+  /// No description provided for @donorDashVerifyDistribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Distribution'**
+  String get donorDashVerifyDistribution;
+
+  /// No description provided for @donorRateConsumer.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate this consumer\'s distribution'**
+  String get donorRateConsumer;
+
+  /// No description provided for @reportButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get reportButton;
+
+  /// No description provided for @reportDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a Mismatch'**
+  String get reportDialogTitle;
+
+  /// No description provided for @reportDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe what doesn\'t match for {name} — e.g. the proof photo looks unrelated, or the distribution wasn\'t completed as claimed.'**
+  String reportDialogBody(String name);
+
+  /// No description provided for @reportDialogHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the issue...'**
+  String get reportDialogHint;
+
+  /// No description provided for @reportSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Report'**
+  String get reportSubmit;
+
+  /// No description provided for @reportReasonRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please describe the issue before submitting.'**
+  String get reportReasonRequiredError;
+
+  /// No description provided for @reportSubmittedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Report submitted. Our team will review it.'**
+  String get reportSubmittedSnack;
+
+  /// No description provided for @trackingWaitingForDistribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered — waiting for distribution to start'**
+  String get trackingWaitingForDistribution;
 }
 
 class _AppLocalizationsDelegate
