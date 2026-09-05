@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 import '../models/listing.dart';
 import '../models/pickup.dart';
 import '../models/request.dart';
 import '../models/models.dart';
+import '../services/listing_image_manager.dart';
 
 class ConsumerProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -20,6 +23,10 @@ class ConsumerProvider extends ChangeNotifier {
   double? _latitude;
   double? _longitude;
   final Set<String> _notifiedListingIds = {};
+
+  final Map<String, StreamSubscription<Position>> _selfLocationSubs = {};
+  bool _selfTrackingPermissionDenied = false;
+  bool get selfTrackingPermissionDenied => _selfTrackingPermissionDenied;
 
   ConsumerProvider() {
     _authSub = _auth.authStateChanges().listen(_onAuthChanged);
@@ -503,6 +510,109 @@ class ConsumerProvider extends ChangeNotifier {
     await ref.update({'volunteerDriverId': FieldValue.delete()});
   }
 
+  // --- Self-pickup GPS broadcast + status transitions -----------------
+  //
+  // Mirrors RiderProvider's tracking so a self-pickup consumer gets the same
+  // turn-by-turn navigation and live-tracking experience a rider would:
+  // navigate to the donor's pickup point, mark picked up, then an untracked
+  // "distributing to the community" phase with no fixed destination, ending
+  // in markDistributionComplete.
+
+  Future<void> markSelfEnRoute(String pickupId) async {
+    await _firestore.collection('pickups').doc(pickupId).update({'status': PickupStatusModel.enRoute.name});
+    await startSelfTracking(pickupId);
+  }
+
+  Future<void> markSelfPickedUp(String pickupId) async {
+    await _firestore.collection('pickups').doc(pickupId).update({'status': PickupStatusModel.pickedUp.name});
+  }
+
+  /// Consumer has the food in hand (either collected it themselves, or a
+  /// rider just handed it off) and is now heading out to distribute it to
+  /// the community. Kicks off the same GPS broadcast a rider uses, so the
+  /// donor can watch this leg live too, regardless of delivery method.
+  Future<void> startDistribution(String pickupId) async {
+    await _firestore.collection('pickups').doc(pickupId).update({'status': PickupStatusModel.distributing.name});
+    await startSelfTracking(pickupId);
+  }
+
+  /// Uploads the distribution proof photo (via the same free Cloudinary
+  /// pipeline listing photos use) and returns its public URL.
+  Future<String> uploadDistributionPhoto(Uint8List bytes) async {
+    final tempFile = File('${Directory.systemTemp.path}/distribution_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await tempFile.writeAsBytes(bytes);
+    return ListingImageManager().uploadListingImage(tempFile);
+  }
+
+  Future<void> markDistributionComplete(String pickupId, String photoUrl) async {
+    stopSelfTracking(pickupId);
+    await _firestore.collection('pickups').doc(pickupId).update({
+      'status': PickupStatusModel.completed.name,
+      'completedAt': FieldValue.serverTimestamp(),
+      'distributionPhotoUrl': photoUrl,
+    });
+  }
+
+  /// Called from the Pickup Coordination screen on every update so tracking
+  /// resumes correctly after an app restart mid-trip, and stops once a
+  /// pickup is no longer in an active self-broadcast phase. Covers both the
+  /// self-pickup consumer's trip to collect the food, and the distribution
+  /// leg afterwards — which applies to every consumer, self-pickup or not,
+  /// since a rider-delivered consumer only starts broadcasting once they
+  /// begin distributing.
+  void ensureSelfTracking(List<PickupModel> myPickups) {
+    final stillActive = myPickups
+        .where((p) =>
+            (p.isSelfPickup && (p.status == PickupStatusModel.enRoute || p.status == PickupStatusModel.pickedUp)) ||
+            p.status == PickupStatusModel.distributing)
+        .map((p) => p.id)
+        .toSet();
+    for (final id in _selfLocationSubs.keys.toList()) {
+      if (!stillActive.contains(id)) stopSelfTracking(id);
+    }
+    for (final id in stillActive) {
+      if (!_selfLocationSubs.containsKey(id)) startSelfTracking(id);
+    }
+  }
+
+  Future<void> startSelfTracking(String pickupId) async {
+    if (_selfLocationSubs.containsKey(pickupId)) return;
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        _selfTrackingPermissionDenied = true;
+        notifyListeners();
+        return;
+      }
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        _selfTrackingPermissionDenied = true;
+        notifyListeners();
+        return;
+      }
+      _selfTrackingPermissionDenied = false;
+      final ref = _firestore.collection('pickups').doc(pickupId);
+      _selfLocationSubs[pickupId] = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 15),
+      ).listen((pos) {
+        ref.update({
+          'riderLat': pos.latitude,
+          'riderLng': pos.longitude,
+          'riderLocationUpdatedAt': FieldValue.serverTimestamp(),
+        });
+      });
+    } catch (_) {
+      _selfTrackingPermissionDenied = true;
+      notifyListeners();
+    }
+  }
+
+  void stopSelfTracking(String pickupId) {
+    _selfLocationSubs.remove(pickupId)?.cancel();
+  }
+
   Future<String?> submitBulkRequest({
     required String orgName,
     required String contactPerson,
@@ -545,6 +655,10 @@ class ConsumerProvider extends ChangeNotifier {
     _authSub?.cancel();
     _listingSub?.cancel();
     _userDocSub?.cancel();
+    for (final sub in _selfLocationSubs.values) {
+      sub.cancel();
+    }
+    _selfLocationSubs.clear();
     super.dispose();
   }
 }
