@@ -9,6 +9,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/rider_provider.dart';
 import '../../l10n/l10n_ext.dart';
 import '../../widgets/ui/live_tracking_map.dart';
+import '../../widgets/ui/rider_navigation_map.dart';
 
 class RiderDashboard extends StatelessWidget {
   const RiderDashboard({super.key});
@@ -29,11 +30,22 @@ class RiderDashboard extends StatelessWidget {
         builder: (context, availableSnap) {
           final available = availableSnap.data ?? [];
           return StreamBuilder<List<PickupModel>>(
+            stream: rider.pendingAssignmentsStream,
+            builder: (context, pendingSnap) {
+              final pending = pendingSnap.data ?? [];
+              return StreamBuilder<List<PickupModel>>(
             stream: rider.myDeliveriesStream,
             builder: (context, mineSnap) {
               final mine = mineSnap.data ?? [];
-              final active = mine.where((p) => p.status != PickupStatusModel.completed && p.status != PickupStatusModel.cancelled).toList();
-              final completed = mine.where((p) => p.status == PickupStatusModel.completed).toList();
+              // Once the rider hands off, their leg is done — `delivered`/
+              // `distributing`/`completed` are all "finished" from a rider's
+              // point of view, even though the consumer still has work left.
+              final active = mine
+                  .where((p) => p.status == PickupStatusModel.scheduled || p.status == PickupStatusModel.enRoute || p.status == PickupStatusModel.pickedUp)
+                  .toList();
+              final completed = mine
+                  .where((p) => p.status == PickupStatusModel.delivered || p.status == PickupStatusModel.distributing || p.status == PickupStatusModel.completed)
+                  .toList();
               rider.ensureTracking(mine);
 
               return Column(
@@ -103,6 +115,15 @@ class RiderDashboard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if (pending.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    Text(t.riderAssignmentRequests, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+                    const SizedBox(height: 12),
+                    ...pending.map((p) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _AssignmentRequestCard(pickup: p),
+                        )),
+                  ],
                   const SizedBox(height: 24),
                   Text(t.riderAvailablePickups, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
                   const SizedBox(height: 12),
@@ -124,6 +145,8 @@ class RiderDashboard extends StatelessWidget {
                           child: _MyDeliveryCard(pickup: p),
                         )),
                 ],
+              );
+                },
               );
             },
           );
@@ -250,17 +273,86 @@ class _AvailablePickupCard extends StatelessWidget {
   }
 }
 
+class _AssignmentRequestCard extends StatelessWidget {
+  final PickupModel pickup;
+  const _AssignmentRequestCard({required this.pickup});
+
+  Future<void> _respond(BuildContext context, bool accept) async {
+    final t = context.l10n;
+    final rider = context.read<RiderProvider>();
+    if (accept) {
+      await rider.acceptAssignment(pickup.id);
+    } else {
+      await rider.declineAssignment(pickup.id);
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(accept ? t.riderAssignmentAcceptedMsg : t.riderAssignmentDeclinedMsg),
+      backgroundColor: accept ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEA580C), width: 1.5),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            pickup.listingTitle?.isNotEmpty == true ? pickup.listingTitle! : t.riderPickupFrom(pickup.donorName ?? ''),
+            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)),
+          ),
+          const SizedBox(height: 4),
+          Text(t.riderAssignedDirectly, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+          const SizedBox(height: 6),
+          Row(children: [
+            Icon(Icons.location_on_outlined, size: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+            const SizedBox(width: 4),
+            Expanded(child: Text(pickup.address?.isNotEmpty == true ? pickup.address! : t.riderNoAddress, style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), overflow: TextOverflow.ellipsis)),
+          ]),
+          const SizedBox(height: 12),
+          Row(children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => _respond(context, false),
+                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFDC2626), side: const BorderSide(color: Color(0xFFDC2626))),
+                child: Text(t.riderDecline, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => _respond(context, true),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0),
+                child: Text(t.reqAccept, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
+}
+
 class _MyDeliveryCard extends StatelessWidget {
   final PickupModel pickup;
   const _MyDeliveryCard({required this.pickup});
 
   Future<void> _advance(BuildContext context) async {
-    final rider = context.read<RiderProvider>();
     if (pickup.status == PickupStatusModel.scheduled) {
-      await rider.markEnRoute(pickup.id);
-    } else if (pickup.status == PickupStatusModel.enRoute) {
-      await rider.markCompleted(pickup.id);
+      await context.read<RiderProvider>().markEnRoute(pickup.id);
     }
+    if (!context.mounted) return;
+    await showRiderNavigation(context, pickup.id);
   }
 
   @override
@@ -269,10 +361,11 @@ class _MyDeliveryCard extends StatelessWidget {
     final t = context.l10n;
     final (statusLabel, variant) = switch (pickup.status) {
       PickupStatusModel.enRoute => (t.pickupStatusEnRoute, BadgeVariant.orange),
+      PickupStatusModel.pickedUp => (t.pickupStatusPickedUp, BadgeVariant.purple),
       PickupStatusModel.completed => (t.pickupStatusCompleted, BadgeVariant.green),
       _ => (t.riderStatusClaimed, BadgeVariant.blue),
     };
-    final actionLabel = pickup.status == PickupStatusModel.enRoute ? t.riderMarkDelivered : t.riderStartDelivery;
+    final actionLabel = pickup.status == PickupStatusModel.scheduled ? t.riderStartDelivery : t.riderResumeNavigation;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -321,7 +414,7 @@ class _MyDeliveryCard extends StatelessWidget {
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: () => _advance(context),
-                icon: Icon(pickup.status == PickupStatusModel.enRoute ? Icons.flag_outlined : Icons.directions_car_outlined, size: 15),
+                icon: Icon(pickup.status == PickupStatusModel.scheduled ? Icons.directions_car_outlined : Icons.navigation_outlined, size: 15),
                 label: Text(actionLabel, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0),
               ),

@@ -10,6 +10,62 @@ import '../../providers/consumer_provider.dart';
 import '../../providers/donor_provider.dart';
 import '../../widgets/ui/block_button.dart';
 import '../../l10n/l10n_ext.dart';
+import 'pickup_coordination.dart' show showAssignRiderSheet;
+
+/// After accepting a direct donation, the consumer picks how they'll receive
+/// it — mirrors the same three-way choice available from Pickup Coordination
+/// for a claimed listing (self pickup / assign a specific rider / leave it
+/// in the open pool for any rider to claim).
+void _showDeliveryChoiceSheet(BuildContext rootContext, String pickupId) {
+  final t = rootContext.l10n;
+  showModalBottomSheet(
+    context: rootContext,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (sheetContext) {
+      final isDark = Theme.of(sheetContext).brightness == Brightness.dark;
+      return Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(t.reqDeliveryChoiceTitle, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.directions_walk, color: Color(0xFF16A34A)),
+                title: Text(t.reqSelfPickupOption, style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212))),
+                onTap: () async {
+                  await rootContext.read<ConsumerProvider>().chooseSelfPickup(pickupId);
+                  if (sheetContext.mounted) Navigator.pop(sheetContext);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.person_add_alt_outlined, color: Color(0xFF2563EB)),
+                title: Text(t.reqAssignRiderOption, style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212))),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  showAssignRiderSheet(rootContext, pickupId);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.groups_outlined, color: Color(0xFFEA580C)),
+                title: Text(t.reqPostToPoolOption, style: TextStyle(fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212))),
+                onTap: () => Navigator.pop(sheetContext),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
 class RequestStatusTracker extends StatelessWidget {
   const RequestStatusTracker({super.key});
@@ -140,7 +196,12 @@ class _DirectOffersSection extends StatelessWidget {
                   Row(children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () => context.read<ConsumerProvider>().respondDirectDonation(d.docId!, true),
+                        onPressed: () async {
+                          final pickupId = await context.read<ConsumerProvider>().respondDirectDonation(d.docId!, true);
+                          if (pickupId != null && context.mounted) {
+                            _showDeliveryChoiceSheet(context, pickupId);
+                          }
+                        },
                         icon: const Icon(Icons.check, size: 15),
                         label: Text(t.reqAccept, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
                         style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0),

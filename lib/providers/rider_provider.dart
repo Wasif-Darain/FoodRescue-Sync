@@ -34,7 +34,9 @@ class RiderProvider extends ChangeNotifier {
             .toList(),
       );
 
-  /// Pickups this rider has claimed, regardless of status.
+  /// Pickups this rider has claimed or accepted, regardless of status.
+  /// Excludes directly-assigned pickups the rider hasn't accepted yet —
+  /// those live in [pendingAssignmentsStream] until acted on.
   Stream<List<PickupModel>> get myDeliveriesStream {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return Stream.value(const []);
@@ -42,7 +44,46 @@ class RiderProvider extends ChangeNotifier {
         .collection('pickups')
         .where('volunteerDriverId', isEqualTo: uid)
         .snapshots()
-        .map((snap) => snap.docs.map((d) => PickupModel.fromFirestore(d)).toList());
+        .map((snap) => snap.docs.map((d) => PickupModel.fromFirestore(d)).where((p) => !p.assignmentPending).toList());
+  }
+
+  /// Pickups a consumer directly assigned to this rider that are still
+  /// awaiting the rider's accept/decline. Filters `assignmentPending`
+  /// client-side (rather than as a second `where` clause) to avoid requiring
+  /// a Firestore composite index, matching [availablePickupsStream]'s
+  /// approach to the same problem.
+  Stream<List<PickupModel>> get pendingAssignmentsStream {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return Stream.value(const []);
+    return _firestore
+        .collection('pickups')
+        .where('volunteerDriverId', isEqualTo: uid)
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => PickupModel.fromFirestore(d)).where((p) => p.assignmentPending).toList());
+  }
+
+  /// Accepts a directly-assigned pickup — it moves from Assignment Requests
+  /// into the rider's active deliveries.
+  Future<void> acceptAssignment(String pickupId) async {
+    await _firestore.collection('pickups').doc(pickupId).update({'assignmentPending': false});
+  }
+
+  /// Declines a directly-assigned pickup, returning it to the open pool for
+  /// any rider to self-claim.
+  Future<void> declineAssignment(String pickupId) async {
+    final ref = _firestore.collection('pickups').doc(pickupId);
+    final snap = await ref.get();
+    final consumerId = snap.data()?['consumerId'] as String?;
+    await ref.update({'volunteerDriverId': FieldValue.delete(), 'assignmentPending': false});
+    if (consumerId != null && consumerId.isNotEmpty) {
+      await _firestore.collection('notifications').add({
+        'recipientUid': consumerId,
+        'payloadType': 'pickup',
+        'message': 'The rider declined your assignment — it was posted back to the open pool.',
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
   }
 
   /// Atomically claims [pickupId] for the current rider, failing if another

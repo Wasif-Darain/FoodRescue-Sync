@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -8,15 +9,17 @@ import '../../widgets/ui/app_badge.dart';
 import '../../widgets/ui/rating_stars.dart';
 import '../../widgets/ui/countdown_timer.dart';
 import '../../widgets/ui/detail_sheet.dart';
+import '../../widgets/ui/photo_picker_row.dart';
 import '../../models/pickup.dart';
 import '../../providers/consumer_provider.dart';
 import '../../widgets/ui/block_button.dart';
 import '../../widgets/ui/live_tracking_map.dart';
+import '../../widgets/ui/rider_navigation_map.dart';
 import '../../l10n/l10n_ext.dart';
 
 /// Bottom sheet listing every registered rider so a consumer can directly
 /// assign one to [pickupId] instead of leaving it for self-claim.
-void _showAssignRiderSheet(BuildContext rootContext, String pickupId) {
+void showAssignRiderSheet(BuildContext rootContext, String pickupId) {
   final t = rootContext.l10n;
   final consumer = rootContext.read<ConsumerProvider>();
   showModalBottomSheet(
@@ -92,6 +95,90 @@ void _showAssignRiderSheet(BuildContext rootContext, String pickupId) {
   );
 }
 
+/// Bottom sheet requiring a proof-of-distribution photo before [pickupId]
+/// can be marked fully complete, so the donor has something concrete to
+/// verify the distribution actually happened.
+void _showDistributionPhotoSheet(BuildContext rootContext, String pickupId) {
+  showModalBottomSheet(
+    context: rootContext,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (sheetContext) => _DistributionPhotoSheet(pickupId: pickupId),
+  );
+}
+
+class _DistributionPhotoSheet extends StatefulWidget {
+  final String pickupId;
+  const _DistributionPhotoSheet({required this.pickupId});
+
+  @override
+  State<_DistributionPhotoSheet> createState() => _DistributionPhotoSheetState();
+}
+
+class _DistributionPhotoSheetState extends State<_DistributionPhotoSheet> {
+  Uint8List? _photo;
+  bool _submitting = false;
+
+  Future<void> _submit() async {
+    final t = context.l10n;
+    if (_photo == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.distributionPhotoRequiredError)));
+      return;
+    }
+    setState(() => _submitting = true);
+    try {
+      final consumer = context.read<ConsumerProvider>();
+      final url = await consumer.uploadDistributionPhoto(_photo!);
+      await consumer.markDistributionComplete(widget.pickupId, url);
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.distributionCompleteSnack), backgroundColor: const Color(0xFF16A34A)));
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.distributionUploadError)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : Colors.white, borderRadius: const BorderRadius.vertical(top: Radius.circular(20))),
+        padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(t.distributionSubmitTitle, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
+              const SizedBox(height: 6),
+              Text(t.distributionSubmitBody, style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+              const SizedBox(height: 16),
+              PhotoPickerRow(imageBytes: _photo, onChanged: (bytes) => setState(() => _photo = bytes)),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _submitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 14)),
+                  child: _submitting
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Text(t.distributionSubmitButton, style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class PickupCoordination extends StatelessWidget {
   const PickupCoordination({super.key});
 
@@ -115,6 +202,7 @@ class PickupCoordination extends StatelessWidget {
       builder: (context, snapshot) {
         final pickups = snapshot.data ?? [];
         final t = context.l10n;
+        context.read<ConsumerProvider>().ensureSelfTracking(pickups);
 
         return AppLayout(
           title: t.pickupTitle,
@@ -125,7 +213,7 @@ class PickupCoordination extends StatelessWidget {
             children: [
               IntrinsicHeight(
                 child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  for (final s in [PickupStatusModel.scheduled, PickupStatusModel.enRoute, PickupStatusModel.completed]) ...[
+                  for (final s in [PickupStatusModel.scheduled, PickupStatusModel.enRoute, PickupStatusModel.pickedUp, PickupStatusModel.completed]) ...[
                     if (s != PickupStatusModel.scheduled) const SizedBox(width: 12),
                     Expanded(child: _HoverScale(
                       child: _PickupStat(
@@ -180,10 +268,13 @@ class _PickupStat extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final t = context.l10n;
     final (label, icon, color) = switch (status) {
-      PickupStatusModel.scheduled => (t.pickupStatusScheduled, Icons.schedule, const Color(0xFF2563EB)),
-      PickupStatusModel.enRoute   => (t.pickupStatusEnRoute,  Icons.directions_car, const Color(0xFFEA580C)),
-      PickupStatusModel.completed => (t.pickupStatusCompleted, Icons.check_circle_outline, const Color(0xFF16A34A)),
-      PickupStatusModel.cancelled => (t.pickupStatusCancelled, Icons.cancel_outlined, const Color(0xFFDC2626)),
+      PickupStatusModel.scheduled   => (t.pickupStatusScheduled, Icons.schedule, const Color(0xFF2563EB)),
+      PickupStatusModel.enRoute     => (t.pickupStatusEnRoute,  Icons.directions_car, const Color(0xFFEA580C)),
+      PickupStatusModel.pickedUp    => (t.pickupStatusPickedUp, Icons.inventory_2_outlined, const Color(0xFF7C3AED)),
+      PickupStatusModel.delivered   => (t.pickupStatusDelivered, Icons.inventory_outlined, const Color(0xFF0D9488)),
+      PickupStatusModel.distributing => (t.pickupStatusDistributing, Icons.volunteer_activism_outlined, const Color(0xFFB45309)),
+      PickupStatusModel.completed   => (t.pickupStatusCompleted, Icons.check_circle_outline, const Color(0xFF16A34A)),
+      PickupStatusModel.cancelled   => (t.pickupStatusCancelled, Icons.cancel_outlined, const Color(0xFFDC2626)),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
@@ -228,10 +319,13 @@ class _PickupCard extends StatelessWidget {
     final itemTitle = pickup.listingTitle?.isNotEmpty == true ? pickup.listingTitle! : matched?.title ?? '';
     final t = context.l10n;
     final (label, variant, statusColor) = switch (pickup.status) {
-      PickupStatusModel.scheduled => (t.pickupStatusScheduled, BadgeVariant.blue,   const Color(0xFF2563EB)),
-      PickupStatusModel.enRoute   => (t.pickupStatusEnRoute,  BadgeVariant.orange, const Color(0xFFEA580C)),
-      PickupStatusModel.completed => (t.pickupStatusCompleted, BadgeVariant.green,  const Color(0xFF16A34A)),
-      PickupStatusModel.cancelled => (t.pickupStatusCancelled, BadgeVariant.red, const Color(0xFFDC2626)),
+      PickupStatusModel.scheduled    => (t.pickupStatusScheduled, BadgeVariant.blue,   const Color(0xFF2563EB)),
+      PickupStatusModel.enRoute      => (t.pickupStatusEnRoute,  BadgeVariant.orange, const Color(0xFFEA580C)),
+      PickupStatusModel.pickedUp     => (t.pickupStatusPickedUp, BadgeVariant.purple, const Color(0xFF7C3AED)),
+      PickupStatusModel.delivered    => (t.pickupStatusDelivered, BadgeVariant.teal, const Color(0xFF0D9488)),
+      PickupStatusModel.distributing => (t.pickupStatusDistributing, BadgeVariant.amber, const Color(0xFFB45309)),
+      PickupStatusModel.completed    => (t.pickupStatusCompleted, BadgeVariant.green,  const Color(0xFF16A34A)),
+      PickupStatusModel.cancelled    => (t.pickupStatusCancelled, BadgeVariant.red, const Color(0xFFDC2626)),
     };
 
     return InkWell(
@@ -283,6 +377,10 @@ class _PickupCard extends StatelessWidget {
           const SizedBox(height: 4),
           _InfoRow(icon: Icons.storefront_outlined, label: t.pickupFromSender(senderName)),
         ],
+        if (pickup.isSelfPickup) ...[
+          const SizedBox(height: 4),
+          _InfoRow(icon: Icons.directions_walk, label: t.pickupSelfBadge),
+        ],
         const SizedBox(height: 12),
         _InfoRow(icon: Icons.location_on_outlined, label: pickup.address ?? t.pickupNoAddress),
         if (pickup.scheduledTime != null) ...[
@@ -290,13 +388,67 @@ class _PickupCard extends StatelessWidget {
           _InfoRow(icon: Icons.access_time, label:
             '${pickup.scheduledTime!.hour.toString().padLeft(2, '0')}:${pickup.scheduledTime!.minute.toString().padLeft(2, '0')} — ${pickup.scheduledTime!.day}/${pickup.scheduledTime!.month}/${pickup.scheduledTime!.year}'),
         ],
-        if (pickup.status == PickupStatusModel.scheduled) ...[
+        if (pickup.isSelfPickup && (pickup.status == PickupStatusModel.scheduled || pickup.status == PickupStatusModel.enRoute)) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final consumer = context.read<ConsumerProvider>();
+                if (pickup.status == PickupStatusModel.scheduled) {
+                  await consumer.markSelfEnRoute(pickup.id);
+                }
+                if (!context.mounted) return;
+                await showRiderNavigation(context, pickup.id, selfPickup: true);
+              },
+              icon: Icon(pickup.status == PickupStatusModel.scheduled ? Icons.directions_walk : Icons.navigation_outlined, size: 15),
+              label: Text(
+                pickup.status == PickupStatusModel.scheduled ? t.selfPickupStart : t.riderResumeNavigation,
+                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+              ),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0),
+            ),
+          ),
+        ],
+        // The food has been received — either the consumer collected it
+        // themselves, or a rider just handed it off — so it's time to start
+        // distributing it to the community.
+        if ((pickup.isSelfPickup && pickup.status == PickupStatusModel.pickedUp) ||
+            (!pickup.isSelfPickup && pickup.status == PickupStatusModel.delivered)) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                await context.read<ConsumerProvider>().startDistribution(pickup.id);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.pickupDistributionStartedSnack)));
+              },
+              icon: const Icon(Icons.volunteer_activism_outlined, size: 15),
+              label: Text(t.pickupStartDistribution, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB45309), foregroundColor: Colors.white, elevation: 0),
+            ),
+          ),
+        ],
+        if (pickup.status == PickupStatusModel.distributing) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _showDistributionPhotoSheet(context, pickup.id),
+              icon: const Icon(Icons.photo_camera_outlined, size: 15),
+              label: Text(t.selfPickupMarkDistributionComplete, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white, elevation: 0),
+            ),
+          ),
+        ],
+        if (pickup.status == PickupStatusModel.scheduled && !pickup.isSelfPickup) ...[
           const SizedBox(height: 12),
           if (pickup.volunteerDriverId == null || pickup.volunteerDriverId!.isEmpty)
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => _showAssignRiderSheet(context, pickup.id),
+                onPressed: () => showAssignRiderSheet(context, pickup.id),
                 icon: const Icon(Icons.person_add_alt_outlined, size: 16),
                 label: Text(t.pickupAssignRider),
                 style: OutlinedButton.styleFrom(
@@ -318,7 +470,7 @@ class _PickupCard extends StatelessWidget {
                     Row(children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => _showAssignRiderSheet(context, pickup.id),
+                          onPressed: () => showAssignRiderSheet(context, pickup.id),
                           style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF2563EB), side: const BorderSide(color: Color(0xFF2563EB))),
                           child: Text(t.pickupReassignRider, style: const TextStyle(fontSize: 12)),
                         ),
@@ -343,7 +495,7 @@ class _PickupCard extends StatelessWidget {
         ],
         if (pickup.volunteerDriverId != null &&
             pickup.volunteerDriverId!.isNotEmpty &&
-            (pickup.status == PickupStatusModel.scheduled || pickup.status == PickupStatusModel.enRoute)) ...[
+            (pickup.status == PickupStatusModel.enRoute || pickup.status == PickupStatusModel.pickedUp)) ...[
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,

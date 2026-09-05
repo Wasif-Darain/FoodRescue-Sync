@@ -233,12 +233,15 @@ class ConsumerProvider extends ChangeNotifier {
         );
   }
 
-  Future<void> respondDirectDonation(String docId, bool accept) async {
+  /// Responds to a direct donation offer. On acceptance, creates the pickup
+  /// and returns its id so the caller can immediately ask the consumer how
+  /// they want to receive it (self pickup / assign a rider / open pool).
+  Future<String?> respondDirectDonation(String docId, bool accept) async {
     final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null) return null;
     final ref = _firestore.collection('direct_donations').doc(docId);
     final snap = await ref.get();
-    if (!snap.exists) return;
+    if (!snap.exists) return null;
     final data = snap.data() as Map<String, dynamic>;
     final donorId = data['donorId'] as String?;
     final itemName = data['itemName'] as String? ?? 'a donation';
@@ -246,7 +249,7 @@ class ConsumerProvider extends ChangeNotifier {
     final scheduled = data['scheduledTime'];
     if (accept) {
       await ref.update({'status': 'accepted'});
-      await _firestore.collection('pickups').add({
+      final pickupRef = await _firestore.collection('pickups').add({
         'consumerId': uid,
         'donorId': donorId,
         'requestId': '',
@@ -267,6 +270,7 @@ class ConsumerProvider extends ChangeNotifier {
         payloadType: 'request',
         message: 'A consumer accepted your direct donation: $itemName.',
       );
+      return pickupRef.id;
     } else {
       await ref.update({'status': 'cancelled'});
       await _notifyUser(
@@ -274,6 +278,7 @@ class ConsumerProvider extends ChangeNotifier {
         payloadType: 'request',
         message: 'A consumer rejected your direct donation: $itemName.',
       );
+      return null;
     }
   }
 
@@ -471,7 +476,10 @@ class ConsumerProvider extends ChangeNotifier {
 
   /// Directly assigns [riderUid] to [pickupId] instead of leaving it in the
   /// open pool for any rider to self-claim. Only the owning consumer can do
-  /// this, and only before the rider has started (still `scheduled`).
+  /// this, and only before the rider has started (still `scheduled`). The
+  /// rider doesn't get pulled onto the trip immediately — `assignmentPending`
+  /// puts it in their "Assignment Requests" list until they accept or
+  /// decline it (see [RiderProvider.acceptAssignment]/[declineAssignment]).
   Future<String?> assignRider(String pickupId, String riderUid) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return 'Not signed in.';
@@ -485,13 +493,13 @@ class ConsumerProvider extends ChangeNotifier {
         if (data['status'] != PickupStatusModel.scheduled.name) {
           throw StateError('This pickup already has a rider on the way.');
         }
-        tx.update(ref, {'volunteerDriverId': riderUid});
+        tx.update(ref, {'volunteerDriverId': riderUid, 'assignmentPending': true, 'deliveryMethod': null});
       });
       await _notifyUser(
         riderUid,
         payloadType: 'pickup',
         listingId: pickupId,
-        message: 'You were assigned a pickup to deliver.',
+        message: 'You were assigned a pickup — accept or decline it from your dashboard.',
       );
       return null;
     } catch (_) {
@@ -507,7 +515,18 @@ class ConsumerProvider extends ChangeNotifier {
     final ref = _firestore.collection('pickups').doc(pickupId);
     final snap = await ref.get();
     if (!snap.exists || snap.data()?['consumerId'] != uid) return;
-    await ref.update({'volunteerDriverId': FieldValue.delete()});
+    await ref.update({'volunteerDriverId': FieldValue.delete(), 'assignmentPending': false});
+  }
+
+  /// Marks [pickupId] as a self-pickup: the consumer collects it themselves,
+  /// with no rider involved at all.
+  Future<void> chooseSelfPickup(String pickupId) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+    final ref = _firestore.collection('pickups').doc(pickupId);
+    final snap = await ref.get();
+    if (!snap.exists || snap.data()?['consumerId'] != uid) return;
+    await ref.update({'deliveryMethod': 'self'});
   }
 
   // --- Self-pickup GPS broadcast + status transitions -----------------
