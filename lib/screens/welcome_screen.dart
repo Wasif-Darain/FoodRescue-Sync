@@ -73,7 +73,10 @@ class WelcomeScreen extends StatelessWidget {
                                 icon: Icons.restaurant_menu,
                                 title: t.welcomeDonor,
                                 subtitle: t.welcomeDonorSubtitle,
-                                features: [t.welcomeFeatureInventory, t.navDonations],
+                                features: [
+                                  t.welcomeFeatureInventory,
+                                  t.navDonations,
+                                ],
                                 accentColor: const Color(0xFF16A34A),
                                 radius: const BorderRadius.only(
                                   topLeft: Radius.circular(32),
@@ -170,7 +173,10 @@ class _HeroVisual extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseFirestore.instance.collection('stats').doc('summary').snapshots(),
+                  stream: FirebaseFirestore.instance
+                      .collection('stats')
+                      .doc('summary')
+                      .snapshots(),
                   builder: (context, snapshot) {
                     final data = snapshot.data?.data();
                     String field(String key) {
@@ -182,11 +188,23 @@ class _HeroVisual extends StatelessWidget {
 
                     return Row(
                       children: [
-                        _StatPill(icon: '🍲', value: field('totalWeightKg'), label: t.welcomeMealsPerDay),
+                        _StatPill(
+                          icon: '🍲',
+                          value: field('totalWeightKg'),
+                          label: t.welcomeMealsPerDay,
+                        ),
                         const SizedBox(width: 8),
-                        _StatPill(icon: '🤝', value: field('donorsCount'), label: t.welcomeDonors),
+                        _StatPill(
+                          icon: '🤝',
+                          value: field('donorsCount'),
+                          label: t.welcomeDonors,
+                        ),
                         const SizedBox(width: 8),
-                        _StatPill(icon: '❤️', value: field('partnersCount'), label: t.welcomePartners),
+                        _StatPill(
+                          icon: '❤️',
+                          value: field('partnersCount'),
+                          label: t.welcomePartners,
+                        ),
                       ],
                     );
                   },
@@ -429,65 +447,74 @@ class _ModeCard extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.28),
-                    borderRadius: BorderRadius.circular(13),
+            // A card this size normally has room to push the text toward the
+            // bottom, but on short/wide viewports (e.g. a wide browser
+            // window) the content can outgrow the available height. Clip
+            // gracefully via a non-scrolling SingleChildScrollView instead of
+            // throwing a render overflow.
+            child: SingleChildScrollView(
+              physics: const NeverScrollableScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.28),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 22),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 22),
-                ),
-                const Spacer(),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                  const SizedBox(height: 10),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.88),
-                    fontWeight: FontWeight.w500,
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.white.withValues(alpha: 0.88),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 5,
-                  runSpacing: 5,
-                  children: features
-                      .map(
-                        (f) => Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.22),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            f,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 5,
+                    runSpacing: 5,
+                    children: features
+                        .map(
+                          (f) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.22),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              f,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ],
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
