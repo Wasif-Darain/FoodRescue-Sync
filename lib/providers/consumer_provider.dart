@@ -334,6 +334,7 @@ class ConsumerProvider extends ChangeNotifier {
     int claimQuantity, {
     DateTime? scheduledTime,
     String? deliveryAddress,
+    bool selfPickup = false,
   }) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return false;
@@ -392,6 +393,7 @@ class ConsumerProvider extends ChangeNotifier {
         'latitude': lat,
         'longitude': lng,
         'address': deliveryAddress,
+        'deliveryMethod': selfPickup ? 'self' : null,
         'createdAt': FieldValue.serverTimestamp(),
       });
       final donorId = listingData['donorId'] as String?;

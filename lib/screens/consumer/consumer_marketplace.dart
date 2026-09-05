@@ -69,7 +69,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                 description: l.description,
                 price: l.price,
                 quantity: l.quantity.toInt(),
-                listingType: ListingType.donation,
+                listingType: l.listingType,
                 pickupStart: l.claimDeadline ?? now,
                 pickupEnd: l.claimDeadline ?? now.add(const Duration(hours: 4)),
                 latitude: l.latitude,
@@ -86,7 +86,8 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                   _selectedCategory == 'All' || l.category == _selectedCategory;
               final typeMatch =
                   _filter == 'All' ||
-                  (_filter == 'Free' && l.listingType == ListingType.donation);
+                  (_filter == 'Free' && l.listingType == ListingType.donation) ||
+                  (_filter == 'Sale' && l.listingType == ListingType.flashSale);
               return catMatch &&
                   typeMatch &&
                   l.pickupEnd.isAfter(now) &&
@@ -605,8 +606,12 @@ class _ListingCard extends StatelessWidget {
                       child: Row(
                         children: [
                           AppBadge(
-                            label: t.commonFree,
-                            variant: BadgeVariant.green,
+                            label: listing.listingType == ListingType.donation
+                                ? t.commonFree
+                                : '৳${listing.price.toStringAsFixed(0)}',
+                            variant: listing.listingType == ListingType.donation
+                                ? BadgeVariant.green
+                                : BadgeVariant.orange,
                           ),
                           if (listing.imageCount > 1) ...[
                             const SizedBox(width: 6),
@@ -898,6 +903,7 @@ class _ClaimActions extends StatefulWidget {
 
 class _ClaimActionsState extends State<_ClaimActions> {
   String? _deliveryAddress;
+  bool _selfPickup = false;
 
   @override
   void initState() {
@@ -905,7 +911,40 @@ class _ClaimActionsState extends State<_ClaimActions> {
     _deliveryAddress = context.read<AuthProvider>().address;
   }
 
+  /// For a Flash Sale item, a mock "confirm payment" step stands in for a
+  /// real payment gateway (there's no backend for one here) — the consumer
+  /// still has to explicitly confirm the charge before the claim goes
+  /// through, rather than a free claim silently charging nothing.
+  Future<bool> _confirmPaymentIfNeeded() async {
+    if (widget.listing.listingType != ListingType.flashSale) return true;
+    final t = context.l10n;
+    final amount = widget.listing.price.toStringAsFixed(0);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(t.mktConfirmPaymentTitle),
+        content: Text(t.mktConfirmPaymentBody(amount)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(t.commonCancel)),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white),
+            child: Text(t.mktPayNow),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return false;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(t.mktPaymentConfirmedMsg(amount)),
+      backgroundColor: const Color(0xFF16A34A),
+    ));
+    return true;
+  }
+
   Future<void> _claim({DateTime? scheduledTime}) async {
+    if (!await _confirmPaymentIfNeeded()) return;
+    if (!mounted) return;
     final consumer = context.read<ConsumerProvider>();
     final t = context.l10n;
     final success = await consumer.claimListing(
@@ -913,6 +952,7 @@ class _ClaimActionsState extends State<_ClaimActions> {
       widget.listing.quantity,
       scheduledTime: scheduledTime,
       deliveryAddress: _deliveryAddress,
+      selfPickup: _selfPickup,
     );
     if (!mounted) return;
     Navigator.pop(context);
@@ -942,6 +982,35 @@ class _ClaimActionsState extends State<_ClaimActions> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          t.mktDeliveryMethodLabel,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(children: [
+          Expanded(
+            child: _DeliveryMethodChip(
+              label: t.mktSelfPickupOption,
+              icon: Icons.directions_walk,
+              selected: _selfPickup,
+              onTap: () => setState(() => _selfPickup = true),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _DeliveryMethodChip(
+              label: t.mktRiderOption,
+              icon: Icons.moped_outlined,
+              selected: !_selfPickup,
+              onTap: () => setState(() => _selfPickup = false),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 14),
         Text(
           t.mktYourAddress,
           style: TextStyle(
@@ -1041,6 +1110,40 @@ class _ClaimActionsState extends State<_ClaimActions> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DeliveryMethodChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  const _DeliveryMethodChip({required this.label, required this.icon, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: selected ? const Color(0xFF16A34A) : Colors.transparent,
+          border: Border.all(color: selected ? const Color(0xFF16A34A) : (isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2))),
+        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 16, color: selected ? Colors.white : (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: selected ? Colors.white : (isDark ? Colors.white : const Color(0xFF121212))),
+          ),
+        ]),
+      ),
     );
   }
 }
