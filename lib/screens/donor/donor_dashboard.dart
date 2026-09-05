@@ -11,6 +11,8 @@ import '../../widgets/ui/user_badge.dart';
 import '../../widgets/ui/countdown_timer.dart';
 import '../../widgets/ui/detail_sheet.dart';
 import '../../widgets/ui/block_button.dart';
+import '../../widgets/ui/report_button.dart';
+import '../../widgets/ui/rating_stars.dart';
 import '../../models/donation_log.dart';
 import '../../models/models.dart';
 import '../../models/pickup.dart';
@@ -51,7 +53,20 @@ class DonorDashboard extends StatelessWidget {
             .snapshots()
             .map((snap) => snap.docs
                 .map((doc) => PickupModel.fromFirestore(doc))
-                .where((p) => p.status == PickupStatusModel.scheduled || p.status == PickupStatusModel.enRoute)
+                .where((p) => p.status != PickupStatusModel.completed && p.status != PickupStatusModel.cancelled)
+                .toList());
+    final recentlyCompletedPickupsStream = myUid.isEmpty
+        ? Stream<List<PickupModel>>.value([])
+        : FirebaseFirestore.instance
+            .collection('pickups')
+            .where('donorId', isEqualTo: myUid)
+            .snapshots()
+            .map((snap) => (snap.docs
+                    .map((doc) => PickupModel.fromFirestore(doc))
+                    .where((p) => p.status == PickupStatusModel.completed && p.distributionPhotoUrl != null)
+                    .toList()
+                  ..sort((a, b) => (b.completedAt ?? DateTime(0)).compareTo(a.completedAt ?? DateTime(0))))
+                .take(5)
                 .toList());
 
     return StreamBuilder<List<InventoryItem>>(
@@ -177,6 +192,27 @@ class DonorDashboard extends StatelessWidget {
                                   child: Column(
                                     children: activePickups
                                         .map((p) => _ActivePickupRow(pickup: p))
+                                        .toList(),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                            );
+                          },
+                        ),
+                        StreamBuilder<List<PickupModel>>(
+                          stream: recentlyCompletedPickupsStream,
+                          builder: (context, completedSnap) {
+                            final recentlyCompleted = completedSnap.data ?? [];
+                            if (recentlyCompleted.isEmpty) return const SizedBox.shrink();
+                            return Column(
+                              children: [
+                                _SectionCard(
+                                  title: t.donorDashVerifyDistribution,
+                                  icon: Icons.fact_check_outlined,
+                                  child: Column(
+                                    children: recentlyCompleted
+                                        .map((p) => _CompletedPickupRow(pickup: p))
                                         .toList(),
                                   ),
                                 ),
@@ -454,8 +490,12 @@ class _ActivePickupRow extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final t = context.l10n;
     final hasRider = pickup.volunteerDriverId != null && pickup.volunteerDriverId!.isNotEmpty;
+    final canTrack = hasRider || pickup.isSelfPickup;
     final (statusLabel, variant) = switch (pickup.status) {
-      PickupStatusModel.enRoute => (t.pickupStatusEnRoute, BadgeVariant.orange),
+      PickupStatusModel.enRoute      => (t.pickupStatusEnRoute, BadgeVariant.orange),
+      PickupStatusModel.pickedUp     => (t.pickupStatusPickedUp, BadgeVariant.purple),
+      PickupStatusModel.delivered    => (t.pickupStatusDelivered, BadgeVariant.teal),
+      PickupStatusModel.distributing => (t.pickupStatusDistributing, BadgeVariant.amber),
       _ => (t.pickupStatusScheduled, BadgeVariant.blue),
     };
     return Padding(
@@ -487,7 +527,7 @@ class _ActivePickupRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           AppBadge(label: statusLabel, variant: variant),
-          if (hasRider) ...[
+          if (canTrack) ...[
             const SizedBox(width: 8),
             OutlinedButton(
               onPressed: () => showLiveTrackingMap(context, pickup.id),
@@ -499,6 +539,99 @@ class _ActivePickupRow extends StatelessWidget {
               ),
               child: Text(t.trackButton, style: const TextStyle(fontSize: 11.5)),
             ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// A completed pickup whose distribution proof photo is in — lets the donor
+/// open the photo full-screen, rate the consumer, or block/report them if
+/// the proof doesn't match what was claimed.
+class _CompletedPickupRow extends StatelessWidget {
+  final PickupModel pickup;
+  const _CompletedPickupRow({required this.pickup});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
+    final consumerId = pickup.consumerId ?? '';
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF262626) : const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GestureDetector(
+                onTap: () => showDialog(
+                  context: context,
+                  builder: (_) => Dialog(
+                    backgroundColor: Colors.transparent,
+                    child: InteractiveViewer(child: Image.network(pickup.distributionPhotoUrl!)),
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(pickup.distributionPhotoUrl!, width: 64, height: 64, fit: BoxFit.cover),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pickup.listingTitle?.isNotEmpty == true ? pickup.listingTitle! : t.pickupHashId(pickup.id),
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (consumerId.isNotEmpty)
+                      StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                        stream: FirebaseFirestore.instance.collection('users').doc(consumerId).snapshots(),
+                        builder: (context, snap) {
+                          final name = snap.data?.data()?['name'] as String? ?? '…';
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(t.pickupAssignedTo(name), style: const TextStyle(fontSize: 11, color: Color(0xFF757575))),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          RatingStars(reviewLabel: t.donorRateConsumer),
+          if (consumerId.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(children: [
+              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: FirebaseFirestore.instance.collection('users').doc(consumerId).snapshots(),
+                builder: (context, snap) {
+                  final name = snap.data?.data()?['name'] as String? ?? '';
+                  return BlockButton(targetUid: consumerId, targetLabel: name);
+                },
+              ),
+              const SizedBox(width: 8),
+              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: FirebaseFirestore.instance.collection('users').doc(consumerId).snapshots(),
+                builder: (context, snap) {
+                  final name = snap.data?.data()?['name'] as String? ?? '';
+                  return ReportButton(targetUid: consumerId, targetLabel: name, pickupId: pickup.id);
+                },
+              ),
+            ]),
           ],
         ],
       ),
