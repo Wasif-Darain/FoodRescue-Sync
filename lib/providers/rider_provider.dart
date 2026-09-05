@@ -74,11 +74,21 @@ class RiderProvider extends ChangeNotifier {
     await startTracking(pickupId);
   }
 
+  /// Rider has collected the order from the donor — the map should now
+  /// route them to the delivery destination instead of the pickup point.
+  /// Location broadcast keeps running unchanged.
+  Future<void> markPickedUp(String pickupId) async {
+    await _firestore.collection('pickups').doc(pickupId).update({'status': PickupStatusModel.pickedUp.name});
+  }
+
+  /// Rider has handed the order off to the consumer — the rider's own leg is
+  /// done here. The consumer takes over from this point: they still need to
+  /// distribute it to the community and mark that complete before the
+  /// pickup is fully `completed`.
   Future<void> markCompleted(String pickupId) async {
     stopTracking(pickupId);
     await _firestore.collection('pickups').doc(pickupId).update({
-      'status': PickupStatusModel.completed.name,
-      'completedAt': FieldValue.serverTimestamp(),
+      'status': PickupStatusModel.delivered.name,
     });
   }
 
@@ -89,7 +99,7 @@ class RiderProvider extends ChangeNotifier {
   /// tracking resumes correctly after an app restart mid-delivery.
   void ensureTracking(List<PickupModel> myDeliveries) {
     final stillActive = myDeliveries
-        .where((p) => p.status == PickupStatusModel.enRoute)
+        .where((p) => p.status == PickupStatusModel.enRoute || p.status == PickupStatusModel.pickedUp)
         .map((p) => p.id)
         .toSet();
     for (final id in _locationSubs.keys.toList()) {

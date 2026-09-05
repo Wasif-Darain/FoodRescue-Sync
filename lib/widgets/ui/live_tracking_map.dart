@@ -103,8 +103,30 @@ class _LiveTrackingPageState extends State<_LiveTrackingPage> {
               final destPoint = (consumerLat != null && consumerLng != null) ? LatLng(consumerLat, consumerLng) : null;
               final consumerName = consumerData?['name'] as String? ?? '';
 
-              if (riderPoint != null && destPoint != null) {
-                _maybeFetchRoute(riderPoint, destPoint);
+              // The pickup pin reads as "done" from the moment it's collected
+              // onward, well past the pickedUp status itself.
+              final pastPickup = pickup.status == PickupStatusModel.pickedUp ||
+                  pickup.status == PickupStatusModel.delivered ||
+                  pickup.status == PickupStatusModel.distributing ||
+                  pickup.status == PickupStatusModel.completed;
+              // Routing only makes sense while actively traveling toward a
+              // fixed next stop: the donor's pickup point, then (for a
+              // rider delivery) the consumer's address. Once delivered, the
+              // consumer is off distributing to the community with no fixed
+              // destination — same as a self-pickup always was — so there's
+              // nothing left to draw a route to.
+              final targetPoint = switch (pickup.status) {
+                PickupStatusModel.scheduled || PickupStatusModel.enRoute => pickupPoint,
+                PickupStatusModel.pickedUp => pickup.isSelfPickup ? null : destPoint,
+                _ => null,
+              };
+
+              if (riderPoint != null && targetPoint != null) {
+                _maybeFetchRoute(riderPoint, targetPoint);
+              } else if (targetPoint == null && _routePoints != null) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) setState(() => _routePoints = null);
+                });
               }
               if (riderPoint != null && _autoFollow) {
                 final target = riderPoint;
@@ -140,7 +162,16 @@ class _LiveTrackingPageState extends State<_LiveTrackingPage> {
                                 Polyline(points: _routePoints!, strokeWidth: 4, color: const Color(0xFF2563EB)),
                               ]),
                             MarkerLayer(markers: [
-                              Marker(point: pickupPoint, width: 70, height: 46, child: _PinLabel(icon: Icons.storefront, color: const Color(0xFF16A34A), label: t.trackingPickupPin)),
+                              Marker(
+                                point: pickupPoint,
+                                width: 70,
+                                height: 46,
+                                child: _PinLabel(
+                                  icon: pastPickup ? Icons.check_circle : Icons.storefront,
+                                  color: pastPickup ? const Color(0xFF9CA3AF) : const Color(0xFF16A34A),
+                                  label: t.trackingPickupPin,
+                                ),
+                              ),
                               if (destPoint != null)
                                 Marker(point: destPoint, width: 70, height: 46, child: _PinLabel(icon: Icons.flag, color: const Color(0xFFDC2626), label: t.trackingDeliveryPin)),
                               if (riderPoint != null)
@@ -184,10 +215,19 @@ class _LiveTrackingPageState extends State<_LiveTrackingPage> {
                           const SizedBox(height: 4),
                           Text(
                             riderPoint == null
-                                ? t.trackingWaitingForRider
-                                : consumerName.isNotEmpty
-                                    ? t.trackingEnRouteTo(consumerName)
-                                    : t.trackingEnRoute,
+                                ? (pickup.status == PickupStatusModel.delivered
+                                    ? t.trackingWaitingForDistribution
+                                    : (pickup.isSelfPickup ? t.trackingWaitingForSelf : t.trackingWaitingForRider))
+                                : switch (pickup.status) {
+                                    PickupStatusModel.delivered => t.trackingWaitingForDistribution,
+                                    PickupStatusModel.distributing => t.navDistributing,
+                                    PickupStatusModel.enRoute =>
+                                      pickup.isSelfPickup ? t.trackingHeadingToPickupSelf : t.trackingHeadingToPickup,
+                                    PickupStatusModel.pickedUp => pickup.isSelfPickup
+                                        ? t.trackingEnRouteSelf
+                                        : (consumerName.isNotEmpty ? t.trackingEnRouteTo(consumerName) : t.trackingEnRoute),
+                                    _ => pickup.isSelfPickup ? t.trackingEnRouteSelf : t.trackingEnRoute,
+                                  },
                             style: TextStyle(fontSize: 12.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
                           ),
                           if (pickup.riderLocationUpdatedAt != null) ...[

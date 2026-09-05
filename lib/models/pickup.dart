@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum PickupStatusModel { scheduled, enRoute, completed, cancelled }
+enum PickupStatusModel { scheduled, enRoute, pickedUp, delivered, distributing, completed, cancelled }
 
 class PickupModel {
   final String id;
@@ -20,6 +20,11 @@ class PickupModel {
   final double? riderLat;
   final double? riderLng;
   final DateTime? riderLocationUpdatedAt;
+  final String? deliveryMethod;
+  final bool assignmentPending;
+  final String? distributionPhotoUrl;
+
+  bool get isSelfPickup => deliveryMethod == 'self';
 
   PickupModel({
     required this.id,
@@ -39,6 +44,9 @@ class PickupModel {
     this.riderLat,
     this.riderLng,
     this.riderLocationUpdatedAt,
+    this.deliveryMethod,
+    this.assignmentPending = false,
+    this.distributionPhotoUrl,
   });
 
   factory PickupModel.fromFirestore(DocumentSnapshot doc) {
@@ -67,6 +75,9 @@ class PickupModel {
       riderLat: (data['riderLat'] as num?)?.toDouble(),
       riderLng: (data['riderLng'] as num?)?.toDouble(),
       riderLocationUpdatedAt: riderLocationUpdatedAt is Timestamp ? riderLocationUpdatedAt.toDate() : null,
+      deliveryMethod: data['deliveryMethod'] as String?,
+      assignmentPending: data['assignmentPending'] as bool? ?? false,
+      distributionPhotoUrl: data['distributionPhotoUrl'] as String?,
     );
   }
 
@@ -82,6 +93,9 @@ class PickupModel {
       'latitude': latitude,
       'longitude': longitude,
       'address': address,
+      'deliveryMethod': deliveryMethod,
+      'assignmentPending': assignmentPending,
+      'distributionPhotoUrl': distributionPhotoUrl,
     };
   }
 }
