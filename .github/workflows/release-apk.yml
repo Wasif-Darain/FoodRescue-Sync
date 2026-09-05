@@ -42,7 +42,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          cat > release_notes.md <<EOF
+          ## What's included
+          - Android app (APK)
+          - Web version: https://foodrescue-sync.web.app
+
+          ## Install on Android
+          1. Download app-release.apk below
+          2. Tap it; allow "Install from unknown sources" when prompted
+          3. Install: sign in with your account
+
+          ## Install on iOS
+          1. Open https://foodrescue-sync.web.app in Safari
+          2. Tap Share → "Add to Home Screen"
+          EOF
           gh release create "${{ github.ref_name }}" \
             build/app/outputs/flutter-apk/app-release.apk \
             --title "FoodRescue-Sync ${{ github.ref_name }}" \
+            --notes-file release_notes.md \
             --generate-notes
