@@ -27,8 +27,16 @@ class NotificationService {
   User? _currentUser;
 
   final _foregroundController = StreamController<RemoteMessage>.broadcast();
-  /// Messages received while the app is in the foreground.
+  /// Messages received while the app is in the foreground. The OS doesn't
+  /// show these in the notification tray by itself, so the app needs to
+  /// surface them (e.g. as an in-app banner) — see `main.dart`.
   Stream<RemoteMessage> get foregroundMessages => _foregroundController.stream;
+
+  final _openedController = StreamController<RemoteMessage>.broadcast();
+  /// Fires when the user taps a push notification — either one that
+  /// resumed the app from the background, or (via [checkInitialMessage])
+  /// one that launched the app fresh from a terminated state.
+  Stream<RemoteMessage> get messageOpened => _openedController.stream;
 
   Future<void> initialize() async {
     // Register the background handler.
@@ -48,9 +56,11 @@ class NotificationService {
       _foregroundController.add(message);
     });
 
-    // Tapping a notification that opened/ resumed the app.
+    // Tapping a notification that opened/resumed the app from the
+    // background.
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       debugPrint('FCM opened from notification: ${message.messageId}');
+      _openedController.add(message);
     });
 
     // Keep the token fresh and bound to the signed-in user.
@@ -108,8 +118,17 @@ class NotificationService {
     }
   }
 
+  /// Checks whether the app was launched by tapping a push notification
+  /// while fully terminated, and if so, emits it on [messageOpened]. Call
+  /// once after the widget tree (and its navigator) is ready.
+  Future<void> checkInitialMessage() async {
+    final initial = await _messaging.getInitialMessage();
+    if (initial != null) _openedController.add(initial);
+  }
+
   void dispose() {
     _authSub?.cancel();
     _foregroundController.close();
+    _openedController.close();
   }
 }

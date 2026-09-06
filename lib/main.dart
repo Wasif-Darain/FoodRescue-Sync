@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
@@ -38,6 +40,8 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
   late final LocaleProvider _localeProvider;
   late final BlockProvider _blocks;
   late final RiderProvider _rider;
+  late final GoRouter _router;
+  final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
@@ -47,13 +51,44 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
     _donor = DonorProvider();
     _consumer = ConsumerProvider();
     _theme = ThemeProvider();
+    _localeProvider = LocaleProvider();
+    _blocks = BlockProvider();
+    _rider = RiderProvider();
+    // Built once (not inline in build()) so it stays the same instance for
+    // the app's lifetime — needed to navigate to it from the notification
+    // handlers below, and avoids resetting the nav stack on every rebuild.
+    _router = buildRouter(_auth);
     // Set up FCM push notifications (permission, token registration,
     // foreground/background message handling).
     _notifications = NotificationService();
     _notifications.initialize();
-    _localeProvider = LocaleProvider();
-    _blocks = BlockProvider();
-    _rider = RiderProvider();
+    // The OS only shows a push in the tray while the app is backgrounded or
+    // terminated — while foregrounded, FCM delivers it silently unless the
+    // app surfaces it itself, so show it as an in-app banner here.
+    _notifications.foregroundMessages.listen(_onForegroundMessage);
+    // Tapping a push (from background, or one that cold-started the app)
+    // takes the user to the Notification Center.
+    _notifications.messageOpened.listen((_) => _router.go('/notifications'));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _notifications.checkInitialMessage();
+    });
+  }
+
+  void _onForegroundMessage(RemoteMessage message) {
+    final notification = message.notification;
+    if (notification == null) return;
+    final title = notification.title ?? 'FoodRescue Sync';
+    final body = notification.body ?? '';
+    _scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Text(body.isEmpty ? title : '$title: $body'),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'View',
+          onPressed: () => _router.go('/notifications'),
+        ),
+      ),
+    );
   }
 
   @override
@@ -82,6 +117,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
           return MaterialApp.router(
             title: 'FoodRescue Sync',
             debugShowCheckedModeBanner: false,
+            scaffoldMessengerKey: _scaffoldMessengerKey,
             themeMode: themeMode,
             theme: _lightGlassTheme(),
             darkTheme: _darkGlassTheme(),
@@ -93,7 +129,7 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            routerConfig: buildRouter(_auth),
+            routerConfig: _router,
           );
         },
       ),

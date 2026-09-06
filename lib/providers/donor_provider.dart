@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/models.dart';
+import '../services/push_notification_sender.dart';
 
 class DonorProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -359,7 +360,7 @@ class DonorProvider extends ChangeNotifier {
         uid == _auth.currentUser?.uid) {
       return;
     }
-    await _firestore.collection('notifications').add({
+    final ref = await _firestore.collection('notifications').add({
       'recipientUid': uid,
       'payloadType': 'pickup',
       'senderUid': _auth.currentUser?.uid ?? '',
@@ -367,6 +368,7 @@ class DonorProvider extends ChangeNotifier {
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    unawaited(sendPushNotification(recipientUid: uid, message: message, payloadType: 'pickup', notificationId: ref.id));
   }
 
   String? rescheduleDonation(int id, DateTime newTime, String newLocation) {

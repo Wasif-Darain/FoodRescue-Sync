@@ -225,6 +225,47 @@ FoodRescue-Sync/
 10. **Firebase Auth** — email/password, sign-up, password recovery.
 11. **Cloudinary Image Uploads** — for listing photos.
 
+## Push Notifications
+
+Every write to the `notifications` Firestore collection is meant to trigger
+a real OS-level push, not just an in-app Notification Center entry. There
+are two ways this is wired up:
+
+1. **`functions/index.js`** — a standard Firebase Cloud Function
+   (`sendNotificationPush`) that triggers on every new `notifications` doc
+   and sends FCM pushes to the recipient's tokens. This is the "normal" way
+   to do it, but Cloud Functions requires the project to be on Firebase's
+   Blaze (pay-as-you-go) plan — billing must be enabled even to stay within
+   the free tier. Deploy with `cd functions && npm install && npm run
+   deploy` once the project is on Blaze.
+2. **`apps_script/`** — a free alternative that needs no billing at all.
+   The Flutter client (`lib/services/push_notification_sender.dart`) calls
+   a small Google Apps Script Web App directly, right after writing the
+   notification doc, and the script sends the FCM push itself. This is what
+   the app currently uses.
+
+### Setting up the Apps Script relay
+
+1. Go to [script.google.com](https://script.google.com) (same Google
+   account that owns the Firebase project) → **New project**.
+2. Replace the default `Code.gs` content with
+   [`apps_script/Code.gs`](apps_script/Code.gs).
+3. Project Settings (gear icon) → check **"Show `appsscript.json`
+   manifest file in editor"** → open it and replace its content with
+   [`apps_script/appsscript.json`](apps_script/appsscript.json).
+4. **Deploy → New deployment** → type **Web app** → Execute as **Me**,
+   Who has access **Anyone** → **Deploy**. Approve the OAuth consent
+   screen (it'll warn the app is unverified — that's expected for a
+   personal script; click **Advanced → Go to (project name)**).
+5. Copy the deployed Web App URL (ends in `/exec`).
+6. Paste it into `_pushRelayUrl` in
+   [`lib/services/push_notification_sender.dart`](lib/services/push_notification_sender.dart),
+   replacing the `REPLACE_WITH_YOUR_APPS_SCRIPT_WEB_APP_URL` placeholder.
+
+No credential is embedded in the app — the script verifies every request's
+Firebase ID token server-side before sending anything, and the FCM-sending
+credential lives only inside the Apps Script project.
+
 ## Deployment Notes
 
 The app targets Android, iOS, and Web. After linking Firebase with `flutterfire configure`, build with the `flutter build` commands above. On web, Firestore + Cloudinary handle the backend and storage respectively.

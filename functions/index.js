@@ -30,6 +30,7 @@ exports.sendNotificationPush = onDocumentCreated(
       listing: 'New listing nearby',
       request: 'Request update',
       pickup: 'Pickup update',
+      cancellation: 'Cancellation',
       system: 'FoodRescue Sync',
     };
 

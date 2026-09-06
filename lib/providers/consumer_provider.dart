@@ -10,6 +10,7 @@ import '../models/pickup.dart';
 import '../models/request.dart';
 import '../models/models.dart';
 import '../services/listing_image_manager.dart';
+import '../services/push_notification_sender.dart';
 
 class ConsumerProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -107,7 +108,7 @@ class ConsumerProvider extends ChangeNotifier {
   ) async {
     _notifiedListingIds.add(listingId);
     try {
-      await _firestore.collection('notifications').add({
+      final ref = await _firestore.collection('notifications').add({
         'recipientUid': uid,
         'payloadType': 'listing',
         'listingId': listingId,
@@ -118,6 +119,7 @@ class ConsumerProvider extends ChangeNotifier {
       await _firestore.collection('users').doc(uid).update({
         'notifiedListingIds': FieldValue.arrayUnion([listingId]),
       });
+      unawaited(sendPushNotification(recipientUid: uid, message: message, payloadType: 'listing', notificationId: ref.id));
     } catch (_) {
       _notifiedListingIds.remove(listingId);
     }
@@ -134,7 +136,7 @@ class ConsumerProvider extends ChangeNotifier {
         recipientUid == _auth.currentUser?.uid) {
       return;
     }
-    await _firestore.collection('notifications').add({
+    final ref = await _firestore.collection('notifications').add({
       'recipientUid': recipientUid,
       'payloadType': payloadType,
       'senderUid': _auth.currentUser?.uid ?? '',
@@ -143,6 +145,7 @@ class ConsumerProvider extends ChangeNotifier {
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
+    unawaited(sendPushNotification(recipientUid: recipientUid, message: message, payloadType: payloadType, notificationId: ref.id));
   }
 
   double _haversineKm(double lat1, double lon1, double lat2, double lon2) {

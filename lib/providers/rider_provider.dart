@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/pickup.dart';
+import '../services/push_notification_sender.dart';
 
 /// Backs the Rider dashboard: a pool of unclaimed pickups any rider can
 /// self-claim, plus the current rider's own active/completed deliveries.
@@ -87,13 +88,15 @@ class RiderProvider extends ChangeNotifier {
     final consumerId = snap.data()?['consumerId'] as String?;
     await ref.update({'volunteerDriverId': FieldValue.delete(), 'assignmentPending': false});
     if (consumerId != null && consumerId.isNotEmpty) {
-      await _firestore.collection('notifications').add({
+      const declinedMessage = 'The rider declined your assignment — it was posted back to the open pool.';
+      final notifRef = await _firestore.collection('notifications').add({
         'recipientUid': consumerId,
         'payloadType': 'pickup',
-        'message': 'The rider declined your assignment — it was posted back to the open pool.',
+        'message': declinedMessage,
         'isRead': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
+      unawaited(sendPushNotification(recipientUid: consumerId, message: declinedMessage, payloadType: 'pickup', notificationId: notifRef.id));
     }
   }
 
@@ -155,13 +158,15 @@ class RiderProvider extends ChangeNotifier {
       });
       stopTracking(pickupId);
       if (consumerId != null && consumerId!.isNotEmpty) {
-        await _firestore.collection('notifications').add({
+        final cancelMessage = 'The rider cancelled your pickup (reason: ${reason.trim()}). It has been reposted for other riders.';
+        final notifRef = await _firestore.collection('notifications').add({
           'recipientUid': consumerId,
           'payloadType': 'pickup',
-          'message': 'The rider cancelled your pickup (reason: ${reason.trim()}). It has been reposted for other riders.',
+          'message': cancelMessage,
           'isRead': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
+        unawaited(sendPushNotification(recipientUid: consumerId!, message: cancelMessage, payloadType: 'pickup', notificationId: notifRef.id));
       }
       return null;
     } catch (_) {
