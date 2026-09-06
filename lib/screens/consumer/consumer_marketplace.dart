@@ -48,15 +48,18 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
     return StreamBuilder<List<ListingModel>>(
       stream: consumer.availableListingsStream,
       builder: (context, snapshot) {
+        // Claimed listings are kept (not filtered out) so other consumers
+        // still see the card — just greyed out and non-actionable — instead
+        // of it silently disappearing from the marketplace.
         final listings = (snapshot.data ?? [])
             .where(
               (l) =>
-                  l.status == ListingStatusModel.active &&
-                  l.quantity > 0 &&
                   !blocked.contains(l.donorId) &&
-                  (l.claimDeadline == null || l.claimDeadline!.isAfter(now)),
+                  (l.status == ListingStatusModel.claimed ||
+                      (l.quantity > 0 && (l.claimDeadline == null || l.claimDeadline!.isAfter(now)))),
             )
             .toList();
+        final availableCount = listings.where((l) => l.status == ListingStatusModel.active).length;
         final filtered = listings
             .map(
               (l) => Listing(
@@ -74,11 +77,12 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                 pickupEnd: l.claimDeadline ?? now.add(const Duration(hours: 4)),
                 latitude: l.latitude,
                 longitude: l.longitude,
-                status: ListingStatus.active,
+                status: l.status == ListingStatusModel.claimed ? ListingStatus.claimed : ListingStatus.active,
                 category: l.category,
                 imageUrl: l.photoUrls.isNotEmpty ? l.photoUrls.first : null,
                 imageCount: l.photoUrls.length,
                 address: l.address,
+                isPriority: l.priorityBoostedAt != null,
               ),
             )
             .where((l) {
@@ -88,10 +92,8 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                   _filter == 'All' ||
                   (_filter == 'Free' && l.listingType == ListingType.donation) ||
                   (_filter == 'Sale' && l.listingType == ListingType.flashSale);
-              return catMatch &&
-                  typeMatch &&
-                  l.pickupEnd.isAfter(now) &&
-                  l.status == ListingStatus.active;
+              final stillOpen = l.status == ListingStatus.claimed || l.pickupEnd.isAfter(now);
+              return catMatch && typeMatch && stillOpen;
             })
             .toList();
 
@@ -138,7 +140,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            t.mktListingsNear(listings.length),
+                            t.mktListingsNear(availableCount),
                             style: TextStyle(
                               color: isDark
                                   ? const Color(0xFF9CA3AF)
@@ -491,6 +493,7 @@ class _ListingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final t = context.l10n;
+    final isClaimed = listing.status == ListingStatus.claimed;
 
     final imageUrl =
         listing.imageUrl ??
@@ -498,7 +501,7 @@ class _ListingCard extends StatelessWidget {
 
     return _HoverScale(
       child: GestureDetector(
-        onTap: () => showListingDetailSheet(
+        onTap: isClaimed ? null : () => showListingDetailSheet(
           context,
           title: listing.title,
           subtitle: t.mktListedBy(listing.donorName),
@@ -540,7 +543,9 @@ class _ListingCard extends StatelessWidget {
                   ),
                 ],
         ),
-        child: Container(
+        child: Opacity(
+          opacity: isClaimed ? 0.55 : 1,
+          child: Container(
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
             borderRadius: BorderRadius.circular(16),
@@ -613,6 +618,13 @@ class _ListingCard extends StatelessWidget {
                                 ? BadgeVariant.green
                                 : BadgeVariant.orange,
                           ),
+                          if (isClaimed) ...[
+                            const SizedBox(width: 6),
+                            AppBadge(label: t.mktClaimedBadge, variant: BadgeVariant.gray),
+                          ] else if (listing.isPriority) ...[
+                            const SizedBox(width: 6),
+                            AppBadge(label: t.mktPriorityBadge, variant: BadgeVariant.red),
+                          ],
                           if (listing.imageCount > 1) ...[
                             const SizedBox(width: 6),
                             Container(
@@ -746,6 +758,7 @@ class _ListingCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

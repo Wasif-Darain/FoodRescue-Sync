@@ -102,6 +102,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonClose => 'Close';
 
   @override
+  String get cancelReasonHint => 'Why are you cancelling? (required)';
+
+  @override
   String get commonEdit => 'Edit';
 
   @override
@@ -823,6 +826,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mktDetailAddress => 'Address';
+
+  @override
+  String get mktClaimedBadge => 'Claimed';
+
+  @override
+  String get mktPriorityBadge => 'Reopened · Priority';
 
   @override
   String get commonFreeLabel => 'Free';
@@ -2229,6 +2238,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get riderAssignmentDeclinedMsg =>
       'Assignment declined — sent back to the open pool.';
+
+  @override
+  String get riderCancelPickup => 'Cancel Pickup';
+
+  @override
+  String get riderCancelledMsg =>
+      'Pickup cancelled — reposted to the open pool for other riders.';
+
+  @override
+  String get riderPriorityBadge => 'Reopened · Priority';
 
   @override
   String get selfPickupMarkDistributionComplete => 'Mark Distribution Complete';

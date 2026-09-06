@@ -35,6 +35,7 @@
   "commonCancel": "বাতিল",
   "commonConfirm": "নিশ্চিত করুন",
   "commonClose": "বন্ধ করুন",
+  "cancelReasonHint": "কেন বাতিল করছেন? (আবশ্যক)",
   "commonEdit": "সম্পাদনা",
   "commonDelete": "মুছে ফেলুন",
   "commonRetry": "আবার চেষ্টা করুন",
@@ -285,6 +286,8 @@
   "mktDetailPrice": "মূল্য",
   "mktDetailPickupWindow": "পিকআপ সময়সীমা",
   "mktDetailAddress": "ঠিকানা",
+  "mktClaimedBadge": "ক্লেইম করা হয়েছে",
+  "mktPriorityBadge": "পুনরায় চালু · অগ্রাধিকার",
   "commonFreeLabel": "ফ্রি",
 
   "areaGulshan": "গুলশান ১, ঢাকা",
@@ -793,6 +796,9 @@
   "riderDecline": "প্রত্যাখ্যান",
   "riderAssignmentAcceptedMsg": "অ্যাসাইনমেন্ট গৃহীত হয়েছে — এটি এখন আপনার ডেলিভারিতে আছে।",
   "riderAssignmentDeclinedMsg": "অ্যাসাইনমেন্ট প্রত্যাখ্যাত হয়েছে — ওপেন পুলে ফেরত পাঠানো হয়েছে।",
+  "riderCancelPickup": "পিকআপ বাতিল করুন",
+  "riderCancelledMsg": "পিকআপ বাতিল হয়েছে — অন্য রাইডারদের জন্য ওপেন পুলে আবার পোস্ট করা হয়েছে।",
+  "riderPriorityBadge": "পুনরায় চালু · অগ্রাধিকার",
 
   "selfPickupMarkDistributionComplete": "বিতরণ সম্পন্ন চিহ্নিত করুন",
   "selfPickupStart": "পিকআপ শুরু করুন",

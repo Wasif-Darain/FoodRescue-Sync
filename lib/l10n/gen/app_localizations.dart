@@ -284,6 +284,12 @@ abstract class AppLocalizations {
   /// **'Close'**
   String get commonClose;
 
+  /// No description provided for @cancelReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Why are you cancelling? (required)'**
+  String get cancelReasonHint;
+
   /// No description provided for @commonEdit.
   ///
   /// In en, this message translates to:
@@ -1603,6 +1609,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Address'**
   String get mktDetailAddress;
+
+  /// No description provided for @mktClaimedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Claimed'**
+  String get mktClaimedBadge;
+
+  /// No description provided for @mktPriorityBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopened · Priority'**
+  String get mktPriorityBadge;
 
   /// No description provided for @commonFreeLabel.
   ///
@@ -4057,6 +4075,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Assignment declined — sent back to the open pool.'**
   String get riderAssignmentDeclinedMsg;
+
+  /// No description provided for @riderCancelPickup.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Pickup'**
+  String get riderCancelPickup;
+
+  /// No description provided for @riderCancelledMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup cancelled — reposted to the open pool for other riders.'**
+  String get riderCancelledMsg;
+
+  /// No description provided for @riderPriorityBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Reopened · Priority'**
+  String get riderPriorityBadge;
 
   /// No description provided for @selfPickupMarkDistributionComplete.
   ///

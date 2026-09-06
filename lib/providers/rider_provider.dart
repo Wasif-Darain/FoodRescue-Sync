@@ -23,15 +23,26 @@ class RiderProvider extends ChangeNotifier {
   /// before this feature existed never wrote that field at all, and
   /// Firestore's `isEqualTo: null` only matches docs where the field is
   /// present and null, not where it's missing.
+  /// Pickups a rider cancelled after accepting (`priorityBoostedAt` set) are
+  /// sorted first, ahead of never-claimed pickups.
   Stream<List<PickupModel>> get availablePickupsStream => _firestore
       .collection('pickups')
       .where('status', isEqualTo: PickupStatusModel.scheduled.name)
       .snapshots()
       .map(
-        (snap) => snap.docs
-            .map((d) => PickupModel.fromFirestore(d))
-            .where((p) => p.volunteerDriverId == null)
-            .toList(),
+        (snap) =>
+            snap.docs
+                .map((d) => PickupModel.fromFirestore(d))
+                .where((p) => p.volunteerDriverId == null)
+                .toList()
+              ..sort((a, b) {
+                final aBoost = a.priorityBoostedAt;
+                final bBoost = b.priorityBoostedAt;
+                if (aBoost != null && bBoost != null) return bBoost.compareTo(aBoost);
+                if (aBoost != null) return -1;
+                if (bBoost != null) return 1;
+                return 0;
+              }),
       );
 
   /// Pickups this rider has claimed or accepted, regardless of status.
@@ -107,6 +118,54 @@ class RiderProvider extends ChangeNotifier {
       return null;
     } catch (_) {
       return 'Could not claim this pickup — it may have just been taken.';
+    }
+  }
+
+  /// Cancels a pickup this rider already claimed/accepted (still `scheduled`
+  /// or `enRoute`), requiring a [reason] so the consumer knows why. The
+  /// pickup goes back to the open pool — `volunteerDriverId` cleared, status
+  /// reset to `scheduled` — and is stamped with `priorityBoostedAt` so it
+  /// jumps to the top of [availablePickupsStream] for other riders.
+  Future<String?> cancelAcceptedPickup(String pickupId, String reason) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return 'Not signed in.';
+    if (reason.trim().isEmpty) return 'Please provide a reason.';
+    final ref = _firestore.collection('pickups').doc(pickupId);
+    try {
+      String? consumerId;
+      await _firestore.runTransaction((tx) async {
+        final snap = await tx.get(ref);
+        if (!snap.exists) throw StateError('Pickup not found.');
+        final data = snap.data() as Map<String, dynamic>;
+        if (data['volunteerDriverId'] != uid) {
+          throw StateError('Not your pickup.');
+        }
+        final status = data['status'] as String?;
+        if (status != PickupStatusModel.scheduled.name && status != PickupStatusModel.enRoute.name) {
+          throw StateError('This pickup can no longer be cancelled.');
+        }
+        consumerId = data['consumerId'] as String?;
+        tx.update(ref, {
+          'volunteerDriverId': FieldValue.delete(),
+          'assignmentPending': false,
+          'status': PickupStatusModel.scheduled.name,
+          'cancellationReason': reason.trim(),
+          'priorityBoostedAt': FieldValue.serverTimestamp(),
+        });
+      });
+      stopTracking(pickupId);
+      if (consumerId != null && consumerId!.isNotEmpty) {
+        await _firestore.collection('notifications').add({
+          'recipientUid': consumerId,
+          'payloadType': 'pickup',
+          'message': 'The rider cancelled your pickup (reason: ${reason.trim()}). It has been reposted for other riders.',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+      return null;
+    } catch (_) {
+      return 'Could not cancel this pickup. Please try again.';
     }
   }
 

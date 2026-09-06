@@ -104,6 +104,11 @@ class Listing {
   final String? address;
   final int imageCount;
 
+  /// True when this listing was reopened after a claim/pickup got
+  /// cancelled — the marketplace sorts these to the top and shows a
+  /// "priority" badge, ahead of never-claimed listings.
+  final bool isPriority;
+
   Listing({
     required this.id,
     this.docId,
@@ -126,6 +131,7 @@ class Listing {
     this.imageBytes,
     this.address,
     this.imageCount = 1,
+    this.isPriority = false,
   });
 
   Listing copyWith({ListingStatus? status}) => Listing(

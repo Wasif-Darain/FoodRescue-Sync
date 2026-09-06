@@ -23,6 +23,13 @@ class PickupModel {
   final String? deliveryMethod;
   final bool assignmentPending;
   final String? distributionPhotoUrl;
+  final String? cancellationReason;
+
+  /// Set when a consumer's claim or a rider's accepted assignment on this
+  /// pickup gets cancelled and it's reopened for others. The rider pool
+  /// stream sorts by this (descending) so a reopened pickup jumps to the
+  /// top ahead of never-claimed ones.
+  final DateTime? priorityBoostedAt;
 
   bool get isSelfPickup => deliveryMethod == 'self';
 
@@ -47,6 +54,8 @@ class PickupModel {
     this.deliveryMethod,
     this.assignmentPending = false,
     this.distributionPhotoUrl,
+    this.cancellationReason,
+    this.priorityBoostedAt,
   });
 
   factory PickupModel.fromFirestore(DocumentSnapshot doc) {
@@ -54,6 +63,7 @@ class PickupModel {
     final scheduled = data['scheduledTime'];
     final completed = data['completedAt'];
     final riderLocationUpdatedAt = data['riderLocationUpdatedAt'];
+    final boosted = data['priorityBoostedAt'];
     return PickupModel(
       id: doc.id,
       requestId: data['requestId'] as String? ?? '',
@@ -78,6 +88,8 @@ class PickupModel {
       deliveryMethod: data['deliveryMethod'] as String?,
       assignmentPending: data['assignmentPending'] as bool? ?? false,
       distributionPhotoUrl: data['distributionPhotoUrl'] as String?,
+      cancellationReason: data['cancellationReason'] as String?,
+      priorityBoostedAt: boosted is Timestamp ? boosted.toDate() : null,
     );
   }
 
@@ -96,6 +108,8 @@ class PickupModel {
       'deliveryMethod': deliveryMethod,
       'assignmentPending': assignmentPending,
       'distributionPhotoUrl': distributionPhotoUrl,
+      'cancellationReason': cancellationReason,
+      'priorityBoostedAt': priorityBoostedAt == null ? null : Timestamp.fromDate(priorityBoostedAt!),
     };
   }
 }

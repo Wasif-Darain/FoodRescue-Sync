@@ -35,6 +35,7 @@
   "commonCancel": "Cancel",
   "commonConfirm": "Confirm",
   "commonClose": "Close",
+  "cancelReasonHint": "Why are you cancelling? (required)",
   "commonEdit": "Edit",
   "commonDelete": "Delete",
   "commonRetry": "Retry",
@@ -285,6 +286,8 @@
   "mktDetailPrice": "Price",
   "mktDetailPickupWindow": "Pickup window",
   "mktDetailAddress": "Address",
+  "mktClaimedBadge": "Claimed",
+  "mktPriorityBadge": "Reopened · Priority",
   "commonFreeLabel": "Free",
 
   "areaGulshan": "Gulshan 1, Dhaka",
@@ -794,6 +797,9 @@
   "riderDecline": "Decline",
   "riderAssignmentAcceptedMsg": "Assignment accepted — it's now in your deliveries.",
   "riderAssignmentDeclinedMsg": "Assignment declined — sent back to the open pool.",
+  "riderCancelPickup": "Cancel Pickup",
+  "riderCancelledMsg": "Pickup cancelled — reposted to the open pool for other riders.",
+  "riderPriorityBadge": "Reopened · Priority",
 
   "selfPickupMarkDistributionComplete": "Mark Distribution Complete",
   "selfPickupStart": "Start Pickup",
