@@ -23,6 +23,12 @@ class ListingModel {
   final DateTime createdAt;
   final ListingType listingType;
 
+  /// Set whenever a claim/pickup on this listing gets cancelled and the
+  /// listing is reopened. Marketplace and rider pool streams sort by this
+  /// (descending) so a reopened item jumps back to the top ahead of
+  /// never-claimed listings, per the "priority" requirement.
+  final DateTime? priorityBoostedAt;
+
   ListingModel({
     required this.id,
     required this.donorId,
@@ -42,12 +48,14 @@ class ListingModel {
     this.claimedBy,
     required this.createdAt,
     this.listingType = ListingType.donation,
+    this.priorityBoostedAt,
   });
 
   factory ListingModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     final deadline = data['claimDeadline'];
     final created = data['createdAt'];
+    final boosted = data['priorityBoostedAt'];
     return ListingModel(
       id: doc.id,
       donorId: data['donorId'] as String? ?? '',
@@ -70,6 +78,7 @@ class ListingModel {
       claimedBy: data['claimedBy'] as String?,
       createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
       listingType: data['listingType'] == 'flashSale' ? ListingType.flashSale : ListingType.donation,
+      priorityBoostedAt: boosted is Timestamp ? boosted.toDate() : null,
     );
   }
 
@@ -92,6 +101,7 @@ class ListingModel {
       'claimedBy': claimedBy,
       'createdAt': Timestamp.fromDate(createdAt),
       'listingType': listingType.name,
+      'priorityBoostedAt': priorityBoostedAt == null ? null : Timestamp.fromDate(priorityBoostedAt!),
     };
   }
 }

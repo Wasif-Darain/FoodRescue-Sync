@@ -15,6 +15,7 @@ import '../../providers/consumer_provider.dart';
 import '../../widgets/ui/block_button.dart';
 import '../../widgets/ui/live_tracking_map.dart';
 import '../../widgets/ui/rider_navigation_map.dart';
+import '../../widgets/ui/cancellation_dialog.dart';
 import '../../l10n/l10n_ext.dart';
 
 /// Bottom sheet listing every registered rider so a consumer can directly
@@ -517,24 +518,13 @@ class _PickupCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: () async {
                 final consumer = context.read<ConsumerProvider>();
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (dialogContext) => AlertDialog(
-                    title: Text(t.pickupCancelClaim),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(dialogContext, false),
-                        child: Text(t.commonClose),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(dialogContext, true),
-                        child: Text(t.pickupCancelClaim),
-                      ),
-                    ],
-                  ),
+                final reason = await showCancellationReasonDialog(
+                  context,
+                  title: t.pickupCancelClaim,
+                  confirmLabel: t.pickupCancelClaim,
                 );
-                if (confirmed == true) {
-                  await consumer.cancelClaim(pickup.id);
+                if (reason != null) {
+                  await consumer.cancelClaim(pickup.id, reason);
                 }
               },
               icon: const Icon(Icons.cancel_outlined, size: 18),

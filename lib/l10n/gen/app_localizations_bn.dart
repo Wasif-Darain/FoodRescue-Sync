@@ -102,6 +102,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get commonClose => 'বন্ধ করুন';
 
   @override
+  String get cancelReasonHint => 'কেন বাতিল করছেন? (আবশ্যক)';
+
+  @override
   String get commonEdit => 'সম্পাদনা';
 
   @override
@@ -827,6 +830,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get mktDetailAddress => 'ঠিকানা';
+
+  @override
+  String get mktClaimedBadge => 'ক্লেইম করা হয়েছে';
+
+  @override
+  String get mktPriorityBadge => 'পুনরায় চালু · অগ্রাধিকার';
 
   @override
   String get commonFreeLabel => 'ফ্রি';
@@ -2239,6 +2248,16 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get riderAssignmentDeclinedMsg =>
       'অ্যাসাইনমেন্ট প্রত্যাখ্যাত হয়েছে — ওপেন পুলে ফেরত পাঠানো হয়েছে।';
+
+  @override
+  String get riderCancelPickup => 'পিকআপ বাতিল করুন';
+
+  @override
+  String get riderCancelledMsg =>
+      'পিকআপ বাতিল হয়েছে — অন্য রাইডারদের জন্য ওপেন পুলে আবার পোস্ট করা হয়েছে।';
+
+  @override
+  String get riderPriorityBadge => 'পুনরায় চালু · অগ্রাধিকার';
 
   @override
   String get selfPickupMarkDistributionComplete => 'বিতরণ সম্পন্ন চিহ্নিত করুন';

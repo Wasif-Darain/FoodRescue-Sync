@@ -160,22 +160,40 @@ class ConsumerProvider extends ChangeNotifier {
 
   double _degToRad(double deg) => deg * pi / 180;
 
+  /// Includes both still-open and fully-claimed listings — claimed ones are
+  /// shown as a greyed-out, non-actionable card in the marketplace instead
+  /// of disappearing, so consumers can see what was just taken. Open
+  /// listings that got reopened after a cancellation (`priorityBoostedAt`
+  /// set) are sorted to the top, ahead of never-claimed listings.
   Stream<List<ListingModel>> get availableListingsStream {
     return _firestore
         .collection('listings')
-        .where('status', isEqualTo: ListingStatusModel.active.name)
+        .where('status', whereIn: [ListingStatusModel.active.name, ListingStatusModel.claimed.name])
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
+        .map((snapshot) {
+          final listings = snapshot.docs
               .map((doc) => ListingModel.fromFirestore(doc))
-              .where((l) => l.quantity > 0)
+              .where((l) => l.status == ListingStatusModel.claimed || l.quantity > 0)
               .where(
                 (l) =>
+                    l.status == ListingStatusModel.claimed ||
                     l.claimDeadline == null ||
                     l.claimDeadline!.isAfter(DateTime.now()),
               )
-              .toList(),
-        );
+              .toList()
+            ..sort((a, b) {
+              final aClaimed = a.status == ListingStatusModel.claimed;
+              final bClaimed = b.status == ListingStatusModel.claimed;
+              if (aClaimed != bClaimed) return aClaimed ? 1 : -1;
+              final aBoost = a.priorityBoostedAt;
+              final bBoost = b.priorityBoostedAt;
+              if (aBoost != null && bBoost != null) return bBoost.compareTo(aBoost);
+              if (aBoost != null) return -1;
+              if (bBoost != null) return 1;
+              return b.createdAt.compareTo(a.createdAt);
+            });
+          return listings;
+        });
   }
 
   Stream<List<RequestModel>> get myRequestsStream {
@@ -421,9 +439,13 @@ class ConsumerProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> cancelClaim(String pickupId) async {
+  /// Cancels this consumer's claim, requiring a [reason] so the donor knows
+  /// why. The listing is restored to `active` and stamped with
+  /// `priorityBoostedAt` so it jumps back to the top of the marketplace,
+  /// ahead of never-claimed listings.
+  Future<bool> cancelClaim(String pickupId, String reason) async {
     final uid = _auth.currentUser?.uid;
-    if (uid == null) return false;
+    if (uid == null || reason.trim().isEmpty) return false;
     try {
       String? donorId;
       String? listingTitle;
@@ -448,6 +470,7 @@ class ConsumerProvider extends ChangeNotifier {
         transaction.update(pickupRef, {
           'status': PickupStatusModel.cancelled.name,
           'cancelledAt': FieldValue.serverTimestamp(),
+          'cancellationReason': reason.trim(),
         });
         if (!listingSnap.exists) return;
         final listingData = listingSnap.data() as Map<String, dynamic>;
@@ -458,6 +481,7 @@ class ConsumerProvider extends ChangeNotifier {
           'quantity': currentQty + restoredQty,
           'status': ListingStatusModel.active.name,
           'claimedBy': FieldValue.delete(),
+          'priorityBoostedAt': FieldValue.serverTimestamp(),
         });
       });
       if (donorId == null) return false;
@@ -466,7 +490,7 @@ class ConsumerProvider extends ChangeNotifier {
         payloadType: 'cancellation',
         listingId: pickupId,
         message:
-            'A consumer cancelled their claim on "$listingTitle". The listing is available again.',
+            'A consumer cancelled their claim on "$listingTitle" (reason: ${reason.trim()}). The listing is available again.',
       );
       return true;
     } catch (_) {

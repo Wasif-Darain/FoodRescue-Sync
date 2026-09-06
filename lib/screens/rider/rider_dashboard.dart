@@ -10,6 +10,7 @@ import '../../providers/rider_provider.dart';
 import '../../l10n/l10n_ext.dart';
 import '../../widgets/ui/live_tracking_map.dart';
 import '../../widgets/ui/rider_navigation_map.dart';
+import '../../widgets/ui/cancellation_dialog.dart';
 
 class RiderDashboard extends StatelessWidget {
   const RiderDashboard({super.key});
@@ -235,10 +236,18 @@ class _AvailablePickupCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            pickup.listingTitle?.isNotEmpty == true ? pickup.listingTitle! : t.riderPickupFrom(pickup.donorName ?? ''),
-            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)),
-          ),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Expanded(
+              child: Text(
+                pickup.listingTitle?.isNotEmpty == true ? pickup.listingTitle! : t.riderPickupFrom(pickup.donorName ?? ''),
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)),
+              ),
+            ),
+            if (pickup.priorityBoostedAt != null) ...[
+              const SizedBox(width: 8),
+              AppBadge(label: t.riderPriorityBadge, variant: BadgeVariant.red),
+            ],
+          ]),
           if (pickup.donorName != null && pickup.donorName!.isNotEmpty) ...[
             const SizedBox(height: 2),
             Text(t.riderPickupFrom(pickup.donorName!), style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
@@ -355,6 +364,23 @@ class _MyDeliveryCard extends StatelessWidget {
     await showRiderNavigation(context, pickup.id);
   }
 
+  Future<void> _cancel(BuildContext context) async {
+    final t = context.l10n;
+    final rider = context.read<RiderProvider>();
+    final reason = await showCancellationReasonDialog(
+      context,
+      title: t.riderCancelPickup,
+      confirmLabel: t.riderCancelPickup,
+    );
+    if (reason == null) return;
+    final error = await rider.cancelAcceptedPickup(pickup.id, reason);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(error ?? t.riderCancelledMsg),
+      backgroundColor: error == null ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -426,6 +452,18 @@ class _MyDeliveryCard extends StatelessWidget {
               child: const Icon(Icons.map_outlined, size: 18),
             ),
           ]),
+          if (pickup.status == PickupStatusModel.scheduled || pickup.status == PickupStatusModel.enRoute) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _cancel(context),
+                icon: const Icon(Icons.cancel_outlined, size: 16),
+                label: Text(t.riderCancelPickup, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFDC2626), side: const BorderSide(color: Color(0xFFDC2626))),
+              ),
+            ),
+          ],
         ],
       ),
     );
