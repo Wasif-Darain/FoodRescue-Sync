@@ -135,7 +135,8 @@ class _DistributionPhotoSheetState extends State<_DistributionPhotoSheet> {
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.distributionCompleteSnack), backgroundColor: const Color(0xFF16A34A)));
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Distribution photo submit failed: $e');
       if (!mounted) return;
       setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.distributionUploadError)));
@@ -545,7 +546,7 @@ class _PickupCard extends StatelessWidget {
         ],
         if (pickup.status == PickupStatusModel.completed) ...[
           const SizedBox(height: 14),
-          RatingStars(reviewLabel: t.pickupRateThis),
+          RatingStars(reviewLabel: t.pickupRateThis, targetUid: pickup.donorId ?? '', pickupId: pickup.id),
         ],
       ]),
       ),

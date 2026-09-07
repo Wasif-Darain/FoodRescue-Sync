@@ -175,7 +175,7 @@ class _LiveTrackingPageState extends State<_LiveTrackingPage> {
                               if (destPoint != null)
                                 Marker(point: destPoint, width: 70, height: 46, child: _PinLabel(icon: Icons.flag, color: const Color(0xFFDC2626), label: t.trackingDeliveryPin)),
                               if (riderPoint != null)
-                                Marker(point: riderPoint, width: 46, height: 46, child: const _RiderPin()),
+                                Marker(point: riderPoint, width: 46, height: 46, child: _RiderPin(isSelf: pickup.isSelfPickup)),
                             ]),
                           ],
                         ),
@@ -281,8 +281,13 @@ class _PinLabel extends StatelessWidget {
   }
 }
 
+/// The moving marker for whoever is currently carrying the food: an actual
+/// rider (moped) or, for a self-pickup, the consumer distributing it
+/// themselves (on foot) — these read as different roles on the map, not
+/// interchangeable "rider" pins.
 class _RiderPin extends StatelessWidget {
-  const _RiderPin();
+  final bool isSelf;
+  const _RiderPin({required this.isSelf});
 
   @override
   Widget build(BuildContext context) {
@@ -290,12 +295,12 @@ class _RiderPin extends StatelessWidget {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: const Color(0xFF2563EB),
+        color: isSelf ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 3),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 2))],
       ),
-      child: const Icon(Icons.moped, color: Colors.white, size: 20),
+      child: Icon(isSelf ? Icons.directions_walk : Icons.moped, color: Colors.white, size: 20),
     );
   }
 }

@@ -184,7 +184,7 @@ class _LogRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 12),
-          RatingStars(reviewLabel: t.donationLogRateThis),
+          RatingStars(reviewLabel: t.donationLogRateThis, targetUid: otherId, pickupId: log.id),
         ],
       ),
       ),

@@ -349,9 +349,9 @@ class _RequestRow extends StatelessWidget {
               ),
             ]),
           ],
-          if (request.status == RequestStatusModel.completed) ...[
+          if (request.status == RequestStatusModel.completed && matched != null) ...[
             const SizedBox(height: 12),
-            RatingStars(reviewLabel: t.reqRateThis),
+            RatingStars(reviewLabel: t.reqRateThis, targetUid: matched.donorUid, pickupId: request.id),
           ],
         ],
       ),

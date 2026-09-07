@@ -150,6 +150,7 @@ class DonorDashboard extends StatelessWidget {
                         value: inventory.length,
                         icon: const Icon(Icons.inventory_2_outlined),
                         color: 'blue',
+                        onTap: () => context.go('/donor/expiry'),
                       ),
                       StatCard(
                         label: t.donorDashSurplusTagged,
@@ -157,12 +158,14 @@ class DonorDashboard extends StatelessWidget {
                         icon: const Icon(Icons.warning_amber_outlined),
                         color: 'orange',
                         subtitle: t.donorDashNeedRedistribution,
+                        onTap: () => context.go('/donor/expiry'),
                       ),
                       StatCard(
                         label: t.donorDashActiveListings,
                         value: listings.where((l) => l.status == ListingStatus.active).length,
                         icon: const Icon(Icons.trending_up),
                         color: 'green',
+                        onTap: () => context.go('/donor/create-listing'),
                       ),
                       StatCard(
                         label: t.donorDashFoodSavedKg,
@@ -170,6 +173,7 @@ class DonorDashboard extends StatelessWidget {
                         icon: const Icon(Icons.favorite_outlined),
                         color: 'red',
                         subtitle: t.donorDashEstimated,
+                        onTap: () => context.go('/donor/donation-log'),
                       ),
                     ],
                   ),
@@ -259,31 +263,39 @@ class DonorDashboard extends StatelessWidget {
                         _SectionCard(
                           title: t.donorDashQuickActions,
                           icon: Icons.bolt_outlined,
-                          child: Column(
+                          child: Row(
                             children: [
-                              _QuickAction(
-                                icon: Icons.timer_outlined,
-                                label: t.donorDashCheckExpiry,
-                                color: const Color(0xFFEA580C),
-                                onTap: () => context.go('/donor/expiry'),
+                              Expanded(
+                                child: _QuickAction(
+                                  icon: Icons.timer_outlined,
+                                  label: t.donorDashCheckExpiry,
+                                  color: const Color(0xFFEA580C),
+                                  onTap: () => context.go('/donor/expiry'),
+                                ),
                               ),
-                              _QuickAction(
-                                icon: Icons.receipt_long_outlined,
-                                label: t.donorDashDonationLog,
-                                color: const Color(0xFF16A34A),
-                                onTap: () => context.go('/donor/donation-log'),
+                              Expanded(
+                                child: _QuickAction(
+                                  icon: Icons.receipt_long_outlined,
+                                  label: t.donorDashDonationLog,
+                                  color: const Color(0xFF16A34A),
+                                  onTap: () => context.go('/donor/donation-log'),
+                                ),
                               ),
-                              _QuickAction(
-                                icon: Icons.emoji_events_outlined,
-                                label: t.donorDashRewards,
-                                color: const Color(0xFFF59E0B),
-                                onTap: () => context.go('/rewards'),
+                              Expanded(
+                                child: _QuickAction(
+                                  icon: Icons.emoji_events_outlined,
+                                  label: t.donorDashRewards,
+                                  color: const Color(0xFFF59E0B),
+                                  onTap: () => context.go('/rewards'),
+                                ),
                               ),
-                              _QuickAction(
-                                icon: Icons.leaderboard_outlined,
-                                label: t.donorDashLeaderboard,
-                                color: const Color(0xFF6B7280),
-                                onTap: () => context.go('/leaderboard'),
+                              Expanded(
+                                child: _QuickAction(
+                                  icon: Icons.leaderboard_outlined,
+                                  label: t.donorDashLeaderboard,
+                                  color: const Color(0xFF6B7280),
+                                  onTap: () => context.go('/leaderboard'),
+                                ),
                               ),
                             ],
                           ),
@@ -612,7 +624,7 @@ class _CompletedPickupRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          RatingStars(reviewLabel: t.donorRateConsumer),
+          RatingStars(reviewLabel: t.donorRateConsumer, targetUid: consumerId, pickupId: pickup.id),
           if (consumerId.isNotEmpty) ...[
             const SizedBox(height: 8),
             Row(children: [
@@ -652,42 +664,35 @@ class _QuickAction extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 2),
-    child: Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 16),
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    borderRadius: BorderRadius.circular(10),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 12,
-                color: Color(0xFFBFBFBF),
-              ),
-            ],
-          ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500),
+            ),
+          ],
         ),
       ),
     ),

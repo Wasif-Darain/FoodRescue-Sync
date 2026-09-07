@@ -174,37 +174,47 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
               _SectionCard(
                 title: t.mktQuickActions,
                 icon: Icons.bolt_outlined,
-                child: Column(
+                child: Row(
                   children: [
-                    _QuickAction(
-                      icon: Icons.radar_outlined,
-                      label: t.mktSurplusRadar,
-                      color: const Color(0xFF2563EB),
-                      onTap: () => context.go('/consumer/radar'),
+                    Expanded(
+                      child: _QuickAction(
+                        icon: Icons.radar_outlined,
+                        label: t.mktSurplusRadar,
+                        color: const Color(0xFF2563EB),
+                        onTap: () => context.go('/consumer/radar'),
+                      ),
                     ),
-                    _QuickAction(
-                      icon: Icons.shopping_cart_outlined,
-                      label: t.mktBulkRequest,
-                      color: const Color(0xFFEA580C),
-                      onTap: () => context.go('/consumer/bulk-request'),
+                    Expanded(
+                      child: _QuickAction(
+                        icon: Icons.shopping_cart_outlined,
+                        label: t.mktBulkRequest,
+                        color: const Color(0xFFEA580C),
+                        onTap: () => context.go('/consumer/bulk-request'),
+                      ),
                     ),
-                    _QuickAction(
-                      icon: Icons.history_outlined,
-                      label: t.mktRequestStatus,
-                      color: const Color(0xFF16A34A),
-                      onTap: () => context.go('/consumer/requests'),
+                    Expanded(
+                      child: _QuickAction(
+                        icon: Icons.history_outlined,
+                        label: t.mktRequestStatus,
+                        color: const Color(0xFF16A34A),
+                        onTap: () => context.go('/consumer/requests'),
+                      ),
                     ),
-                    _QuickAction(
-                      icon: Icons.emoji_events_outlined,
-                      label: t.mktRewards,
-                      color: const Color(0xFFF59E0B),
-                      onTap: () => context.go('/rewards'),
+                    Expanded(
+                      child: _QuickAction(
+                        icon: Icons.emoji_events_outlined,
+                        label: t.mktRewards,
+                        color: const Color(0xFFF59E0B),
+                        onTap: () => context.go('/rewards'),
+                      ),
                     ),
-                    _QuickAction(
-                      icon: Icons.leaderboard_outlined,
-                      label: t.mktLeaderboard,
-                      color: const Color(0xFF6B7280),
-                      onTap: () => context.go('/leaderboard'),
+                    Expanded(
+                      child: _QuickAction(
+                        icon: Icons.leaderboard_outlined,
+                        label: t.mktLeaderboard,
+                        color: const Color(0xFF6B7280),
+                        onTap: () => context.go('/leaderboard'),
+                      ),
                     ),
                   ],
                 ),
@@ -861,45 +871,35 @@ class _QuickAction extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 2),
-    child: Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 16),
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    borderRadius: BorderRadius.circular(10),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 12,
-                color: Color(0xFFBFBFBF),
-              ),
-            ],
-          ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500),
+            ),
+          ],
         ),
       ),
     ),

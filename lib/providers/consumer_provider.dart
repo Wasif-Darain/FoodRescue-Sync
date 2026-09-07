@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -585,9 +584,7 @@ class ConsumerProvider extends ChangeNotifier {
   /// Uploads the distribution proof photo (via the same free Cloudinary
   /// pipeline listing photos use) and returns its public URL.
   Future<String> uploadDistributionPhoto(Uint8List bytes) async {
-    final tempFile = File('${Directory.systemTemp.path}/distribution_${DateTime.now().millisecondsSinceEpoch}.jpg');
-    await tempFile.writeAsBytes(bytes);
-    return ListingImageManager().uploadListingImage(tempFile);
+    return ListingImageManager().uploadBytes(bytes, filename: 'distribution_${DateTime.now().millisecondsSinceEpoch}.jpg');
   }
 
   Future<void> markDistributionComplete(String pickupId, String photoUrl) async {
