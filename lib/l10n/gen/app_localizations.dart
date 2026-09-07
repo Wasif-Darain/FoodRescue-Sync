@@ -578,6 +578,36 @@ abstract class AppLocalizations {
   /// **'Get notified about campaigns and promotions'**
   String get notifPrefsPromotionsSub;
 
+  /// No description provided for @notifPrefsPushEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Push Notifications'**
+  String get notifPrefsPushEnable;
+
+  /// No description provided for @notifPrefsPushEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Push notifications are on'**
+  String get notifPrefsPushEnabled;
+
+  /// No description provided for @notifPrefsPushDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Push notifications are off'**
+  String get notifPrefsPushDisabled;
+
+  /// No description provided for @notifPrefsPushDeniedSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications were blocked in your device settings. Turn them back on from there.'**
+  String get notifPrefsPushDeniedSub;
+
+  /// No description provided for @notifPrefsPushButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable'**
+  String get notifPrefsPushButton;
+
   /// No description provided for @privacyTitle.
   ///
   /// In en, this message translates to:
@@ -1021,6 +1051,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Business / organization address'**
   String get authAddressHint;
+
+  /// No description provided for @authVerificationDocLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Document'**
+  String get authVerificationDocLabel;
+
+  /// No description provided for @authVerificationDocHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload a photo of your business/organization registration or license, for admin review.'**
+  String get authVerificationDocHint;
+
+  /// No description provided for @authVerificationDocRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please upload a verification document to continue.'**
+  String get authVerificationDocRequired;
+
+  /// No description provided for @authNidLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'National ID (NID)'**
+  String get authNidLabel;
+
+  /// No description provided for @authNidHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload clear photos of both sides of your NID, for admin review.'**
+  String get authNidHint;
+
+  /// No description provided for @authNidFront.
+  ///
+  /// In en, this message translates to:
+  /// **'NID — Front'**
+  String get authNidFront;
+
+  /// No description provided for @authNidBack.
+  ///
+  /// In en, this message translates to:
+  /// **'NID — Back'**
+  String get authNidBack;
+
+  /// No description provided for @authNidRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please upload both sides of your NID to continue.'**
+  String get authNidRequired;
+
+  /// No description provided for @authDocUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t upload your document. Please try again.'**
+  String get authDocUploadFailed;
 
   /// No description provided for @authPassword.
   ///
@@ -1861,6 +1945,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This will permanently remove \"{name}\" from the platform.'**
   String acctMgmtRemoveBody(String name);
+
+  /// No description provided for @acctMgmtNoDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'No verification documents submitted yet.'**
+  String get acctMgmtNoDocuments;
+
+  /// No description provided for @verifiedBadgeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified by admin'**
+  String get verifiedBadgeTooltip;
+
+  /// No description provided for @adminUserNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This account no longer exists.'**
+  String get adminUserNotFound;
+
+  /// No description provided for @adminVerificationDocs.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Documents'**
+  String get adminVerificationDocs;
+
+  /// No description provided for @adminActivityStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get adminActivityStats;
+
+  /// No description provided for @adminStatDonations.
+  ///
+  /// In en, this message translates to:
+  /// **'Donations'**
+  String get adminStatDonations;
+
+  /// No description provided for @adminStatKgSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'kg Saved'**
+  String get adminStatKgSaved;
+
+  /// No description provided for @adminStatCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get adminStatCompleted;
+
+  /// No description provided for @adminStatCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get adminStatCancelled;
+
+  /// No description provided for @adminStatScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled'**
+  String get adminStatScheduled;
+
+  /// No description provided for @adminStatInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In Progress'**
+  String get adminStatInProgress;
+
+  /// No description provided for @adminStatRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get adminStatRating;
+
+  /// No description provided for @adminStatReviewCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews'**
+  String get adminStatReviewCount;
+
+  /// No description provided for @adminStatVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get adminStatVerified;
+
+  /// No description provided for @adminReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews'**
+  String get adminReviews;
+
+  /// No description provided for @adminNoReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'No reviews yet.'**
+  String get adminNoReviews;
+
+  /// No description provided for @adminReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get adminReports;
+
+  /// No description provided for @adminNoReports.
+  ///
+  /// In en, this message translates to:
+  /// **'No reports filed.'**
+  String get adminNoReports;
+
+  /// No description provided for @adminReportAgainst.
+  ///
+  /// In en, this message translates to:
+  /// **'Report against {name}'**
+  String adminReportAgainst(String name);
+
+  /// No description provided for @adminReportsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports & Reviews'**
+  String get adminReportsTitle;
+
+  /// No description provided for @adminReportsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Every report and review filed across the platform'**
+  String get adminReportsSubtitle;
+
+  /// No description provided for @adminStatsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get adminStatsTitle;
+
+  /// No description provided for @adminStatsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform-wide donation & delivery analytics'**
+  String get adminStatsSubtitle;
+
+  /// No description provided for @adminStatsDonations.
+  ///
+  /// In en, this message translates to:
+  /// **'Donations'**
+  String get adminStatsDonations;
+
+  /// No description provided for @adminStatsDeliveries.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliveries'**
+  String get adminStatsDeliveries;
+
+  /// No description provided for @adminStatsSuccessRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Success Rate'**
+  String get adminStatsSuccessRate;
+
+  /// No description provided for @adminStatsSuccessRateValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of deliveries completed successfully'**
+  String adminStatsSuccessRateValue(String percent);
+
+  /// No description provided for @adminStatsUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'Users'**
+  String get adminStatsUsers;
 
   /// No description provided for @notifCenterTitle.
   ///

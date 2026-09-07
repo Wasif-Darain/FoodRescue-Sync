@@ -258,6 +258,22 @@ class AppLocalizationsBn extends AppLocalizations {
       'ক্যাম্পেইন ও প্রচারণা সম্পর্কে জানানো হবে';
 
   @override
+  String get notifPrefsPushEnable => 'পুশ নোটিফিকেশন চালু করুন';
+
+  @override
+  String get notifPrefsPushEnabled => 'পুশ নোটিফিকেশন চালু আছে';
+
+  @override
+  String get notifPrefsPushDisabled => 'পুশ নোটিফিকেশন বন্ধ আছে';
+
+  @override
+  String get notifPrefsPushDeniedSub =>
+      'আপনার ডিভাইস সেটিংসে নোটিফিকেশন ব্লক করা আছে। ডিভাইস সেটিংস থেকে এটি চালু করুন।';
+
+  @override
+  String get notifPrefsPushButton => 'চালু করুন';
+
+  @override
   String get privacyTitle => 'গোপনীয়তা ও নিরাপত্তা';
 
   @override
@@ -486,6 +502,38 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get authAddressHint => 'ব্যবসা / প্রতিষ্ঠানের ঠিকানা';
+
+  @override
+  String get authVerificationDocLabel => 'যাচাইকরণ ডকুমেন্ট';
+
+  @override
+  String get authVerificationDocHint =>
+      'আপনার ব্যবসা/প্রতিষ্ঠানের রেজিস্ট্রেশন বা লাইসেন্সের একটি ছবি আপলোড করুন, অ্যাডমিন যাচাইয়ের জন্য।';
+
+  @override
+  String get authVerificationDocRequired =>
+      'চালিয়ে যেতে একটি যাচাইকরণ ডকুমেন্ট আপলোড করুন।';
+
+  @override
+  String get authNidLabel => 'জাতীয় পরিচয়পত্র (NID)';
+
+  @override
+  String get authNidHint =>
+      'আপনার NID-এর উভয় পাশের স্পষ্ট ছবি আপলোড করুন, অ্যাডমিন যাচাইয়ের জন্য।';
+
+  @override
+  String get authNidFront => 'NID — সামনের দিক';
+
+  @override
+  String get authNidBack => 'NID — পেছনের দিক';
+
+  @override
+  String get authNidRequired =>
+      'চালিয়ে যেতে আপনার NID-এর উভয় পাশ আপলোড করুন।';
+
+  @override
+  String get authDocUploadFailed =>
+      'আপনার ডকুমেন্ট আপলোড করা যায়নি। আবার চেষ্টা করুন।';
 
   @override
   String get authPassword => 'পাসওয়ার্ড';
@@ -979,6 +1027,96 @@ class AppLocalizationsBn extends AppLocalizations {
   String acctMgmtRemoveBody(String name) {
     return 'এটি \"$name\" প্ল্যাটফর্ম থেকে স্থায়ীভাবে অপসারণ করবে।';
   }
+
+  @override
+  String get acctMgmtNoDocuments =>
+      'এখনো কোনো যাচাইকরণ ডকুমেন্ট জমা দেওয়া হয়নি।';
+
+  @override
+  String get verifiedBadgeTooltip => 'অ্যাডমিন কর্তৃক যাচাইকৃত';
+
+  @override
+  String get adminUserNotFound => 'এই অ্যাকাউন্টটি আর নেই।';
+
+  @override
+  String get adminVerificationDocs => 'যাচাইকরণ ডকুমেন্ট';
+
+  @override
+  String get adminActivityStats => 'কার্যক্রম';
+
+  @override
+  String get adminStatDonations => 'দান';
+
+  @override
+  String get adminStatKgSaved => 'কেজি সংরক্ষিত';
+
+  @override
+  String get adminStatCompleted => 'সম্পন্ন';
+
+  @override
+  String get adminStatCancelled => 'বাতিল';
+
+  @override
+  String get adminStatScheduled => 'নির্ধারিত';
+
+  @override
+  String get adminStatInProgress => 'চলমান';
+
+  @override
+  String get adminStatRating => 'রেটিং';
+
+  @override
+  String get adminStatReviewCount => 'রিভিউ';
+
+  @override
+  String get adminStatVerified => 'যাচাইকৃত';
+
+  @override
+  String get adminReviews => 'রিভিউ';
+
+  @override
+  String get adminNoReviews => 'এখনো কোনো রিভিউ নেই।';
+
+  @override
+  String get adminReports => 'রিপোর্ট';
+
+  @override
+  String get adminNoReports => 'কোনো রিপোর্ট দাখিল করা হয়নি।';
+
+  @override
+  String adminReportAgainst(String name) {
+    return '$name-এর বিরুদ্ধে রিপোর্ট';
+  }
+
+  @override
+  String get adminReportsTitle => 'রিপোর্ট ও রিভিউ';
+
+  @override
+  String get adminReportsSubtitle =>
+      'প্ল্যাটফর্মে দাখিল হওয়া প্রতিটি রিপোর্ট ও রিভিউ';
+
+  @override
+  String get adminStatsTitle => 'পরিসংখ্যান';
+
+  @override
+  String get adminStatsSubtitle => 'প্ল্যাটফর্ম-ব্যাপী দান ও ডেলিভারি বিশ্লেষণ';
+
+  @override
+  String get adminStatsDonations => 'দান';
+
+  @override
+  String get adminStatsDeliveries => 'ডেলিভারি';
+
+  @override
+  String get adminStatsSuccessRate => 'সফলতার হার';
+
+  @override
+  String adminStatsSuccessRateValue(String percent) {
+    return '$percent% ডেলিভারি সফলভাবে সম্পন্ন হয়েছে';
+  }
+
+  @override
+  String get adminStatsUsers => 'ব্যবহারকারী';
 
   @override
   String get notifCenterTitle => 'নোটিফিকেশন';

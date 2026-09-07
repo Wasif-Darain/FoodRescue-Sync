@@ -240,6 +240,11 @@ class RegisteredAccount {
   final double? latitude;
   final double? longitude;
   final String? address;
+  final String? phone;
+  final bool isVerified;
+  final String? verificationDocUrl;
+  final String? nidFrontUrl;
+  final String? nidBackUrl;
 
   RegisteredAccount({
     required this.id,
@@ -262,7 +267,19 @@ class RegisteredAccount {
     this.latitude,
     this.longitude,
     this.address,
+    this.phone,
+    this.isVerified = false,
+    this.verificationDocUrl,
+    this.nidFrontUrl,
+    this.nidBackUrl,
   });
+
+  /// Whether this account submitted the documents required for its type
+  /// (a single verification doc for org donor types, NID front+back for an
+  /// individual or rider) — used to gate the admin "Approve" action.
+  bool get hasSubmittedDocuments => accountType == AccountType.individual || accountType == AccountType.rider
+      ? (nidFrontUrl != null && nidBackUrl != null)
+      : verificationDocUrl != null;
 
   RegisteredAccount copyWith({
     AccountStatus? status,
@@ -271,6 +288,7 @@ class RegisteredAccount {
     double? latitude,
     double? longitude,
     String? address,
+    bool? isVerified,
   }) => RegisteredAccount(
     id: id,
     uid: uid,
@@ -292,6 +310,11 @@ class RegisteredAccount {
     latitude: latitude ?? this.latitude,
     longitude: longitude ?? this.longitude,
     address: address ?? this.address,
+    phone: phone,
+    isVerified: isVerified ?? this.isVerified,
+    verificationDocUrl: verificationDocUrl,
+    nidFrontUrl: nidFrontUrl,
+    nidBackUrl: nidBackUrl,
   );
 }
 

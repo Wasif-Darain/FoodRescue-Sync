@@ -24,6 +24,9 @@ import 'screens/shared/language_region.dart';
 import 'screens/shared/help_support.dart';
 import 'screens/admin/admin_dashboard.dart';
 import 'screens/admin/account_management.dart';
+import 'screens/admin/admin_user_detail.dart';
+import 'screens/admin/admin_reports.dart';
+import 'screens/admin/admin_statistics.dart';
 import 'screens/rider/rider_dashboard.dart';
 import 'screens/rewards/rewards_screen.dart';
 import 'screens/leaderboard/leaderboard_screen.dart';
@@ -189,6 +192,18 @@ GoRouter buildRouter(AuthProvider auth) => GoRouter(
     GoRoute(
       path: '/admin/accounts',
       pageBuilder: (_, state) => _fadeThrough(state, const AccountManagement()),
+    ),
+    GoRoute(
+      path: '/admin/user/:uid',
+      pageBuilder: (_, state) => _fadeThrough(state, AdminUserDetail(uid: state.pathParameters['uid']!)),
+    ),
+    GoRoute(
+      path: '/admin/reports',
+      pageBuilder: (_, state) => _fadeThrough(state, const AdminReports()),
+    ),
+    GoRoute(
+      path: '/admin/statistics',
+      pageBuilder: (_, state) => _fadeThrough(state, const AdminStatistics()),
     ),
     // Rider
     GoRoute(

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/app_badge.dart';
-import '../../widgets/ui/detail_sheet.dart';
+import '../../widgets/ui/verified_badge.dart';
 import '../../models/models.dart';
 import '../../providers/admin_provider.dart';
 import '../../l10n/l10n_ext.dart';
@@ -142,18 +143,7 @@ class _AccountCard extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: () => showDetailSheet(
-        context,
-        title: account.name,
-        subtitle: t.acctMgmtAccountDetails,
-        email: account.email,
-        rows: [
-          DetailRow(Icons.badge_outlined, t.acctMgmtRole, _roleLabel(t, account.mode)),
-          DetailRow(Icons.category_outlined, t.acctMgmtAccountType, _accountTypeLabel(t)[account.accountType] ?? ''),
-          DetailRow(Icons.calendar_today_outlined, t.acctMgmtJoined, '${account.joinedAt.day}/${account.joinedAt.month}/${account.joinedAt.year}'),
-          DetailRow(Icons.verified_outlined, t.acctMgmtStatus, label),
-        ],
-      ),
+      onTap: () => context.go('/admin/user/${account.uid}'),
       child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -187,7 +177,15 @@ class _AccountCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(account.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Row(
+                      children: [
+                        Flexible(child: Text(account.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212)), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        if (account.isVerified) ...[
+                          const SizedBox(width: 4),
+                          VerifiedBadge(mode: account.mode, size: 14),
+                        ],
+                      ],
+                    ),
                     Text(account.email, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
                 ),
@@ -205,6 +203,16 @@ class _AccountCard extends StatelessWidget {
               _Tag(text: t.acctMgmtJoinedTag('${account.joinedAt.year}-${account.joinedAt.month.toString().padLeft(2, '0')}-${account.joinedAt.day.toString().padLeft(2, '0')}')),
             ],
           ),
+          if (account.status != AccountStatus.approved && !account.hasSubmittedDocuments) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.warning_amber_outlined, size: 14, color: Color(0xFFD97706)),
+                const SizedBox(width: 6),
+                Expanded(child: Text(t.acctMgmtNoDocuments, style: const TextStyle(fontSize: 11, color: Color(0xFFD97706)))),
+              ],
+            ),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [
@@ -213,7 +221,7 @@ class _AccountCard extends StatelessWidget {
                   child: _ActionButton(
                     label: t.acctMgmtApprove,
                     color: const Color(0xFF16A34A),
-                    onTap: () => admin.setStatus(account.email, AccountStatus.approved),
+                    onTap: () => admin.approve(account.uid),
                   ),
                 ),
               if (account.status == AccountStatus.approved)
@@ -221,7 +229,7 @@ class _AccountCard extends StatelessWidget {
                   child: _ActionButton(
                     label: t.acctMgmtSuspend,
                     color: const Color(0xFFD97706),
-                    onTap: () => admin.setStatus(account.email, AccountStatus.suspended),
+                    onTap: () => admin.setStatus(account.uid, AccountStatus.suspended),
                   ),
                 ),
               const SizedBox(width: 8),
@@ -253,7 +261,7 @@ class _AccountCard extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(t.commonCancel)),
           ElevatedButton(
             onPressed: () {
-              admin.removeAccount(account.email);
+              admin.removeAccount(account.uid);
               Navigator.pop(dialogContext);
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), foregroundColor: Colors.white, elevation: 0),

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../l10n/l10n_ext.dart';
 
@@ -5,7 +7,20 @@ class RatingStars extends StatefulWidget {
   final double? initialRating;
   final double size;
   final String? reviewLabel;
-  const RatingStars({super.key, this.initialRating, this.size = 28, this.reviewLabel});
+  /// Uid of the user this review is about. Reviews are only persisted (to
+  /// the `reviews` collection, plus an aggregate on `users/{targetUid}`)
+  /// when this is non-empty — pass '' to keep the widget purely cosmetic
+  /// when the target can't be resolved.
+  final String targetUid;
+  final String? pickupId;
+  const RatingStars({
+    super.key,
+    this.initialRating,
+    this.size = 28,
+    this.reviewLabel,
+    this.targetUid = '',
+    this.pickupId,
+  });
 
   @override
   State<RatingStars> createState() => _RatingStarsState();
@@ -14,7 +29,44 @@ class RatingStars extends StatefulWidget {
 class _RatingStarsState extends State<RatingStars> {
   int _rating = 0;
   bool _submitted = false;
+  bool _submitting = false;
   final _reviewCtrl = TextEditingController();
+
+  Future<void> _submit() async {
+    if (widget.targetUid.isEmpty) {
+      setState(() => _submitted = true);
+      return;
+    }
+    setState(() => _submitting = true);
+    final raterUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final raterName = FirebaseAuth.instance.currentUser?.displayName ?? '';
+    final firestore = FirebaseFirestore.instance;
+    try {
+      await firestore.collection('reviews').add({
+        'targetUid': widget.targetUid,
+        'raterUid': raterUid,
+        'raterName': raterName,
+        'rating': _rating,
+        'reviewText': _reviewCtrl.text.trim().isEmpty ? null : _reviewCtrl.text.trim(),
+        'pickupId': widget.pickupId,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      await firestore.collection('users').doc(widget.targetUid).update({
+        'ratingSum': FieldValue.increment(_rating),
+        'reviewCount': FieldValue.increment(1),
+      });
+    } catch (_) {
+      // The review UI is a nice-to-have on top of the core pickup flow —
+      // fail silently rather than blocking the user on a write hiccup.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+          _submitted = true;
+        });
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -121,7 +173,7 @@ class _RatingStarsState extends State<RatingStars> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _rating == 0 ? null : () => setState(() => _submitted = true),
+              onPressed: _rating == 0 || _submitting ? null : _submit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF16A34A),
                 foregroundColor: Colors.white,
@@ -129,7 +181,9 @@ class _RatingStarsState extends State<RatingStars> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: Text(t.ratingSubmit, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              child: _submitting
+                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text(t.ratingSubmit, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
             ),
           ),
         ],

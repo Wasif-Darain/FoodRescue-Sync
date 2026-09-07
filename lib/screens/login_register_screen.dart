@@ -4,10 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/auth_provider.dart';
+import '../services/listing_image_manager.dart';
 import '../widgets/ui/glass.dart';
+import '../widgets/ui/photo_picker_row.dart';
 import '../utils/password_validator.dart';
 import '../l10n/l10n_ext.dart';
 import '../l10n/gen/app_localizations.dart';
+
+/// Whether [type] is a person (submits NID front+back) rather than an
+/// organization (submits a single registration/verification document).
+bool _isIndividualType(AccountType type) => type == AccountType.individual || type == AccountType.rider;
 
 const _brandGreen = Color(0xFF16A34A);
 
@@ -32,6 +38,11 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
   final _phoneCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _extraCtrl = TextEditingController();
+
+  Uint8List? _verificationDoc;
+  Uint8List? _nidFront;
+  Uint8List? _nidBack;
+  bool _uploadingDocs = false;
 
   @override
   void dispose() {
@@ -64,6 +75,38 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
       _showAuthError(context.l10n.authPasswordNotStrong(kMinPasswordLength));
       return;
     }
+    final t = context.l10n;
+    if (_isIndividualType(_accountType)) {
+      if (_nidFront == null || _nidBack == null) {
+        _showAuthError(t.authNidRequired);
+        return;
+      }
+    } else if (_verificationDoc == null) {
+      _showAuthError(t.authVerificationDocRequired);
+      return;
+    }
+
+    setState(() => _uploadingDocs = true);
+    String? verificationDocUrl;
+    String? nidFrontUrl;
+    String? nidBackUrl;
+    try {
+      final images = ListingImageManager();
+      if (_isIndividualType(_accountType)) {
+        nidFrontUrl = await images.uploadBytes(_nidFront!, filename: 'nid_front_${DateTime.now().millisecondsSinceEpoch}.jpg');
+        nidBackUrl = await images.uploadBytes(_nidBack!, filename: 'nid_back_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      } else {
+        verificationDocUrl = await images.uploadBytes(_verificationDoc!, filename: 'verification_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _uploadingDocs = false);
+      _showAuthError(t.authDocUploadFailed);
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _uploadingDocs = false);
+
     await auth.signUp(
       name: _nameCtrl.text.isEmpty ? 'User' : _nameCtrl.text,
       email: _emailCtrl.text,
@@ -71,6 +114,9 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
       phone: _phoneCtrl.text,
       address: _addressCtrl.text,
       accountType: _accountType,
+      verificationDocUrl: verificationDocUrl,
+      nidFrontUrl: nidFrontUrl,
+      nidBackUrl: nidBackUrl,
     );
     if (!mounted) return;
     if (auth.errorMessage != null) {
@@ -180,8 +226,20 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
       _Field(icon: Icons.location_on_outlined, label: t.authAddress, ctrl: _addressCtrl, placeholder: t.authAddressHint),
       const SizedBox(height: 18),
       _PasswordField(ctrl: _passCtrl, show: _showPassword, onToggle: () => setState(() => _showPassword = !_showPassword), showValidation: true),
+      const SizedBox(height: 18),
+      _isIndividualType(_accountType)
+          ? _NidUpload(
+              front: _nidFront,
+              back: _nidBack,
+              onFrontChanged: (b) => setState(() => _nidFront = b),
+              onBackChanged: (b) => setState(() => _nidBack = b),
+            )
+          : _VerificationDocUpload(
+              photo: _verificationDoc,
+              onChanged: (b) => setState(() => _verificationDoc = b),
+            ),
       const SizedBox(height: 22),
-      _PrimaryButton(label: t.authCreateAccount, onPressed: _submit),
+      _PrimaryButton(label: t.authCreateAccount, onPressed: _uploadingDocs ? null : _submit, loading: _uploadingDocs),
     ],
     );
   }
@@ -284,8 +342,9 @@ class _BottomWaveClipper extends CustomClipper<Path> {
 
 class _PrimaryButton extends StatelessWidget {
   final String label;
-  final VoidCallback onPressed;
-  const _PrimaryButton({required this.label, required this.onPressed});
+  final VoidCallback? onPressed;
+  final bool loading;
+  const _PrimaryButton({required this.label, required this.onPressed, this.loading = false});
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -299,7 +358,9 @@ class _PrimaryButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 15),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       ),
-      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+      child: loading
+          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+          : Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
     ),
   );
 }
@@ -390,6 +451,60 @@ class _AccountTypeGrid extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+/// A single "upload your organization's verification document" picker,
+/// shown to any non-individual/non-rider account type at signup — an
+/// admin reviews this before approving the account (see AdminProvider.approve).
+class _VerificationDocUpload extends StatelessWidget {
+  final Uint8List? photo;
+  final ValueChanged<Uint8List?> onChanged;
+  const _VerificationDocUpload({required this.photo, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(t.authVerificationDocLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF757575))),
+        const SizedBox(height: 4),
+        Text(t.authVerificationDocHint, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+        const SizedBox(height: 8),
+        PhotoPickerRow(imageBytes: photo, onChanged: onChanged),
+      ],
+    );
+  }
+}
+
+/// The individual/rider equivalent: a National ID, front and back.
+class _NidUpload extends StatelessWidget {
+  final Uint8List? front;
+  final Uint8List? back;
+  final ValueChanged<Uint8List?> onFrontChanged;
+  final ValueChanged<Uint8List?> onBackChanged;
+  const _NidUpload({required this.front, required this.back, required this.onFrontChanged, required this.onBackChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(t.authNidLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF757575))),
+        const SizedBox(height: 4),
+        Text(t.authNidHint, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+        const SizedBox(height: 8),
+        Text(t.authNidFront, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF525252))),
+        const SizedBox(height: 4),
+        PhotoPickerRow(imageBytes: front, onChanged: onFrontChanged),
+        const SizedBox(height: 12),
+        Text(t.authNidBack, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF525252))),
+        const SizedBox(height: 4),
+        PhotoPickerRow(imageBytes: back, onChanged: onBackChanged),
+      ],
     );
   }
 }

@@ -37,6 +37,7 @@ class AdminDashboard extends StatelessWidget {
                     value: accounts.length,
                     icon: const Icon(Icons.groups_outlined),
                     color: 'red',
+                    onTap: () => context.go('/admin/accounts'),
                   ),
                   StatCard(
                     label: t.adminPendingApprovals,
@@ -44,15 +45,78 @@ class AdminDashboard extends StatelessWidget {
                     icon: const Icon(Icons.pending_actions_outlined),
                     color: 'orange',
                     subtitle: pending > 0 ? t.adminNeedsReview : t.adminAllCaughtUp,
+                    onTap: () => context.go('/admin/accounts'),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
               _ManageAccountsCard(pending: pending),
+              const SizedBox(height: 12),
+              _NavCard(
+                icon: Icons.flag_outlined,
+                title: t.adminReportsTitle,
+                subtitle: t.adminReportsSubtitle,
+                route: '/admin/reports',
+              ),
+              const SizedBox(height: 12),
+              _NavCard(
+                icon: Icons.bar_chart_outlined,
+                title: t.adminStatsTitle,
+                subtitle: t.adminStatsSubtitle,
+                route: '/admin/statistics',
+              ),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _NavCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String route;
+  const _NavCard({required this.icon, required this.title, required this.subtitle, required this.route});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
+    final subColor = isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575);
+    return Material(
+      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => context.go(route),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, color: const Color(0xFF16A34A), size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: TextStyle(color: subColor, fontSize: 12)),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios, color: subColor, size: 13),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

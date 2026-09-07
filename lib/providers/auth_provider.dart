@@ -25,8 +25,10 @@ class AuthProvider extends ChangeNotifier {
   bool _privacyVisible = true;
   bool _privacyLoginAlerts = true;
   bool _privacyDataSharing = false;
+  bool _isVerified = false;
 
   AppUser? get user => _user;
+  bool get isVerified => _isVerified;
   String? get address => _address;
   double get maxRadiusKm => _maxRadiusKm;
   int get unattendedAfterHours => _unattendedAfterHours;
@@ -76,11 +78,15 @@ class AuthProvider extends ChangeNotifier {
         _privacyVisible = data['privacyVisible'] as bool? ?? true;
         _privacyLoginAlerts = data['privacyLoginAlerts'] as bool? ?? true;
         _privacyDataSharing = data['privacyDataSharing'] as bool? ?? false;
+        _isVerified = data['isVerified'] as bool? ?? false;
+        final storedAccountType = data['accountType'] as String?;
         _user = AppUser(
           id: 0,
           name: data['name'] as String? ?? firebaseUser.displayName ?? 'User',
           email: firebaseUser.email ?? '',
-          accountType: _accountTypeFromRole(role),
+          accountType: storedAccountType != null
+              ? AccountType.values.firstWhere((t) => t.name == storedAccountType, orElse: () => _accountTypeFromRole(role))
+              : _accountTypeFromRole(role),
           mode: _modeFromRole(role),
         );
       } else {
@@ -155,6 +161,9 @@ class AuthProvider extends ChangeNotifier {
     required String phone,
     required String address,
     required AccountType accountType,
+    String? verificationDocUrl,
+    String? nidFrontUrl,
+    String? nidBackUrl,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -179,8 +188,17 @@ class AuthProvider extends ChangeNotifier {
           'uid': uid,
           'email': email.trim(),
           'role': role,
+          'accountType': accountType.name,
           'name': name,
+          'phone': phone,
+          'address': address,
           'profileRef': orgRef,
+          'status': AccountStatus.pending.name,
+          'isVerified': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          if (verificationDocUrl != null) 'verificationDocUrl': verificationDocUrl,
+          if (nidFrontUrl != null) 'nidFrontUrl': nidFrontUrl,
+          if (nidBackUrl != null) 'nidBackUrl': nidBackUrl,
         });
         transaction.set(orgRef, {
           'orgName': name,

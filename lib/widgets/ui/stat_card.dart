@@ -6,6 +6,7 @@ class StatCard extends StatelessWidget {
   final Widget icon;
   final String color;
   final String? subtitle;
+  final VoidCallback? onTap;
 
   const StatCard({
     super.key,
@@ -14,6 +15,7 @@ class StatCard extends StatelessWidget {
     required this.icon,
     this.color = 'blue',
     this.subtitle,
+    this.onTap,
   });
 
   @override
@@ -35,35 +37,58 @@ class StatCard extends StatelessWidget {
         child: Transform.translate(offset: Offset(0, (1 - t) * 14), child: child),
       ),
       child: Container(
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(8)),
-              child: Center(child: IconTheme(data: IconThemeData(color: c, size: 18), child: icon)),
-            ),
-            const SizedBox(height: 10),
-            _AnimatedValue(value: value),
-            const SizedBox(height: 2),
-            Text(label, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
-            const SizedBox(height: 2),
-            Text(
-              subtitle ?? '\u200B',
-              style: TextStyle(
-                fontSize: 11,
-                color: subtitle != null ? (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)) : Colors.transparent,
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 32, height: 32,
+                    decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                    child: Center(child: IconTheme(data: IconThemeData(color: c, size: 16), child: icon)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _AnimatedValue(value: value),
+                        Text(
+                          label,
+                          style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (subtitle != null)
+                          Text(
+                            subtitle!,
+                            style: TextStyle(fontSize: 10.5, color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (onTap != null) ...[
+                    const SizedBox(width: 4),
+                    Icon(Icons.arrow_forward_ios, size: 11, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
+                  ],
+                ],
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -79,7 +104,7 @@ class _AnimatedValue extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final style = TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212));
+    final style = TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212));
     if (value is int) {
       return TweenAnimationBuilder<int>(
         tween: IntTween(begin: 0, end: value as int),

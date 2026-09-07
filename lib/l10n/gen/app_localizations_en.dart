@@ -258,6 +258,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'Get notified about campaigns and promotions';
 
   @override
+  String get notifPrefsPushEnable => 'Enable Push Notifications';
+
+  @override
+  String get notifPrefsPushEnabled => 'Push notifications are on';
+
+  @override
+  String get notifPrefsPushDisabled => 'Push notifications are off';
+
+  @override
+  String get notifPrefsPushDeniedSub =>
+      'Notifications were blocked in your device settings. Turn them back on from there.';
+
+  @override
+  String get notifPrefsPushButton => 'Enable';
+
+  @override
   String get privacyTitle => 'Privacy & Security';
 
   @override
@@ -483,6 +499,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authAddressHint => 'Business / organization address';
+
+  @override
+  String get authVerificationDocLabel => 'Verification Document';
+
+  @override
+  String get authVerificationDocHint =>
+      'Upload a photo of your business/organization registration or license, for admin review.';
+
+  @override
+  String get authVerificationDocRequired =>
+      'Please upload a verification document to continue.';
+
+  @override
+  String get authNidLabel => 'National ID (NID)';
+
+  @override
+  String get authNidHint =>
+      'Upload clear photos of both sides of your NID, for admin review.';
+
+  @override
+  String get authNidFront => 'NID — Front';
+
+  @override
+  String get authNidBack => 'NID — Back';
+
+  @override
+  String get authNidRequired =>
+      'Please upload both sides of your NID to continue.';
+
+  @override
+  String get authDocUploadFailed =>
+      'Couldn\'t upload your document. Please try again.';
 
   @override
   String get authPassword => 'Password';
@@ -974,6 +1022,96 @@ class AppLocalizationsEn extends AppLocalizations {
   String acctMgmtRemoveBody(String name) {
     return 'This will permanently remove \"$name\" from the platform.';
   }
+
+  @override
+  String get acctMgmtNoDocuments => 'No verification documents submitted yet.';
+
+  @override
+  String get verifiedBadgeTooltip => 'Verified by admin';
+
+  @override
+  String get adminUserNotFound => 'This account no longer exists.';
+
+  @override
+  String get adminVerificationDocs => 'Verification Documents';
+
+  @override
+  String get adminActivityStats => 'Activity';
+
+  @override
+  String get adminStatDonations => 'Donations';
+
+  @override
+  String get adminStatKgSaved => 'kg Saved';
+
+  @override
+  String get adminStatCompleted => 'Completed';
+
+  @override
+  String get adminStatCancelled => 'Cancelled';
+
+  @override
+  String get adminStatScheduled => 'Scheduled';
+
+  @override
+  String get adminStatInProgress => 'In Progress';
+
+  @override
+  String get adminStatRating => 'Rating';
+
+  @override
+  String get adminStatReviewCount => 'Reviews';
+
+  @override
+  String get adminStatVerified => 'Verified';
+
+  @override
+  String get adminReviews => 'Reviews';
+
+  @override
+  String get adminNoReviews => 'No reviews yet.';
+
+  @override
+  String get adminReports => 'Reports';
+
+  @override
+  String get adminNoReports => 'No reports filed.';
+
+  @override
+  String adminReportAgainst(String name) {
+    return 'Report against $name';
+  }
+
+  @override
+  String get adminReportsTitle => 'Reports & Reviews';
+
+  @override
+  String get adminReportsSubtitle =>
+      'Every report and review filed across the platform';
+
+  @override
+  String get adminStatsTitle => 'Statistics';
+
+  @override
+  String get adminStatsSubtitle =>
+      'Platform-wide donation & delivery analytics';
+
+  @override
+  String get adminStatsDonations => 'Donations';
+
+  @override
+  String get adminStatsDeliveries => 'Deliveries';
+
+  @override
+  String get adminStatsSuccessRate => 'Success Rate';
+
+  @override
+  String adminStatsSuccessRateValue(String percent) {
+    return '$percent% of deliveries completed successfully';
+  }
+
+  @override
+  String get adminStatsUsers => 'Users';
 
   @override
   String get notifCenterTitle => 'Notifications';
