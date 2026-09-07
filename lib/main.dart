@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
+import 'models/notification_model.dart';
 import 'providers/auth_provider.dart';
 import 'providers/admin_provider.dart';
 import 'providers/donor_provider.dart';
@@ -67,8 +69,9 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
     // app surfaces it itself, so show it as an in-app banner here.
     _notifications.foregroundMessages.listen(_onForegroundMessage);
     // Tapping a push (from background, or one that cold-started the app)
-    // takes the user to the Notification Center.
-    _notifications.messageOpened.listen((_) => _router.go('/notifications'));
+    // opens the specific screen the notification is about, not just the
+    // Notification Center.
+    _notifications.messageOpened.listen(_onNotificationOpened);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _notifications.checkInitialMessage();
     });
@@ -85,11 +88,30 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
         duration: const Duration(seconds: 5),
         action: SnackBarAction(
           label: 'View',
-          onPressed: () => _router.go('/notifications'),
+          onPressed: () => _openNotification(message),
         ),
       ),
     );
   }
+
+  /// Routes to the screen a tapped notification is about, and marks it
+  /// read — mirrors the tap behavior in the in-app Notification Center so
+  /// a push tap doesn't leave the same notification showing as unread
+  /// there.
+  void _openNotification(RemoteMessage message) {
+    final payloadType = message.data['payloadType'] as String? ?? 'system';
+    final notificationId = message.data['notificationId'] as String?;
+    if (notificationId != null && notificationId.isNotEmpty) {
+      FirebaseFirestore.instance
+          .collection('notifications')
+          .doc(notificationId)
+          .update({'isRead': true})
+          .catchError((_) {});
+    }
+    _router.go(notificationRouteFor(payloadType, _auth.user?.mode));
+  }
+
+  void _onNotificationOpened(RemoteMessage message) => _openNotification(message);
 
   @override
   void dispose() {

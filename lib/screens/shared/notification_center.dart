@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../models/notification_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/block_provider.dart';
 import '../../l10n/l10n_ext.dart';
 
@@ -96,11 +98,15 @@ class _NotificationTile extends StatelessWidget {
 
     return GestureDetector(
       onTap: () async {
-        if (notification.isRead) return;
-        await FirebaseFirestore.instance
-            .collection('notifications')
-            .doc(notification.id)
-            .update({'isRead': true});
+        if (!notification.isRead) {
+          await FirebaseFirestore.instance
+              .collection('notifications')
+              .doc(notification.id)
+              .update({'isRead': true});
+        }
+        if (!context.mounted) return;
+        final mode = context.read<AuthProvider>().user?.mode;
+        context.go(notification.routeFor(mode));
       },
       child: Container(
         color: bg,

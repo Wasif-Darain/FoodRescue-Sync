@@ -1,4 +1,30 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'models.dart';
+
+/// Screen to open when a notification of [payloadType] is tapped, given the
+/// current user's [mode] — notifications (both the Firestore doc and the
+/// push payload) only carry a type, not an explicit target, so the
+/// destination is inferred from type + role. e.g. a donor's 'request'
+/// notification means "someone acted on your listing", so it opens the
+/// donor's consumers screen; the same type for a consumer means "your
+/// request changed", so it opens their request tracker instead.
+String notificationRouteFor(String payloadType, UserMode? mode) {
+  switch (payloadType) {
+    case 'listing':
+      return '/consumer';
+    case 'request':
+      return mode == UserMode.donor ? '/donor/consumers' : '/consumer/requests';
+    case 'pickup':
+    case 'cancellation':
+      return switch (mode) {
+        UserMode.donor => '/donor/donation-log',
+        UserMode.rider => '/rider',
+        _ => '/consumer/pickups',
+      };
+    default:
+      return '/notifications';
+  }
+}
 
 class NotificationModel {
   final String id;
@@ -32,6 +58,9 @@ class NotificationModel {
       createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
     );
   }
+
+  /// See [notificationRouteFor].
+  String routeFor(UserMode? mode) => notificationRouteFor(payloadType, mode);
 
   Map<String, dynamic> toMap() {
     return {

@@ -65,7 +65,16 @@ class NotificationService {
 
     // Keep the token fresh and bound to the signed-in user.
     _authSub = _auth.authStateChanges().listen(_onAuthChanged);
-    _currentToken = await _messaging.getToken();
+    // On iOS this throws until an APNs token is issued, which requires the
+    // Push Notifications entitlement (not configured yet on the free/
+    // personal Apple Developer account this project currently uses) —
+    // without the try/catch here it's an unhandled exception that kills
+    // the app on launch.
+    try {
+      _currentToken = await _messaging.getToken();
+    } catch (_) {
+      _currentToken = null;
+    }
     _currentUser = _auth.currentUser;
     if (_currentUser != null && _currentToken != null) {
       await _saveToken(_currentUser!.uid, _currentToken!);
@@ -97,7 +106,13 @@ class NotificationService {
     }
     _currentUser = user;
     if (user == null) return;
-    _currentToken ??= await _messaging.getToken();
+    if (_currentToken == null) {
+      try {
+        _currentToken = await _messaging.getToken();
+      } catch (_) {
+        _currentToken = null;
+      }
+    }
     if (_currentToken != null) {
       await _saveToken(user.uid, _currentToken!);
     }
