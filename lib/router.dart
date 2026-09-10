@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'providers/auth_provider.dart';
+import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/login_register_screen.dart';
+import 'screens/pending_screen.dart';
 import 'screens/password_recovery_screen.dart';
 import 'screens/donor/donor_dashboard.dart';
 import 'screens/donor/donor_consumers.dart';
@@ -34,10 +36,10 @@ import 'models/models.dart';
 
 /// Fade + gentle upward slide used for every route so navigating around
 /// the app feels like one continuous motion instead of hard page cuts.
-CustomTransitionPage<void> _fadeThrough(GoRouterState state, Widget child) {
+CustomTransitionPage<void> _fadeThrough(GoRouterState state, Widget child, {bool forceLightTheme = false}) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
-    child: child,
+    child: forceLightTheme ? _ForceLightTheme(child: child) : child,
     transitionDuration: const Duration(milliseconds: 280),
     reverseTransitionDuration: const Duration(milliseconds: 220),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -59,15 +61,41 @@ CustomTransitionPage<void> _fadeThrough(GoRouterState state, Widget child) {
   );
 }
 
+/// Wraps a child widget with a forced light theme, ignoring the global
+/// theme mode. Used for auth pages (Welcome, Login, Signup) to ensure
+/// consistent appearance regardless of user preference.
+class _ForceLightTheme extends StatelessWidget {
+  final Widget child;
+  const _ForceLightTheme({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: ThemeData(
+        brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF16A34A),
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFF4F7F5),
+      ),
+      child: child,
+    );
+  }
+}
+
 GoRouter buildRouter(AuthProvider auth) => GoRouter(
   refreshListenable: auth,
   initialLocation: '/',
   redirect: (context, state) {
+    // Show splash screen while auth state is being determined
+    if (auth.authInitializing) return '/splash';
     final isAuth = auth.isAuthenticated;
     final isPublic =
         state.matchedLocation == '/' ||
         state.matchedLocation == '/login' ||
-        state.matchedLocation == '/forgot-password';
+        state.matchedLocation == '/forgot-password' ||
+        state.matchedLocation == '/splash';
     if (!isAuth && !isPublic) return '/login';
     if (isAuth && isPublic) {
       return switch (auth.user!.mode) {
@@ -77,17 +105,29 @@ GoRouter buildRouter(AuthProvider auth) => GoRouter(
         UserMode.rider => '/rider',
       };
     }
+    // Non-admin users must be approved to access the app
+    if (isAuth && auth.user != null && auth.user!.mode != UserMode.admin && !auth.isApproved) {
+      return '/pending';
+    }
     return null;
   },
   routes: [
     GoRoute(
+      path: '/splash',
+      pageBuilder: (_, state) => _fadeThrough(state, const SplashScreen(), forceLightTheme: true),
+    ),
+    GoRoute(
+      path: '/pending',
+      pageBuilder: (_, state) => _fadeThrough(state, const PendingScreen(), forceLightTheme: true),
+    ),
+    GoRoute(
       path: '/',
-      pageBuilder: (_, state) => _fadeThrough(state, const WelcomeScreen()),
+      pageBuilder: (_, state) => _fadeThrough(state, const WelcomeScreen(), forceLightTheme: true),
     ),
     GoRoute(
       path: '/login',
       pageBuilder: (_, state) =>
-          _fadeThrough(state, const LoginRegisterScreen()),
+          _fadeThrough(state, const LoginRegisterScreen(), forceLightTheme: true),
     ),
     GoRoute(
       path: '/forgot-password',

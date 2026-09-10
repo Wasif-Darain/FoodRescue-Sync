@@ -4,6 +4,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 
+/// Maps a stored status string to [AccountStatus].
+AccountStatus _statusFrom(String? s) {
+  return switch (s) {
+    'approved' => AccountStatus.approved,
+    'suspended' => AccountStatus.suspended,
+    _ => AccountStatus.pending,
+  };
+}
+
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -12,6 +21,8 @@ class AuthProvider extends ChangeNotifier {
   AppUser? _user;
   String? _errorMessage;
   bool _isLoading = false;
+  bool _authInitializing = true;
+  AccountStatus _status = AccountStatus.pending;
   double _maxRadiusKm = 10;
   int _unattendedAfterHours = 24;
   double? _latitude;
@@ -45,6 +56,8 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _user != null;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
+  bool get authInitializing => _authInitializing;
+  bool get isApproved => _status == AccountStatus.approved || _user?.mode == UserMode.admin;
 
   AuthProvider() {
     _authSubscription = _auth.authStateChanges().listen(_onAuthStateChanged);
@@ -53,6 +66,7 @@ class AuthProvider extends ChangeNotifier {
   void _onAuthStateChanged(User? firebaseUser) {
     if (firebaseUser == null) {
       _user = null;
+      _authInitializing = false;
       notifyListeners();
       return;
     }
@@ -79,6 +93,7 @@ class AuthProvider extends ChangeNotifier {
         _privacyLoginAlerts = data['privacyLoginAlerts'] as bool? ?? true;
         _privacyDataSharing = data['privacyDataSharing'] as bool? ?? false;
         _isVerified = data['isVerified'] as bool? ?? false;
+        _status = _statusFrom(data['status'] as String?);
         final storedAccountType = data['accountType'] as String?;
         _user = AppUser(
           id: 0,
@@ -98,6 +113,7 @@ class AuthProvider extends ChangeNotifier {
           mode: UserMode.consumer,
         );
       }
+      _authInitializing = false;
       notifyListeners();
     } catch (e) {
       _user = AppUser(
@@ -107,6 +123,7 @@ class AuthProvider extends ChangeNotifier {
         accountType: AccountType.individual,
         mode: UserMode.consumer,
       );
+      _authInitializing = false;
       notifyListeners();
     }
   }

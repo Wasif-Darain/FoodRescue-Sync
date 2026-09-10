@@ -36,6 +36,7 @@ class AccountManagement extends StatefulWidget {
 
 class _AccountManagementState extends State<AccountManagement> {
   AccountStatus? _filter;
+  bool _approvingAll = false;
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +48,39 @@ class _AccountManagementState extends State<AccountManagement> {
       builder: (context, snapshot) {
         final accounts = snapshot.data ?? [];
         final filtered = _filter == null ? accounts : accounts.where((a) => a.status == _filter).toList();
+        final pendingCount = accounts.where((a) => a.status == AccountStatus.pending).length;
 
     return AppLayout(
       title: t.acctMgmtTitle,
       subtitle: t.acctMgmtSubtitle,
       currentRoute: '/admin/accounts',
+      action: pendingCount > 0
+          ? TextButton(
+              onPressed: _approvingAll
+                  ? null
+                  : () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Approve All Accounts'),
+                          content: Text('Approve all $pendingCount pending accounts?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                            ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Approve All')),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true && mounted) {
+                        setState(() => _approvingAll = true);
+                        await admin.approveAllExisting();
+                        if (mounted) setState(() => _approvingAll = false);
+                      }
+                    },
+              child: _approvingAll
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text('Approve All ($pendingCount)', style: const TextStyle(color: Color(0xFF16A34A), fontSize: 13)),
+            )
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -77,6 +106,12 @@ class _AccountManagementState extends State<AccountManagement> {
                   label: t.acctMgmtFilterSuspended(accounts.where((a) => a.status == AccountStatus.suspended).length),
                   selected: _filter == AccountStatus.suspended,
                   onTap: () => setState(() => _filter = AccountStatus.suspended),
+                ),
+                const SizedBox(width: 8),
+                _FilterChip(
+                  label: t.acctMgmtFilterExpired(accounts.where((a) => a.status == AccountStatus.expired).length),
+                  selected: _filter == AccountStatus.expired,
+                  onTap: () => setState(() => _filter = AccountStatus.expired),
                 ),
               ],
             ),
@@ -138,6 +173,7 @@ class _AccountCard extends StatelessWidget {
       AccountStatus.pending => (t.acctMgmtStatusPending, BadgeVariant.orange),
       AccountStatus.approved => (t.acctMgmtStatusApproved, BadgeVariant.green),
       AccountStatus.suspended => (t.acctMgmtStatusSuspended, BadgeVariant.red),
+      AccountStatus.expired => (t.acctMgmtStatusExpired, BadgeVariant.gray),
     };
     final admin = context.read<AdminProvider>();
 
@@ -213,10 +249,22 @@ class _AccountCard extends StatelessWidget {
               ],
             ),
           ],
+          if (account.hasSubmittedDocuments) ...[
+            const SizedBox(height: 8),
+            _NidPreview(account: account),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [
-              if (account.status != AccountStatus.approved)
+              if (account.status == AccountStatus.expired)
+                Expanded(
+                  child: _ActionButton(
+                    label: t.acctMgmtBringBackOnTrack,
+                    color: const Color(0xFF16A34A),
+                    onTap: () => admin.reactivateAccount(account.uid),
+                  ),
+                ),
+              if (account.status == AccountStatus.pending || account.status == AccountStatus.suspended)
                 Expanded(
                   child: _ActionButton(
                     label: t.acctMgmtApprove,
@@ -284,6 +332,61 @@ class _Tag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(20)),
       child: Text(text, style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF525252), fontWeight: FontWeight.w500)),
+    );
+  }
+}
+
+class _NidPreview extends StatelessWidget {
+  final RegisteredAccount account;
+  const _NidPreview({required this.account});
+
+  @override
+  Widget build(BuildContext context) {
+    final isIndividual = account.accountType == AccountType.individual || account.accountType == AccountType.rider;
+    final urls = isIndividual
+        ? [account.nidFrontUrl, account.nidBackUrl]
+        : [account.verificationDocUrl];
+    final labels = isIndividual ? ['NID Front', 'NID Back'] : ['Verification Doc'];
+
+    return Row(
+      children: List.generate(urls.length, (i) {
+        final url = urls[i];
+        if (url == null) return const SizedBox.shrink();
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: i < urls.length - 1 ? 8 : 0),
+            child: GestureDetector(
+              onTap: () => _showFullImage(context, url, labels[i]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(labels[i], style: TextStyle(fontSize: 10, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(url, height: 80, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(height: 80, color: const Color(0xFFF5F5F5), child: const Icon(Icons.broken_image_outlined, color: Color(0xFFBFBFBF)))),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  void _showFullImage(BuildContext context, String url, String label) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppBar(title: Text(label), leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx))),
+            Image.network(url, fit: BoxFit.contain),
+          ],
+        ),
+      ),
     );
   }
 }

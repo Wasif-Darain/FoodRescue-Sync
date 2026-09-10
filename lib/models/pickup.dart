@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../utils/display_name.dart';
+
 enum PickupStatusModel { scheduled, enRoute, pickedUp, delivered, distributing, completed, cancelled }
 
 class PickupModel {
@@ -70,7 +72,7 @@ class PickupModel {
       listingId: data['listingId'] as String?,
       consumerId: data['consumerId'] as String?,
       donorId: data['donorId'] as String?,
-      donorName: data['donorName'] as String?,
+      donorName: sanitizeDonorName(data['donorName'] as String?),
       listingTitle: data['listingTitle'] as String?,
       volunteerDriverId: data['volunteerDriverId'] as String?,
       scheduledTime: scheduled is Timestamp ? scheduled.toDate() : null,

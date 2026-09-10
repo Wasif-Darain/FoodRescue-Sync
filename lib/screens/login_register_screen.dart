@@ -29,6 +29,11 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
   bool _showPassword = false;
   AccountType _accountType = AccountType.restaurant;
 
+  // Admin access state
+  bool _showAdminAccess = false;
+  final _adminPasswordCtrl = TextEditingController();
+  bool _adminLoading = false;
+
   // Signup is split across two pages: 1 = identity, 2 = contact & security.
   int _signupStep = 1;
 
@@ -52,7 +57,24 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
     _phoneCtrl.dispose();
     _addressCtrl.dispose();
     _extraCtrl.dispose();
+    _adminPasswordCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _adminLogin() async {
+    if (_adminPasswordCtrl.text.isEmpty) return;
+    setState(() => _adminLoading = true);
+    final auth = context.read<AuthProvider>();
+    await auth.signIn('admin@foodrescue.sync', _adminPasswordCtrl.text);
+    if (!mounted) return;
+    setState(() => _adminLoading = false);
+    if (auth.errorMessage != null) {
+      _showAuthError(auth.errorMessage!);
+      return;
+    }
+    if (auth.user != null) {
+      context.go('/admin');
+    }
   }
 
   Future<void> _submit() async {
@@ -148,9 +170,26 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
       const SizedBox(height: 4),
       Text(t.authSignInToContinue, style: const TextStyle(fontSize: 13, color: Color(0xFF757575))),
       const SizedBox(height: 24),
-      _Field(icon: Icons.email_outlined, label: t.authEmail, ctrl: _emailCtrl, placeholder: 'you@example.com', keyboardType: TextInputType.emailAddress),
-      const SizedBox(height: 18),
-      _PasswordField(ctrl: _passCtrl, show: _showPassword, onToggle: () => setState(() => _showPassword = !_showPassword)),
+      AnimatedCrossFade(
+        duration: const Duration(milliseconds: 300),
+        crossFadeState: _showAdminAccess ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+        firstChild: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _Field(icon: Icons.email_outlined, label: t.authEmail, ctrl: _emailCtrl, placeholder: 'you@example.com', keyboardType: TextInputType.emailAddress),
+            const SizedBox(height: 18),
+            _PasswordField(ctrl: _passCtrl, show: _showPassword, onToggle: () => setState(() => _showPassword = !_showPassword)),
+          ],
+        ),
+        secondChild: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _Field(icon: Icons.shield_outlined, label: 'Admin Email', ctrl: _emailCtrl, placeholder: 'admin@foodrescue.sync', keyboardType: TextInputType.emailAddress),
+            const SizedBox(height: 18),
+            _PasswordField(ctrl: _adminPasswordCtrl, show: _showPassword, onToggle: () => setState(() => _showPassword = !_showPassword)),
+          ],
+        ),
+      ),
       Align(
         alignment: Alignment.centerRight,
         child: TextButton(
@@ -160,11 +199,32 @@ class _LoginRegisterScreenState extends State<LoginRegisterScreen> {
         ),
       ),
       const SizedBox(height: 22),
-      _PrimaryButton(label: t.authLogIn, onPressed: _submit),
+      _PrimaryButton(
+        label: _showAdminAccess ? 'Access Admin' : t.authLogIn,
+        onPressed: _showAdminAccess ? _adminLogin : _submit,
+        loading: _adminLoading,
+      ),
       const SizedBox(height: 16),
       const _OrDivider(),
       const SizedBox(height: 16),
       _SecondaryButton(label: t.authSignUp, onPressed: () => _switchMode(false)),
+      const SizedBox(height: 12),
+      Center(
+        child: TextButton(
+          onPressed: () => setState(() {
+            _showAdminAccess = !_showAdminAccess;
+            _showPassword = false;
+          }),
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF9CA3AF),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          ),
+          child: Text(
+            _showAdminAccess ? 'Back to Login' : 'Admin Access',
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+          ),
+        ),
+      ),
     ],
     );
   }

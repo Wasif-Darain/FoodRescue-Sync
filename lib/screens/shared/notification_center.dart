@@ -8,6 +8,7 @@ import '../../models/notification_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/block_provider.dart';
 import '../../l10n/l10n_ext.dart';
+import '../../utils/display_name.dart';
 
 class NotificationCenter extends StatelessWidget {
   const NotificationCenter({super.key});
@@ -125,7 +126,9 @@ class _NotificationTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(notification.message, style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFFE5E5E5) : const Color(0xFF525252), fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w500)),
+                  Text(
+                    sanitizeLegacyNotificationMessage(notification.message),
+                    style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFFE5E5E5) : const Color(0xFF525252), fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w500)),
                   const SizedBox(height: 4),
                   Text(
                     '${notification.createdAt.hour.toString().padLeft(2, '0')}:${notification.createdAt.minute.toString().padLeft(2, '0')} · ${notification.createdAt.day}/${notification.createdAt.month}/${notification.createdAt.year}',

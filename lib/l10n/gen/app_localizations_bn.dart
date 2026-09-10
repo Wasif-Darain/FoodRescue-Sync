@@ -974,6 +974,11 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String acctMgmtFilterExpired(int count) {
+    return 'মেয়াদোত্তীর্ণ ($count)';
+  }
+
+  @override
   String get acctMgmtNoAccounts => 'এই ফিল্টারে কোনো অ্যাকাউন্ট নেই।';
 
   @override
@@ -1012,10 +1017,16 @@ class AppLocalizationsBn extends AppLocalizations {
   String get acctMgmtStatusSuspended => 'স্থগিত';
 
   @override
+  String get acctMgmtStatusExpired => 'মেয়াদোত্তীর্ণ';
+
+  @override
   String get acctMgmtApprove => 'অনুমোদন করুন';
 
   @override
   String get acctMgmtSuspend => 'স্থগিত করুন';
+
+  @override
+  String get acctMgmtBringBackOnTrack => 'ট্র্যাকে ফিরিয়ে আনুন';
 
   @override
   String get acctMgmtRemove => 'অপসারণ করুন';
@@ -1117,6 +1128,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get adminStatsUsers => 'ব্যবহারকারী';
+
+  @override
+  String get adminStatsChartDeliveries => 'ডেলিভারি স্ট্যাটাস ভাগ';
+
+  @override
+  String get adminStatsChartUsers => 'ভূমিকা অনুযায়ী ব্যবহারকারী';
 
   @override
   String get notifCenterTitle => 'নোটিফিকেশন';

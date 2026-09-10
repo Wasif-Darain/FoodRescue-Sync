@@ -125,6 +125,7 @@ class _AdminUserDetailState extends State<AdminUserDetail> {
       AccountStatus.pending => (t.acctMgmtStatusPending, BadgeVariant.orange),
       AccountStatus.approved => (t.acctMgmtStatusApproved, BadgeVariant.green),
       AccountStatus.suspended => (t.acctMgmtStatusSuspended, BadgeVariant.red),
+      AccountStatus.expired => (t.acctMgmtStatusExpired, BadgeVariant.gray),
     };
 
     return Scaffold(
@@ -166,7 +167,9 @@ class _AdminUserDetailState extends State<AdminUserDetail> {
                   ]),
                   const SizedBox(height: 14),
                   Row(children: [
-                    if (account.status != AccountStatus.approved)
+                    if (account.status == AccountStatus.expired)
+                      Expanded(child: _Action(label: t.acctMgmtBringBackOnTrack, color: const Color(0xFF16A34A), onTap: () => _runAndReload(() => admin.reactivateAccount(account.uid)))),
+                    if (account.status == AccountStatus.pending || account.status == AccountStatus.suspended)
                       Expanded(child: _Action(label: t.acctMgmtApprove, color: const Color(0xFF16A34A), onTap: () => _runAndReload(() => admin.approve(account.uid)))),
                     if (account.status == AccountStatus.approved)
                       Expanded(child: _Action(label: t.acctMgmtSuspend, color: const Color(0xFFD97706), onTap: () => _runAndReload(() => admin.setStatus(account.uid, AccountStatus.suspended)))),

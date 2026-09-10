@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/push_notification_sender.dart';
+import '../utils/display_name.dart';
 
 class DonorProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -130,8 +131,10 @@ class DonorProvider extends ChangeNotifier {
       id: int.tryParse(doc.id) ?? 0,
       docId: doc.id,
       donorId: 0,
-      donorName:
-          (data['donorName'] as String?) ?? (data['donorId'] as String?) ?? '',
+      donorName: sanitizeDonorName(
+        data['donorName'] as String?,
+        fallback: data['donorId'] as String? ?? 'A donor',
+      ),
       donorUid: data['donorId'] as String? ?? '',
       title: data['title'] as String? ?? '',
       description: data['description'] as String? ?? '',
@@ -163,7 +166,7 @@ class DonorProvider extends ChangeNotifier {
     required bool isSurplus,
     required String category,
     Uint8List? imageBytes,
-    String donorName = 'You',
+    String? donorName,
   }) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
@@ -212,16 +215,20 @@ class DonorProvider extends ChangeNotifier {
     required DateTime pickupStart,
     required DateTime pickupEnd,
     List<String>? photoUrls,
-    String donorName = 'You',
+    String? donorName,
     double? latitude,
     double? longitude,
     String? address,
   }) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
+    final donorNameResolved = sanitizeDonorName(
+      donorName,
+      fallback: _auth.currentUser?.displayName ?? 'A donor',
+    );
     final docRef = await _firestore.collection('listings').add({
       'donorId': uid,
-      'donorName': donorName,
+      'donorName': donorNameResolved,
       'title': title,
       'description': description,
       'price': price,
@@ -302,7 +309,7 @@ class DonorProvider extends ChangeNotifier {
       consumerId: 0,
       consumerUid: data['consumerId'] as String? ?? '',
       consumerName: data['consumerName'] as String? ?? '',
-      donorName: data['donorName'] as String? ?? '',
+      donorName: sanitizeDonorName(data['donorName'] as String?),
       itemName: data['itemName'] as String? ?? '',
       description: data['description'] as String? ?? '',
       category: data['category'] as String? ?? '',

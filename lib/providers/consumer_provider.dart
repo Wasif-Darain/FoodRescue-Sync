@@ -10,6 +10,7 @@ import '../models/request.dart';
 import '../models/models.dart';
 import '../services/listing_image_manager.dart';
 import '../services/push_notification_sender.dart';
+import '../utils/display_name.dart';
 
 class ConsumerProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -231,7 +232,7 @@ class ConsumerProvider extends ChangeNotifier {
               docId: doc.id,
               consumerId: 0,
               consumerName: '',
-              donorName: data['donorName'] as String? ?? '',
+              donorName: sanitizeDonorName(data['donorName'] as String?),
               itemName: data['itemName'] as String? ?? '',
               description: data['description'] as String? ?? '',
               category: data['category'] as String? ?? '',
@@ -276,7 +277,7 @@ class ConsumerProvider extends ChangeNotifier {
         'listingId': '',
         'isBulk': false,
         'directDonationId': docId,
-        'donorName': data['donorName'] as String? ?? '',
+        'donorName': sanitizeDonorName(data['donorName'] as String?),
         'listingTitle': itemName,
         'status': PickupStatusModel.scheduled.name,
         'scheduledTime': scheduled is Timestamp ? scheduled : null,

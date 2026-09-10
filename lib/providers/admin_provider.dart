@@ -7,10 +7,53 @@ import '../models/review.dart';
 class AdminProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  /// Maximum time (in days) an account can stay pending without NID submission
+  static const int pendingExpiryDays = 7;
+
   Stream<List<RegisteredAccount>> get accountsStream {
     return _firestore.collection('users').snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) => registeredAccountFromDoc(doc)).toList();
+      final accounts = snapshot.docs.map((doc) => registeredAccountFromDoc(doc)).toList();
+      // Auto-expire pending accounts without NID after the grace period
+      for (final account in accounts) {
+        _autoExpireIfStale(account);
+      }
+      return accounts;
     });
+  }
+
+  /// Flags accounts that have been pending for over [pendingExpiryDays] days
+  /// without submitting NID photos as `expired` instead of deleting them, so
+  /// admins can review and bring them back on track from the Expired tab.
+  /// Called reactively by the accounts stream.
+  Future<void> _autoExpireIfStale(RegisteredAccount account) async {
+    if (account.status != AccountStatus.pending) return;
+    final age = DateTime.now().difference(account.joinedAt);
+    if (age.inDays > pendingExpiryDays && !account.hasSubmittedDocuments) {
+      await setStatus(account.uid, AccountStatus.expired);
+    }
+  }
+
+  /// Returns an expired account to the pending queue so the admin can review
+  /// and approve it once the missing documents are provided.
+  Future<void> reactivateAccount(String uid) async {
+    await _firestore.collection('users').doc(uid).update({
+      'status': AccountStatus.pending.name,
+      'isVerified': false,
+    });
+  }
+
+  /// Approves all existing accounts that are still pending. Used to bring
+  /// pre-existing accounts into compliance with the new approval requirement.
+  Future<void> approveAllExisting() async {
+    final pending = await _firestore
+        .collection('users')
+        .where('status', isEqualTo: 'pending')
+        .get();
+    final batch = _firestore.batch();
+    for (final doc in pending.docs) {
+      batch.update(doc.reference, {'status': 'approved', 'isVerified': true});
+    }
+    await batch.commit();
   }
 
   /// All reports ever filed, newest first — the admin-facing view of what
@@ -76,6 +119,8 @@ AccountStatus statusFromString(String? s) {
       return AccountStatus.approved;
     case 'suspended':
       return AccountStatus.suspended;
+    case 'expired':
+      return AccountStatus.expired;
     default:
       return AccountStatus.pending;
   }

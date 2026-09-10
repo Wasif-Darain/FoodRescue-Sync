@@ -1844,6 +1844,12 @@ abstract class AppLocalizations {
   /// **'Suspended ({count})'**
   String acctMgmtFilterSuspended(int count);
 
+  /// No description provided for @acctMgmtFilterExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired ({count})'**
+  String acctMgmtFilterExpired(int count);
+
   /// No description provided for @acctMgmtNoAccounts.
   ///
   /// In en, this message translates to:
@@ -1916,6 +1922,12 @@ abstract class AppLocalizations {
   /// **'Suspended'**
   String get acctMgmtStatusSuspended;
 
+  /// No description provided for @acctMgmtStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get acctMgmtStatusExpired;
+
   /// No description provided for @acctMgmtApprove.
   ///
   /// In en, this message translates to:
@@ -1927,6 +1939,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Suspend'**
   String get acctMgmtSuspend;
+
+  /// No description provided for @acctMgmtBringBackOnTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring Back on Track'**
+  String get acctMgmtBringBackOnTrack;
 
   /// No description provided for @acctMgmtRemove.
   ///
@@ -2113,6 +2131,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Users'**
   String get adminStatsUsers;
+
+  /// No description provided for @adminStatsChartDeliveries.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Status Breakdown'**
+  String get adminStatsChartDeliveries;
+
+  /// No description provided for @adminStatsChartUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'Users by Role'**
+  String get adminStatsChartUsers;
 
   /// No description provided for @notifCenterTitle.
   ///

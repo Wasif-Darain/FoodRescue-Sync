@@ -969,6 +969,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String acctMgmtFilterExpired(int count) {
+    return 'Expired ($count)';
+  }
+
+  @override
   String get acctMgmtNoAccounts => 'No accounts in this filter.';
 
   @override
@@ -1007,10 +1012,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get acctMgmtStatusSuspended => 'Suspended';
 
   @override
+  String get acctMgmtStatusExpired => 'Expired';
+
+  @override
   String get acctMgmtApprove => 'Approve';
 
   @override
   String get acctMgmtSuspend => 'Suspend';
+
+  @override
+  String get acctMgmtBringBackOnTrack => 'Bring Back on Track';
 
   @override
   String get acctMgmtRemove => 'Remove';
@@ -1112,6 +1123,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminStatsUsers => 'Users';
+
+  @override
+  String get adminStatsChartDeliveries => 'Delivery Status Breakdown';
+
+  @override
+  String get adminStatsChartUsers => 'Users by Role';
 
   @override
   String get notifCenterTitle => 'Notifications';

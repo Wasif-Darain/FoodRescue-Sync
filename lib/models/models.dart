@@ -13,7 +13,7 @@ enum AccountType {
 
 enum UserMode { donor, consumer, admin, rider }
 
-enum AccountStatus { pending, approved, suspended }
+enum AccountStatus { pending, approved, suspended, expired }
 
 enum ListingType { donation, flashSale }
 
