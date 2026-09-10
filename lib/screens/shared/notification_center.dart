@@ -92,6 +92,7 @@ class _NotificationTile extends StatelessWidget {
       'listing' => (Icons.storefront_outlined, const Color(0xFF16A34A)),
       'request' => (Icons.assignment_outlined, const Color(0xFF2563EB)),
       'pickup' => (Icons.local_shipping_outlined, const Color(0xFFEA580C)),
+      'cancellation' => (Icons.cancel_outlined, const Color(0xFFDC2626)),
       _ => (Icons.notifications_outlined, const Color(0xFF757575)),
     };
     final bg = notification.isRead ? (isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF)) : (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7));

@@ -505,9 +505,7 @@ class _ListingCard extends StatelessWidget {
     final t = context.l10n;
     final isClaimed = listing.status == ListingStatus.claimed;
 
-    final imageUrl =
-        listing.imageUrl ??
-        'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80';
+    final imageUrl = listing.imageUrl;
 
     return _HoverScale(
       child: GestureDetector(
@@ -588,18 +586,26 @@ class _ListingCard extends StatelessWidget {
                     Positioned.fill(
                       child: listing.imageBytes != null
                           ? Image.memory(listing.imageBytes!, fit: BoxFit.cover)
-                          : Image.network(
-                              imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Center(
-                                    child: Icon(
-                                      Icons.favorite_outline,
-                                      size: 40,
-                                      color: Color(0xFF059669),
-                                    ),
+                          : imageUrl != null
+                              ? Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Center(
+                                        child: Icon(
+                                          Icons.favorite_outline,
+                                          size: 40,
+                                          color: Color(0xFF059669),
+                                        ),
+                                      ),
+                                )
+                              : const Center(
+                                  child: Icon(
+                                    Icons.image_outlined,
+                                    size: 40,
+                                    color: Color(0xFFBFBFBF),
                                   ),
-                            ),
+                                ),
                     ),
                     Positioned.fill(
                       child: DecoratedBox(

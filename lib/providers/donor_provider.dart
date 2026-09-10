@@ -329,13 +329,14 @@ class DonorProvider extends ChangeNotifier {
     required DateTime scheduledTime,
     required String location,
     String description = '',
-    String donorName = 'You',
+    String? donorName,
   }) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
+    final donorNameResolved = donorName ?? _auth.currentUser?.displayName ?? 'A donor';
     await _firestore.collection('direct_donations').add({
       'donorId': uid,
-      'donorName': donorName,
+      'donorName': donorNameResolved,
       'consumerId': consumerId,
       'consumerName': consumerName,
       'itemName': itemName,
@@ -349,11 +350,11 @@ class DonorProvider extends ChangeNotifier {
     });
     await _notifyConsumerUid(
       consumerId,
-      '$donorName offered you a direct donation: $itemName. Open Requests to accept or reject it.',
+      '$donorNameResolved offered you a direct donation: $itemName. Open Requests to accept or reject it.',
     );
   }
 
-  Future<void> _notifyConsumerUid(String? uid, String message) async {
+  Future<void> _notifyConsumerUid(String? uid, String message, {String payloadType = 'pickup'}) async {
     if (uid == null ||
         uid.isEmpty ||
         uid == '0' ||
@@ -362,13 +363,13 @@ class DonorProvider extends ChangeNotifier {
     }
     final ref = await _firestore.collection('notifications').add({
       'recipientUid': uid,
-      'payloadType': 'pickup',
+      'payloadType': payloadType,
       'senderUid': _auth.currentUser?.uid ?? '',
       'message': message,
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    unawaited(sendPushNotification(recipientUid: uid, message: message, payloadType: 'pickup', notificationId: ref.id));
+    unawaited(sendPushNotification(recipientUid: uid, message: message, payloadType: payloadType, notificationId: ref.id));
   }
 
   String? rescheduleDonation(int id, DateTime newTime, String newLocation) {
@@ -415,6 +416,7 @@ class DonorProvider extends ChangeNotifier {
       d.consumerId.toString() == '0' ? null : d.consumerId.toString(),
       '${d.donorName} cancelled the donation scheduled for '
       '${d.scheduledTime.day}/${d.scheduledTime.month}/${d.scheduledTime.year}.',
+      payloadType: 'cancellation',
     );
     return null;
   }
@@ -441,6 +443,7 @@ class DonorProvider extends ChangeNotifier {
           '${d.donorName} has marked themselves unavailable and cancelled '
           'the donation scheduled for '
           '${d.scheduledTime.day}/${d.scheduledTime.month}/${d.scheduledTime.year}.',
+          payloadType: 'cancellation',
         );
         cancelled++;
       }
