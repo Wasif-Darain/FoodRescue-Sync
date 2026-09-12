@@ -26,6 +26,7 @@ class ConsumerMarketplace extends StatefulWidget {
 class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
   String _selectedCategory = 'All';
   String _filter = 'All';
+  bool _showRecentlyExpired = false;
 
   List<(String, String)> _categories(AppLocalizations t) => [
     ('All', t.mktCatAll),
@@ -51,7 +52,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
         // Claimed listings are kept (not filtered out) so other consumers
         // still see the card — just greyed out and non-actionable — instead
         // of it silently disappearing from the marketplace.
-        final listings = (snapshot.data ?? [])
+        final allListings = (snapshot.data ?? [])
             .where(
               (l) =>
                   !blocked.contains(l.donorId) &&
@@ -59,6 +60,22 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                       (l.quantity > 0 && (l.claimDeadline == null || l.claimDeadline!.isAfter(now)))),
             )
             .toList();
+        // Recently-expired listings (deadline passed within the last 12h)
+        // live under their own tab; older ones are never fetched/shown, so
+        // consumers see what they just missed without stale clutter.
+        final recentCutoff = now.subtract(const Duration(hours: 12));
+        final expiredListings = (snapshot.data ?? [])
+            .where(
+              (l) =>
+                  !blocked.contains(l.donorId) &&
+                  l.status != ListingStatusModel.claimed &&
+                  l.claimDeadline != null &&
+                  l.claimDeadline!.isBefore(now) &&
+                  l.claimDeadline!.isAfter(recentCutoff),
+            )
+            .toList()
+          ..sort((a, b) => b.claimDeadline!.compareTo(a.claimDeadline!));
+        final listings = _showRecentlyExpired ? expiredListings : allListings;
         final availableCount = listings.where((l) => l.status == ListingStatusModel.active).length;
         final filtered = listings
             .map(
@@ -361,6 +378,32 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
               ),
               const SizedBox(height: 14),
 
+              // Available vs Recently Expired (last 12h) tabs.
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(child: _MarketTab(
+                      label: t.mktTabAvailable,
+                      icon: Icons.storefront_outlined,
+                      selected: !_showRecentlyExpired,
+                      onTap: () => setState(() => _showRecentlyExpired = false),
+                    )),
+                    Expanded(child: _MarketTab(
+                      label: t.mktTabRecentlyExpired(expiredListings.length),
+                      icon: Icons.history_outlined,
+                      selected: _showRecentlyExpired,
+                      onTap: () => setState(() => _showRecentlyExpired = true),
+                    )),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -430,7 +473,9 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                   child: Column(
                     children: [
                       Icon(
-                        Icons.storefront_outlined,
+                        _showRecentlyExpired
+                            ? Icons.history_outlined
+                            : Icons.storefront_outlined,
                         size: 48,
                         color: isDark
                             ? const Color(0xFF3F3F46)
@@ -438,7 +483,9 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        t.mktNoListings,
+                        _showRecentlyExpired
+                            ? t.mktNoRecentlyExpired
+                            : t.mktNoListings,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -449,7 +496,9 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        t.mktCheckBackSoon,
+                        _showRecentlyExpired
+                            ? t.mktNoRecentlyExpiredHint
+                            : t.mktCheckBackSoon,
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark
@@ -493,6 +542,66 @@ String _dummyAreaFor(AppLocalizations t, String donorName) {
   ];
   final index = donorName.hashCode.abs() % areas.length;
   return areas[index];
+}
+
+class _MarketTab extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  const _MarketTab({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected
+              ? (isDark ? Colors.white : const Color(0xFF121212))
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: selected
+                  ? (isDark ? const Color(0xFF121212) : Colors.white)
+                  : (isDark
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF757575)),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: selected
+                      ? (isDark ? const Color(0xFF121212) : Colors.white)
+                      : (isDark
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF757575)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ListingCard extends StatelessWidget {

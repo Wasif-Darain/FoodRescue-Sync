@@ -808,6 +808,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Check back soon for new surplus food listings.';
 
   @override
+  String get mktTabAvailable => 'Available';
+
+  @override
+  String mktTabRecentlyExpired(int count) {
+    return 'Recently Expired ($count)';
+  }
+
+  @override
+  String get mktNoRecentlyExpired => 'No recently expired listings';
+
+  @override
+  String get mktNoRecentlyExpiredHint =>
+      'Listings that expired in the last 12 hours will show up here.';
+
+  @override
   String mktListedBy(String donorName) {
     return 'Listed by $donorName';
   }

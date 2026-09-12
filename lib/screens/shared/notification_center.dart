@@ -107,8 +107,17 @@ class _NotificationTile extends StatelessWidget {
               .update({'isRead': true});
         }
         if (!context.mounted) return;
-        final mode = context.read<AuthProvider>().user?.mode;
-        context.go(notification.routeFor(mode));
+        final auth = context.read<AuthProvider>();
+        final target = notification.routeFor(auth.user?.mode);
+        // Cross-module tap (e.g. donor tapping a notification whose exact
+        // target lives in the consumer module): flip the module first so the
+        // go() below lands on the real page instead of a same-module guess.
+        // rider/admin are app-level roles with a fixed nav, so a target in
+        // another module is opened as-is.
+        final owner = modeForRoute(target);
+        if (owner != null) auth.switchToMode(owner);
+        if (!context.mounted) return;
+        context.go(target);
       },
       child: Container(
         color: bg,

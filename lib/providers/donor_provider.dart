@@ -358,10 +358,13 @@ class DonorProvider extends ChangeNotifier {
     await _notifyConsumerUid(
       consumerId,
       '$donorNameResolved offered you a direct donation: $itemName. Open Requests to accept or reject it.',
+      // Direct offers are accepted/rejected on the Request Status screen.
+      targetRoute: '/consumer/requests',
     );
   }
 
-  Future<void> _notifyConsumerUid(String? uid, String message, {String payloadType = 'pickup'}) async {
+  Future<void> _notifyConsumerUid(String? uid, String message,
+      {String payloadType = 'pickup', String? targetRoute}) async {
     if (uid == null ||
         uid.isEmpty ||
         uid == '0' ||
@@ -372,11 +375,17 @@ class DonorProvider extends ChangeNotifier {
       'recipientUid': uid,
       'payloadType': payloadType,
       'senderUid': _auth.currentUser?.uid ?? '',
+      if (targetRoute != null) 'targetRoute': targetRoute,
       'message': message,
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    unawaited(sendPushNotification(recipientUid: uid, message: message, payloadType: payloadType, notificationId: ref.id));
+    unawaited(sendPushNotification(
+        recipientUid: uid,
+        message: message,
+        payloadType: payloadType,
+        notificationId: ref.id,
+        targetRoute: targetRoute));
   }
 
   String? rescheduleDonation(int id, DateTime newTime, String newLocation) {
@@ -400,6 +409,7 @@ class DonorProvider extends ChangeNotifier {
       '${d.donorName} rescheduled your donation pickup to '
       '${newTime.hour.toString().padLeft(2, '0')}:${newTime.minute.toString().padLeft(2, '0')} '
       'on ${newTime.day}/${newTime.month}/${newTime.year} at $newLocation.',
+      targetRoute: '/consumer/pickups',
     );
     return null;
   }
@@ -424,6 +434,7 @@ class DonorProvider extends ChangeNotifier {
       '${d.donorName} cancelled the donation scheduled for '
       '${d.scheduledTime.day}/${d.scheduledTime.month}/${d.scheduledTime.year}.',
       payloadType: 'cancellation',
+      targetRoute: '/consumer/pickups',
     );
     return null;
   }
@@ -451,6 +462,7 @@ class DonorProvider extends ChangeNotifier {
           'the donation scheduled for '
           '${d.scheduledTime.day}/${d.scheduledTime.month}/${d.scheduledTime.year}.',
           payloadType: 'cancellation',
+          targetRoute: '/consumer/pickups',
         );
         cancelled++;
       }

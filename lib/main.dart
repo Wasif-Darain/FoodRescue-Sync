@@ -108,7 +108,17 @@ class _FoodRescueAppState extends State<FoodRescueApp> {
           .update({'isRead': true})
           .catchError((_) {});
     }
-    _router.go(notificationRouteFor(payloadType, _auth.user?.mode));
+    // Same cross-module handling as the in-app Notification Center: if the
+    // push carries the sender's exact target page and it lives in the other
+    // module (donor <-> consumer), flip the module first so the go() below
+    // lands on the real page instead of a same-module fallback.
+    final targetRoute = message.data['targetRoute'] as String?;
+    final owner = targetRoute != null && targetRoute.isNotEmpty
+        ? modeForRoute(targetRoute)
+        : null;
+    if (owner != null) _auth.switchToMode(owner);
+    _router.go(notificationRouteFor(payloadType, _auth.user?.mode,
+        targetRoute: targetRoute));
   }
 
   void _onNotificationOpened(RemoteMessage message) => _openNotification(message);

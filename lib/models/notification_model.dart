@@ -8,7 +8,13 @@ import 'models.dart';
 /// notification means "someone acted on your listing", so it opens the
 /// donor's consumers screen; the same type for a consumer means "your
 /// request changed", so it opens their request tracker instead.
-String notificationRouteFor(String payloadType, UserMode? mode) {
+///
+/// [targetRoute], when present on the notification document, is the exact
+/// page the sender intended (e.g. `/consumer/requests` for a direct-donation
+/// offer) and takes precedence over the inferred fallback below.
+String notificationRouteFor(String payloadType, UserMode? mode,
+    {String? targetRoute}) {
+  if (targetRoute != null && targetRoute.isNotEmpty) return targetRoute;
   switch (payloadType) {
     case 'listing':
       return '/consumer';
@@ -26,6 +32,17 @@ String notificationRouteFor(String payloadType, UserMode? mode) {
   }
 }
 
+/// The [UserMode] that owns [route], or null for shared routes that exist in
+/// every module (e.g. `/notifications`). Used to detect cross-module taps —
+/// e.g. a donor tapping a notification whose target is `/consumer/requests`.
+UserMode? modeForRoute(String route) {
+  if (route.startsWith('/donor')) return UserMode.donor;
+  if (route.startsWith('/consumer')) return UserMode.consumer;
+  if (route.startsWith('/rider')) return UserMode.rider;
+  if (route.startsWith('/admin')) return UserMode.admin;
+  return null;
+}
+
 class NotificationModel {
   final String id;
   final String recipientUid;
@@ -35,6 +52,12 @@ class NotificationModel {
   final bool isRead;
   final DateTime createdAt;
 
+  /// Exact page the sender intended this notification to open, when known
+  /// (e.g. `/consumer/requests` for a direct-donation offer). Older
+  /// notifications written before this field existed won't have it — the
+  /// route then falls back to the payloadType + role inference.
+  final String? targetRoute;
+
   NotificationModel({
     required this.id,
     required this.recipientUid,
@@ -43,6 +66,7 @@ class NotificationModel {
     required this.message,
     required this.isRead,
     required this.createdAt,
+    this.targetRoute,
   });
 
   factory NotificationModel.fromFirestore(DocumentSnapshot doc) {
@@ -56,11 +80,13 @@ class NotificationModel {
       message: data['message'] as String? ?? '',
       isRead: data['isRead'] as bool? ?? false,
       createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
+      targetRoute: data['targetRoute'] as String?,
     );
   }
 
   /// See [notificationRouteFor].
-  String routeFor(UserMode? mode) => notificationRouteFor(payloadType, mode);
+  String routeFor(UserMode? mode) =>
+      notificationRouteFor(payloadType, mode, targetRoute: targetRoute);
 
   Map<String, dynamic> toMap() {
     return {

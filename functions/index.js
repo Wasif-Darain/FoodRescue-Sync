@@ -57,6 +57,44 @@ exports.sendNotificationPush = onDocumentCreated(
   }
 );
 
+// Backfill older notification docs that were written before `targetRoute`
+// existed, plus stamp every new doc that arrives without one, so the app's
+// exact-page deep-link (incl. auto-switching the donor<->consumer module)
+// works for taps on old and new notifications alike. Only fills the field
+// when it's missing — never touches an explicit targetRoute, and never
+// touches anything the in-app Notification Center reads for display.
+function inferTargetRoute(payloadType, current) {
+  if (current) return undefined;
+  switch (payloadType) {
+    case 'listing':
+      return '/consumer';
+    case 'request':
+      return '/consumer/requests';
+    case 'pickup':
+    case 'cancellation':
+      return '/consumer/pickups';
+    default:
+      return undefined;
+  }
+}
+
+exports.backfillNotificationTarget = onDocumentCreated(
+  'notifications/{notificationId}',
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return null;
+    const data = snap.data() || {};
+    const inferred = inferTargetRoute(data.payloadType, data.targetRoute);
+    if (!inferred) return null;
+    try {
+      await snap.ref.update({ targetRoute: inferred });
+    } catch (err) {
+      console.error('Failed to backfill targetRoute:', err);
+    }
+    return null;
+  }
+);
+
 /**
  * Recomputes the public, pre-login welcome-screen stats (total meals saved,
  * donor count, partner count) into `stats/summary`, using the Admin SDK

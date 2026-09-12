@@ -112,6 +112,7 @@ class ConsumerProvider extends ChangeNotifier {
         'recipientUid': uid,
         'payloadType': 'listing',
         'listingId': listingId,
+        'targetRoute': '/consumer',
         'message': message,
         'isRead': false,
         'createdAt': FieldValue.serverTimestamp(),
@@ -119,7 +120,12 @@ class ConsumerProvider extends ChangeNotifier {
       await _firestore.collection('users').doc(uid).update({
         'notifiedListingIds': FieldValue.arrayUnion([listingId]),
       });
-      unawaited(sendPushNotification(recipientUid: uid, message: message, payloadType: 'listing', notificationId: ref.id));
+      unawaited(sendPushNotification(
+          recipientUid: uid,
+          message: message,
+          payloadType: 'listing',
+          notificationId: ref.id,
+          targetRoute: '/consumer'));
     } catch (_) {
       _notifiedListingIds.remove(listingId);
     }
@@ -130,6 +136,7 @@ class ConsumerProvider extends ChangeNotifier {
     required String payloadType,
     String? listingId,
     required String message,
+    String? targetRoute,
   }) async {
     if (recipientUid == null ||
         recipientUid.isEmpty ||
@@ -141,11 +148,17 @@ class ConsumerProvider extends ChangeNotifier {
       'payloadType': payloadType,
       'senderUid': _auth.currentUser?.uid ?? '',
       ...?(listingId != null ? {'listingId': listingId} : null),
+      if (targetRoute != null) 'targetRoute': targetRoute,
       'message': message,
       'isRead': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    unawaited(sendPushNotification(recipientUid: recipientUid, message: message, payloadType: payloadType, notificationId: ref.id));
+    unawaited(sendPushNotification(
+        recipientUid: recipientUid,
+        message: message,
+        payloadType: payloadType,
+        notificationId: ref.id,
+        targetRoute: targetRoute));
   }
 
   double _haversineKm(double lat1, double lon1, double lat2, double lon2) {
@@ -290,6 +303,7 @@ class ConsumerProvider extends ChangeNotifier {
         donorId,
         payloadType: 'request',
         message: 'A consumer accepted your direct donation: $itemName.',
+        targetRoute: '/donor/consumers',
       );
       return pickupRef.id;
     } else {
@@ -298,6 +312,7 @@ class ConsumerProvider extends ChangeNotifier {
         donorId,
         payloadType: 'request',
         message: 'A consumer rejected your direct donation: $itemName.',
+        targetRoute: '/donor/consumers',
       );
       return null;
     }
@@ -346,6 +361,7 @@ class ConsumerProvider extends ChangeNotifier {
         payloadType: 'request',
         message:
             'A consumer accepted the request for "${listingSnap.data()?['title'] ?? 'your listing'}".',
+        targetRoute: '/donor/consumers',
       );
     } else if (!accept && listingId.isNotEmpty) {
       final listingSnap = await _firestore
@@ -358,6 +374,7 @@ class ConsumerProvider extends ChangeNotifier {
         payloadType: 'request',
         message:
             'A consumer rejected the request for "${listingSnap.data()?['title'] ?? 'your listing'}".',
+        targetRoute: '/donor/consumers',
       );
     }
   }
@@ -435,6 +452,7 @@ class ConsumerProvider extends ChangeNotifier {
         payloadType: 'request',
         message:
             'Your listing "${listingData['title'] ?? 'a listing'}" was claimed by a consumer.',
+        targetRoute: '/donor/consumers',
       );
       return true;
     } catch (_) {
@@ -494,6 +512,7 @@ class ConsumerProvider extends ChangeNotifier {
         listingId: pickupId,
         message:
             'A consumer cancelled their claim on "$listingTitle" (reason: ${reason.trim()}). The listing is available again.',
+        targetRoute: '/donor/consumers',
       );
       return true;
     } catch (_) {
@@ -527,6 +546,7 @@ class ConsumerProvider extends ChangeNotifier {
         payloadType: 'pickup',
         listingId: pickupId,
         message: 'You were assigned a pickup — accept or decline it from your dashboard.',
+        targetRoute: '/rider',
       );
       return null;
     } catch (_) {

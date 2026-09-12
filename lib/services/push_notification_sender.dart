@@ -34,6 +34,7 @@ Future<void> sendPushNotification({
   required String message,
   required String payloadType,
   String? notificationId,
+  String? targetRoute,
 }) async {
   if (_pushRelayUrl.startsWith('REPLACE_')) return;
   try {
@@ -49,6 +50,7 @@ Future<void> sendPushNotification({
             'message': message,
             'payloadType': payloadType,
             'notificationId': notificationId,
+            if (targetRoute != null) 'targetRoute': targetRoute,
           }),
         )
         .timeout(const Duration(seconds: 10));

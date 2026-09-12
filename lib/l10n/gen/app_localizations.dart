@@ -1586,6 +1586,30 @@ abstract class AppLocalizations {
   /// **'Check back soon for new surplus food listings.'**
   String get mktCheckBackSoon;
 
+  /// No description provided for @mktTabAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get mktTabAvailable;
+
+  /// No description provided for @mktTabRecentlyExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently Expired ({count})'**
+  String mktTabRecentlyExpired(int count);
+
+  /// No description provided for @mktNoRecentlyExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'No recently expired listings'**
+  String get mktNoRecentlyExpired;
+
+  /// No description provided for @mktNoRecentlyExpiredHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Listings that expired in the last 12 hours will show up here.'**
+  String get mktNoRecentlyExpiredHint;
+
   /// No description provided for @mktListedBy.
   ///
   /// In en, this message translates to:

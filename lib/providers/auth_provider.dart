@@ -293,6 +293,20 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Switches to [mode] (donor <-> consumer) if it isn't already active.
+  /// Returns true when a switch happened. rider/admin are app-level roles,
+  /// not a toggleable "module", so they are ignored here.
+  bool switchToMode(UserMode mode) {
+    if (_user == null) return false;
+    if (_user!.mode == mode) return false;
+    if ((_user!.mode == UserMode.donor && mode == UserMode.consumer) ||
+        (_user!.mode == UserMode.consumer && mode == UserMode.donor)) {
+      toggleMode();
+      return true;
+    }
+    return false;
+  }
+
   Future<void> updateMaxRadiusKm(double km) async {
     final firebaseUser = _auth.currentUser;
     if (firebaseUser == null) return;

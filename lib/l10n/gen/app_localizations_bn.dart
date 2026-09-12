@@ -811,6 +811,21 @@ class AppLocalizationsBn extends AppLocalizations {
       'নতুন সারপ্লাস খাবারের লিস্টিংয়ের জন্য শীঘ্রই আবার দেখুন।';
 
   @override
+  String get mktTabAvailable => 'উপলব্ধ';
+
+  @override
+  String mktTabRecentlyExpired(int count) {
+    return 'সম্প্রতি মেয়াদোত্তীর্ণ ($count)';
+  }
+
+  @override
+  String get mktNoRecentlyExpired => 'সম্প্রতি মেয়াদোত্তীর্ণ কোনো লিস্টিং নেই';
+
+  @override
+  String get mktNoRecentlyExpiredHint =>
+      'গত ১২ ঘণ্টায় মেয়াদোত্তীর্ণ লিস্টিং এখানে দেখা যাবে।';
+
+  @override
   String mktListedBy(String donorName) {
     return '$donorName দ্বারা তালিকাভুক্ত';
   }

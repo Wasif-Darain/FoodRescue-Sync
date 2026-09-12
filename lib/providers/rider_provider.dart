@@ -92,11 +92,12 @@ class RiderProvider extends ChangeNotifier {
       final notifRef = await _firestore.collection('notifications').add({
         'recipientUid': consumerId,
         'payloadType': 'pickup',
+        'targetRoute': '/consumer/pickups',
         'message': declinedMessage,
         'isRead': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
-      unawaited(sendPushNotification(recipientUid: consumerId, message: declinedMessage, payloadType: 'pickup', notificationId: notifRef.id));
+      unawaited(sendPushNotification(recipientUid: consumerId, message: declinedMessage, payloadType: 'pickup', notificationId: notifRef.id, targetRoute: '/consumer/pickups'));
     }
   }
 
@@ -162,11 +163,12 @@ class RiderProvider extends ChangeNotifier {
         final notifRef = await _firestore.collection('notifications').add({
           'recipientUid': consumerId,
           'payloadType': 'pickup',
+          'targetRoute': '/consumer/pickups',
           'message': cancelMessage,
           'isRead': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
-        unawaited(sendPushNotification(recipientUid: consumerId!, message: cancelMessage, payloadType: 'pickup', notificationId: notifRef.id));
+        unawaited(sendPushNotification(recipientUid: consumerId!, message: cancelMessage, payloadType: 'pickup', notificationId: notifRef.id, targetRoute: '/consumer/pickups'));
       }
       return null;
     } catch (_) {

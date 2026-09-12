@@ -60,6 +60,7 @@ function doPost(e) {
     var message = body.message;
     var payloadType = body.payloadType;
     var notificationId = body.notificationId;
+    var targetRoute = body.targetRoute;
 
     if (!idToken || !recipientUid || !message) {
       result = { error: 'Missing required fields.' };
@@ -78,6 +79,10 @@ function doPost(e) {
         var ok = sendFcmMessage(tokens[i], title, message, {
           notificationId: notificationId || '',
           payloadType: payloadType || 'system',
+          // Lets the app deep-link the exact page (incl. auto-switching the
+          // donor<->consumer module) when the push is tapped. Pure routing
+          // metadata — ignored by everything except _onNotificationOpened.
+          targetRoute: targetRoute || '',
         });
         if (ok) sent++;
       }
@@ -88,6 +93,20 @@ function doPost(e) {
   }
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }
+
+/**
+ * Android 8+ requires every push to carry an explicit channel or the OS
+ * silently drops it even when the token + payload are valid. The app's
+ * manifest declares `high_importance_channel` as the default channel and
+ * `flutter_local_notifications` creates it at startup (see
+ * NotificationService._ensureAndroidChannel) — but a push whose
+ * `android.notification.channel_id` disagrees still falls back to a
+ * system channel the user may have muted. So stamp the same channel id
+ * here: display-only pushes never touch this field (it ships inside the
+ * `android` block, not `data`), keeping the existing in-app
+ * Firestore->NotificationCenter mechanism completely untouched.
+ */
+var ANDROID_CHANNEL_ID = 'high_importance_channel';
 
 /** Verifies a Firebase Auth ID token via the Identity Toolkit REST API. */
 function verifyIdToken(idToken) {
@@ -138,6 +157,15 @@ function sendFcmMessage(token, title, body, data) {
       message: {
         token: token,
         notification: { title: title, body: body },
+        // Explicit channel: without this, Android 8+ may drop background /
+        // terminated pushes that carry only `notification` + `data`.
+        android: {
+          priority: 'HIGH',
+          notification: {
+            channel_id: ANDROID_CHANNEL_ID,
+            sound: 'default',
+          },
+        },
         data: data,
       },
     }),

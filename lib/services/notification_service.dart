@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// Top-level background message handler (must not be an instance method).
 @pragma('vm:entry-point')
@@ -41,6 +42,16 @@ class NotificationService {
   Future<void> initialize() async {
     // Register the background handler.
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+    // The Apps Script relay now stamps every push with
+    // `android.notification.channel_id = high_importance_channel` (the id
+    // also declared as the manifest default). The OS only renders into a
+    // channel that exists — create it here at startup so background /
+    // terminated pushes can't land in a muted fallback or be dropped, which
+    // is the most common "in-app works, tray push never shows" cause on
+    // Android 8+. Pure display plumbing: the Firestore in-app path is
+    // untouched.
+    await _ensureAndroidChannel();
 
     // Ask the user for permission (needed on iOS / Android 13+).
     await _messaging.requestPermission(
@@ -131,6 +142,32 @@ class NotificationService {
         }, SetOptions(merge: true));
       } catch (_) {}
     }
+  }
+
+  /// Creates the Android notification channel the relay's pushes target.
+  /// Missing channel = the #1 silent-drop cause for background pushes; also
+  /// re-requests POST_NOTIFICATIONS on Android 13+ in case the user denied
+  /// it earlier (in-app Firestore banners keep working regardless, since
+  /// they never go through the OS tray).
+  Future<void> _ensureAndroidChannel() async {
+    try {
+      const channel = AndroidNotificationChannel(
+        'high_importance_channel',
+        'FoodRescue Updates',
+        description: 'Pickup, request and listing alerts.',
+        importance: Importance.max,
+      );
+      final plugin = FlutterLocalNotificationsPlugin();
+      await plugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channel);
+      await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    } catch (_) {}
   }
 
   /// Checks whether the app was launched by tapping a push notification
