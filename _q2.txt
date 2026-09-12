@@ -1,0 +1,21 @@
+36:    final recentDonationsStream = myUid.isEmpty
+58:    final recentlyCompletedPickupsStream = myUid.isEmpty
+207:                          stream: recentlyCompletedPickupsStream,
+209:                            final recentlyCompleted = completedSnap.data ?? [];
+210:                            if (recentlyCompleted.isEmpty) return const SizedBox.shrink();
+217:                                    children: recentlyCompleted
+310:                          title: t.donorDashRecentDonations,
+313:                            stream: recentDonationsStream,
+333:                                      (l) => _RecentDonationRow(
+707:class _RecentDonationRow extends StatelessWidget {
+710:  const _RecentDonationRow({required this.log, required this.isBlocked});
+601:  // "distributing to the community" phase with no fixed destination, ending
+602:  // in markDistributionComplete.
+618:    await _firestore.collection('pickups').doc(pickupId).update({'status': PickupStatusModel.distributing.name});
+628:  Future<void> markDistributionComplete(String pickupId, String photoUrl) async {
+643:  /// begin distributing.
+648:            p.status == PickupStatusModel.distributing)
+lib/screens/consumer/pickup_coordination.dart:549:          RatingStars(reviewLabel: t.pickupRateThis, targetUid: pickup.donorId ?? '', pickupId: pickup.id),
+lib/screens/consumer/request_status_tracker.dart:354:            RatingStars(reviewLabel: t.reqRateThis, targetUid: matched.donorUid, pickupId: request.id),
+lib/screens/donor/donation_log.dart:188:          RatingStars(reviewLabel: t.donationLogRateThis, targetUid: otherId, pickupId: log.id),
+lib/screens/donor/donor_dashboard.dart:632:          RatingStars(reviewLabel: t.donorRateConsumer, targetUid: consumerId, pickupId: pickup.id),

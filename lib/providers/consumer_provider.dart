@@ -627,11 +627,93 @@ class ConsumerProvider extends ChangeNotifier {
 
   Future<void> markDistributionComplete(String pickupId, String photoUrl) async {
     stopSelfTracking(pickupId);
+    final pickupDoc = await _firestore.collection('pickups').doc(pickupId).get();
+    final pickupData = pickupDoc.data();
+    if (pickupData == null) return;
     await _firestore.collection('pickups').doc(pickupId).update({
       'status': PickupStatusModel.completed.name,
       'completedAt': FieldValue.serverTimestamp(),
       'distributionPhotoUrl': photoUrl,
     });
+    // Same side-effects the rider-completion path performs — without these,
+    // consumer-completed donations never appeared in the donor's Recent
+    // Donations, added no food-saved kg, and never notified the donor.
+    await _createDonationLog(pickupId, pickupData);
+    await _decrementInventory(pickupData);
+    await _notifyDonorOnCompletion(pickupData);
+  }
+
+  /// Creates the donation_logs entry so the completed donation shows up in
+  /// both the donor's and consumer's Donation Log screens (mirrors
+  /// RiderProvider._createDonationLog).
+  Future<void> _createDonationLog(String pickupId, Map<String, dynamic> pickupData) async {
+    try {
+      final donorId = pickupData['donorId'] as String? ?? '';
+      final donorName = sanitizeDonorName(pickupData['donorName'] as String?);
+      final consumerId = pickupData['consumerId'] as String? ?? '';
+      final listingId = pickupData['listingId'] as String? ?? '';
+
+      double totalWeight = 0;
+      if (listingId.isNotEmpty) {
+        try {
+          final listingDoc = await _firestore.collection('listings').doc(listingId).get();
+          totalWeight = ((listingDoc.data()?['quantity'] as num?)?.toDouble()) ?? 0;
+        } catch (_) {}
+      }
+
+      await _firestore.collection('donation_logs').add({
+        'donorId': donorId,
+        'donorName': donorName,
+        'recipientId': consumerId,
+        'recipientName': pickupData['consumerName'] as String? ?? '',
+        'listingId': listingId,
+        'totalWeight': totalWeight,
+        'completedAt': FieldValue.serverTimestamp(),
+        'pickupId': pickupId,
+      });
+    } catch (_) {}
+  }
+
+  /// Decrements the donor's inventory when food is distributed.
+  Future<void> _decrementInventory(Map<String, dynamic> pickupData) async {
+    try {
+      final listingId = pickupData['listingId'] as String?;
+      if (listingId == null || listingId.isEmpty) return;
+      final inventorySnap = await _firestore
+          .collection('inventory_items')
+          .where('listingId', isEqualTo: listingId)
+          .where('donorId', isEqualTo: pickupData['donorId'])
+          .limit(1)
+          .get();
+      if (inventorySnap.docs.isNotEmpty) {
+        final invDoc = inventorySnap.docs.first;
+        final currentQty = (invDoc.data()['quantity'] as num?)?.toInt() ?? 0;
+        if (currentQty > 0) {
+          await invDoc.reference.update({
+            'quantity': currentQty - 1,
+            'lastDistributedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// Notifies the donor that their donation reached its recipient.
+  Future<void> _notifyDonorOnCompletion(Map<String, dynamic> pickupData) async {
+    try {
+      final donorId = pickupData['donorId'] as String? ?? '';
+      final listingTitle = pickupData['listingTitle'] as String? ?? 'food donation';
+      if (donorId.isEmpty) return;
+      final now = DateTime.now();
+      final when =
+          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} on ${now.day}/${now.month}/${now.year}';
+      await sendPushNotification(
+        recipientUid: donorId,
+        message: 'Your donation of "$listingTitle" was distributed at $when. Thank you for rescuing food!',
+        payloadType: 'donation_completed',
+        targetRoute: '/donor/donation-log',
+      );
+    } catch (_) {}
   }
 
   /// Called from the Pickup Coordination screen on every update so tracking

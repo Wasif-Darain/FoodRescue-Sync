@@ -63,13 +63,37 @@ class DonorDashboard extends StatelessWidget {
             .snapshots()
             .map((snap) => (snap.docs
                     .map((doc) => PickupModel.fromFirestore(doc))
-                    .where((p) => p.status == PickupStatusModel.completed && p.distributionPhotoUrl != null)
+                    // 'completed' = consumer finished the distribution leg
+                    // (self-pickup/rider handoff); 'delivered' = rider
+                    // handed off and took their own photo at completion.
+                    .where((p) =>
+                        (p.status == PickupStatusModel.completed ||
+                            p.status == PickupStatusModel.delivered) &&
+                        p.distributionPhotoUrl != null)
                     .toList()
                   ..sort((a, b) => (b.completedAt ?? DateTime(0)).compareTo(a.completedAt ?? DateTime(0))))
                 .take(5)
                 .toList());
+    // Real, all-time donation weight — the Food Saved stat card used to
+    // show a fabricated estimate (inventory quantity × 0.5), which never
+    // matched what was actually delivered.
+    final donationLogsStream = myUid.isEmpty
+        ? Stream<List<DonationLogModel>>.value([])
+        : FirebaseFirestore.instance
+            .collection('donation_logs')
+            .where('donorId', isEqualTo: myUid)
+            .snapshots()
+            .map((snap) => snap.docs
+                .map((doc) => DonationLogModel.fromFirestore(doc))
+                .toList());
 
-    return StreamBuilder<List<InventoryItem>>(
+    return StreamBuilder<List<DonationLogModel>>(
+      stream: donationLogsStream,
+      builder: (context, donationLogsSnapshot) {
+        final totalDonatedKg = (donationLogsSnapshot.data ?? const <DonationLogModel>[])
+            .fold<double>(0, (acc, log) => acc + log.totalWeightKg);
+
+        return StreamBuilder<List<InventoryItem>>(
       stream: donor.inventoryStream,
       builder: (context, inventorySnapshot) {
         final inventory = inventorySnapshot.data ?? donor.inventory;
@@ -88,10 +112,6 @@ class DonorDashboard extends StatelessWidget {
                 .where((l) => l.status == ListingStatus.active)
                 .take(3)
                 .toList();
-            final totalDonatedKg = inventory.fold<double>(
-              0,
-              (acc, item) => acc + item.quantity * 0.5,
-            );
 
             return AppLayout(
               title: t.donorDashTitle,
@@ -364,6 +384,8 @@ class DonorDashboard extends StatelessWidget {
             );
           },
         );
+      },
+    );
       },
     );
   }
