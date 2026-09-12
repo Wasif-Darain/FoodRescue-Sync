@@ -50,27 +50,27 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
     return StreamBuilder<List<ListingModel>>(
       stream: consumer.availableListingsStream,
       builder: (context, snapshot) {
-        // Claimed listings are kept (not filtered out) so other consumers
-        // still see the card — just greyed out and non-actionable — instead
-        // of it silently disappearing from the marketplace.
-        final allListings = (snapshot.data ?? [])
-            .where(
-              (l) =>
-                  !blocked.contains(l.donorId) &&
-                  (l.status == ListingStatusModel.claimed ||
-                      (l.quantity > 0 && (l.claimDeadline == null || l.claimDeadline!.isAfter(now)))),
-            )
-            .toList();
         // Expired listings: the effective window end — the same chain the
         // card countdown uses (claim deadline, else the donor-set pickup
         // end, else created + 4h) — has already passed, and the listing was
         // posted no older than 12h ago. Older ones are never shown, so
-        // consumers see what they just missed without stale clutter. (The
-        // old filter required claimDeadline != null, which most listings
-        // never have, so the tab was permanently empty.)
+        // consumers see what they just missed without stale clutter.
         final recentCutoff = now.subtract(const Duration(hours: 12));
         DateTime effectiveExpiry(ListingModel l) =>
             l.claimDeadline ?? l.pickupEnd ?? l.createdAt.add(const Duration(hours: 4));
+        // Claimed listings are kept visible (greyed out, non-actionable) so
+        // others still see the card instead of it silently disappearing —
+        // but only while their window is open. Once the window has passed
+        // they're fully done (claimed AND expired) and drop off the
+        // marketplace entirely instead of lingering as red-Expired clutter.
+        final allListings = (snapshot.data ?? [])
+            .where(
+              (l) =>
+                  !blocked.contains(l.donorId) &&
+                  l.quantity > 0 &&
+                  effectiveExpiry(l).isAfter(now),
+            )
+            .toList();
         final expiredListings = (snapshot.data ?? [])
             .where(
               (l) =>
@@ -123,7 +123,10 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                   _filter == 'All' ||
                   (_filter == 'Free' && l.listingType == ListingType.donation) ||
                   (_filter == 'Sale' && l.listingType == ListingType.flashSale);
-              final stillOpen = l.status == ListingStatus.claimed || l.pickupEnd.isAfter(now);
+              // On the Expired tab the whole point is window-passed items,
+              // so the still-open rule only applies to the Available tab.
+              final stillOpen =
+                  _showExpired || l.status == ListingStatus.claimed || l.pickupEnd.isAfter(now);
               return catMatch && typeMatch && stillOpen;
             })
             .toList();
