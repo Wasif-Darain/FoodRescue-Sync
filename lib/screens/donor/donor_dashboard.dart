@@ -165,7 +165,6 @@ class DonorDashboard extends StatelessWidget {
                         value: listings.where((l) => l.status == ListingStatus.active).length,
                         icon: const Icon(Icons.trending_up),
                         color: 'green',
-                        onTap: () => context.go('/donor/create-listing'),
                       ),
                       StatCard(
                         label: t.donorDashFoodSavedKg,
@@ -245,9 +244,15 @@ class DonorDashboard extends StatelessWidget {
                         _SectionCard(
                           title: t.donorDashActiveListings,
                           icon: Icons.storefront_outlined,
-                          action: TextButton(
+                          action: TextButton.icon(
                             onPressed: () => context.go('/donor/create-listing'),
-                            child: Text(t.donorDashCreateNew),
+                            icon: const Icon(Icons.add, size: 16),
+                            label: Text(t.donorDashCreateNew),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
                           ),
                           child: Column(
                             children: activeListings
@@ -723,7 +728,7 @@ class _RecentDonationRow extends StatelessWidget {
           DetailRow(
             Icons.person_outline,
             'Recipient',
-            log.recipientId.isEmpty ? '-' : log.recipientId,
+            log.recipientDisplayName,
           ),
           if (items.isNotEmpty)
             DetailRow(Icons.inventory_2_outlined, 'Items', items),
@@ -739,7 +744,7 @@ class _RecentDonationRow extends StatelessWidget {
                 blockSheetMenuItem(
                   context,
                   targetUid: log.recipientId,
-                  targetLabel: log.recipientId,
+                  targetLabel: log.recipientDisplayName,
                 ),
               ],
       ),
@@ -759,7 +764,7 @@ class _RecentDonationRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${log.totalWeightKg.toStringAsFixed(1)} kg → ${log.recipientId}',
+                    '${log.totalWeightKg.toStringAsFixed(1)} kg → ${log.recipientDisplayName}',
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,

@@ -404,6 +404,64 @@ class _ReviewRow extends StatelessWidget {
           const SizedBox(height: 2),
           Text(review.reviewText!, style: TextStyle(fontSize: 12, color: subColor)),
         ],
+        // Show attached image and/or video if present
+        if (review.imageUrl != null || review.videoUrl != null) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (review.imageUrl != null)
+                GestureDetector(
+                  onTap: () => showDialog(
+                    context: context,
+                    builder: (_) => Dialog(
+                      child: InteractiveViewer(child: Image.network(review.imageUrl!)),
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      review.imageUrl!,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined, size: 24, color: Color(0xFFBFBFBF)),
+                    ),
+                  ),
+                ),
+              if (review.videoUrl != null)
+                GestureDetector(
+                  onTap: () {
+                    // Open video URL in external player/browser
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        content: Text('Video: ${review.videoUrl}'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Close'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.play_circle_outline, size: 32, color: Color(0xFF16A34A)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ],
     ),
   );

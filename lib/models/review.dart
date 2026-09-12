@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// A star rating + optional written review one user leaves for another
@@ -10,6 +11,8 @@ class ReviewModel {
   final String raterName;
   final int rating;
   final String? reviewText;
+  final String? imageUrl;
+  final String? videoUrl;
   final String? pickupId;
   final DateTime createdAt;
 
@@ -20,6 +23,8 @@ class ReviewModel {
     required this.raterName,
     required this.rating,
     this.reviewText,
+    this.imageUrl,
+    this.videoUrl,
     this.pickupId,
     required this.createdAt,
   });
@@ -33,8 +38,24 @@ class ReviewModel {
       raterName: data['raterName'] as String? ?? '',
       rating: (data['rating'] as num?)?.toInt() ?? 0,
       reviewText: data['reviewText'] as String?,
+      imageUrl: data['imageUrl'] as String?,
+      videoUrl: data['videoUrl'] as String?,
       pickupId: data['pickupId'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'targetUid': targetUid,
+      'raterUid': raterUid,
+      'raterName': raterName,
+      'rating': rating,
+      'reviewText': reviewText,
+      'imageUrl': imageUrl,
+      'videoUrl': videoUrl,
+      'pickupId': pickupId,
+      'createdAt': Timestamp.fromDate(createdAt),
+    };
   }
 }

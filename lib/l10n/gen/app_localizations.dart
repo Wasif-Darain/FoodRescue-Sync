@@ -1595,19 +1595,19 @@ abstract class AppLocalizations {
   /// No description provided for @mktTabRecentlyExpired.
   ///
   /// In en, this message translates to:
-  /// **'Recently Expired ({count})'**
+  /// **'Expired ({count})'**
   String mktTabRecentlyExpired(int count);
 
   /// No description provided for @mktNoRecentlyExpired.
   ///
   /// In en, this message translates to:
-  /// **'No recently expired listings'**
+  /// **'No expired listings'**
   String get mktNoRecentlyExpired;
 
   /// No description provided for @mktNoRecentlyExpiredHint.
   ///
   /// In en, this message translates to:
-  /// **'Listings that expired in the last 12 hours will show up here.'**
+  /// **'Listings posted no older than 12 hours ago that have expired will show up here.'**
   String get mktNoRecentlyExpiredHint;
 
   /// No description provided for @mktListedBy.
@@ -1727,7 +1727,7 @@ abstract class AppLocalizations {
   /// No description provided for @mktPriorityBadge.
   ///
   /// In en, this message translates to:
-  /// **'Reopened · Priority'**
+  /// **'Reopened'**
   String get mktPriorityBadge;
 
   /// No description provided for @commonFreeLabel.
@@ -2329,6 +2329,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Locked'**
   String get rewardsLocked;
+
+  /// No description provided for @rewardsCertificate.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate'**
+  String get rewardsCertificate;
+
+  /// No description provided for @rewardsCertificateEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'Earned'**
+  String get rewardsCertificateEarned;
+
+  /// No description provided for @rewardsCertificateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate of Achievement'**
+  String get rewardsCertificateTitle;
+
+  /// No description provided for @rewardsCertificateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Awarded for reaching {level} level'**
+  String rewardsCertificateSubtitle(String level);
+
+  /// No description provided for @rewardsCertificateDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'{kg} kg food saved across {donations} donations'**
+  String rewardsCertificateDesc(String kg, int donations);
+
+  /// No description provided for @rewardsCertificateDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get rewardsCertificateDate;
+
+  /// No description provided for @rewardsCertificateLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get rewardsCertificateLevel;
 
   /// No description provided for @levelPlatinum.
   ///
@@ -4112,6 +4154,12 @@ abstract class AppLocalizations {
   /// **'Location updated {time}'**
   String trackingLastUpdated(String time);
 
+  /// No description provided for @trackingHmsAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{time} ago'**
+  String trackingHmsAgo(String time);
+
   /// No description provided for @trackingSecondsAgo.
   ///
   /// In en, this message translates to:
@@ -4123,6 +4171,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{minutes}m ago'**
   String trackingMinutesAgo(int minutes);
+
+  /// No description provided for @trackingHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h ago'**
+  String trackingHoursAgo(int hours);
+
+  /// No description provided for @trackingDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d ago'**
+  String trackingDaysAgo(int days);
 
   /// No description provided for @trackButton.
   ///
@@ -4397,7 +4457,7 @@ abstract class AppLocalizations {
   /// No description provided for @riderPriorityBadge.
   ///
   /// In en, this message translates to:
-  /// **'Reopened · Priority'**
+  /// **'Reopened'**
   String get riderPriorityBadge;
 
   /// No description provided for @selfPickupMarkDistributionComplete.

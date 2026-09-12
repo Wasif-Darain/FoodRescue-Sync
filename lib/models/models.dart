@@ -67,6 +67,10 @@ class InventoryItem {
   final String? imageUrl;
   final Uint8List? imageBytes;
 
+  /// When the item was added to inventory. Falls back to [DateTime.now] for
+  /// legacy items that were written before this field existed.
+  final DateTime createdAt;
+
   InventoryItem({
     required this.id,
     this.docId,
@@ -78,7 +82,8 @@ class InventoryItem {
     required this.category,
     this.imageUrl,
     this.imageBytes,
-  });
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
 }
 
 class Listing {

@@ -30,6 +30,7 @@ class ProfileSettings extends StatelessWidget {
 
     final quickLinks = [
       (Icons.person_outline, t.profileEditProfile, '/profile/edit'),
+      (Icons.star_outline, 'My Reviews', '/profile/reviews'),
       (Icons.notifications_outlined, t.profileNotificationPreferences, '/profile/notifications'),
       (Icons.lock_outline, t.profilePrivacySecurity, '/profile/privacy-security'),
       (Icons.language_outlined, t.profileLanguageRegion, '/profile/language-region'),

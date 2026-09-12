@@ -24,6 +24,7 @@ import 'screens/shared/notification_preferences.dart';
 import 'screens/shared/privacy_security.dart';
 import 'screens/shared/language_region.dart';
 import 'screens/shared/help_support.dart';
+import 'screens/shared/reviews_screen.dart';
 import 'screens/admin/admin_dashboard.dart';
 import 'screens/admin/account_management.dart';
 import 'screens/admin/admin_user_detail.dart';
@@ -214,6 +215,10 @@ GoRouter buildRouter(AuthProvider auth) => GoRouter(
     GoRoute(
       path: '/profile/help-support',
       pageBuilder: (_, state) => _fadeThrough(state, const HelpSupport()),
+    ),
+    GoRoute(
+      path: '/profile/reviews',
+      pageBuilder: (_, state) => _fadeThrough(state, const ReviewsScreen()),
     ),
     GoRoute(
       path: '/rewards',

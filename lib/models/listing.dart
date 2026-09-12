@@ -23,6 +23,12 @@ class ListingModel {
   final DateTime createdAt;
   final ListingType listingType;
 
+  /// The donor-chosen pickup window end (from `pickupEnd` in Firestore).
+  /// Null on listings created before this field was read; the marketplace
+  /// countdown falls back to [createdAt] + 4h for those.
+  final DateTime? pickupEnd;
+  final DateTime? pickupStart;
+
   /// Set whenever a claim/pickup on this listing gets cancelled and the
   /// listing is reopened. Marketplace and rider pool streams sort by this
   /// (descending) so a reopened item jumps back to the top ahead of
@@ -47,6 +53,8 @@ class ListingModel {
     this.address,
     this.claimedBy,
     required this.createdAt,
+    this.pickupEnd,
+    this.pickupStart,
     this.listingType = ListingType.donation,
     this.priorityBoostedAt,
   });
@@ -77,6 +85,12 @@ class ListingModel {
       address: data['address'] as String?,
       claimedBy: data['claimedBy'] as String?,
       createdAt: created is Timestamp ? created.toDate() : DateTime.now(),
+      pickupEnd: data['pickupEnd'] is Timestamp
+          ? (data['pickupEnd'] as Timestamp).toDate()
+          : null,
+      pickupStart: data['pickupStart'] is Timestamp
+          ? (data['pickupStart'] as Timestamp).toDate()
+          : null,
       listingType: data['listingType'] == 'flashSale' ? ListingType.flashSale : ListingType.donation,
       priorityBoostedAt: boosted is Timestamp ? boosted.toDate() : null,
     );
@@ -100,6 +114,8 @@ class ListingModel {
       'address': address,
       'claimedBy': claimedBy,
       'createdAt': Timestamp.fromDate(createdAt),
+      'pickupStart': pickupStart == null ? null : Timestamp.fromDate(pickupStart!),
+      'pickupEnd': pickupEnd == null ? null : Timestamp.fromDate(pickupEnd!),
       'listingType': listingType.name,
       'priorityBoostedAt': priorityBoostedAt == null ? null : Timestamp.fromDate(priorityBoostedAt!),
     };

@@ -812,15 +812,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String mktTabRecentlyExpired(int count) {
-    return 'Recently Expired ($count)';
+    return 'Expired ($count)';
   }
 
   @override
-  String get mktNoRecentlyExpired => 'No recently expired listings';
+  String get mktNoRecentlyExpired => 'No expired listings';
 
   @override
   String get mktNoRecentlyExpiredHint =>
-      'Listings that expired in the last 12 hours will show up here.';
+      'Listings posted no older than 12 hours ago that have expired will show up here.';
 
   @override
   String mktListedBy(String donorName) {
@@ -894,7 +894,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mktClaimedBadge => 'Claimed';
 
   @override
-  String get mktPriorityBadge => 'Reopened · Priority';
+  String get mktPriorityBadge => 'Reopened';
 
   @override
   String get commonFreeLabel => 'Free';
@@ -1239,6 +1239,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rewardsLocked => 'Locked';
+
+  @override
+  String get rewardsCertificate => 'Certificate';
+
+  @override
+  String get rewardsCertificateEarned => 'Earned';
+
+  @override
+  String get rewardsCertificateTitle => 'Certificate of Achievement';
+
+  @override
+  String rewardsCertificateSubtitle(String level) {
+    return 'Awarded for reaching $level level';
+  }
+
+  @override
+  String rewardsCertificateDesc(String kg, int donations) {
+    return '$kg kg food saved across $donations donations';
+  }
+
+  @override
+  String get rewardsCertificateDate => 'Date';
+
+  @override
+  String get rewardsCertificateLevel => 'Level';
 
   @override
   String get levelPlatinum => 'Platinum';
@@ -2233,6 +2258,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String trackingHmsAgo(String time) {
+    return '$time ago';
+  }
+
+  @override
   String trackingSecondsAgo(int seconds) {
     return '${seconds}s ago';
   }
@@ -2240,6 +2270,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String trackingMinutesAgo(int minutes) {
     return '${minutes}m ago';
+  }
+
+  @override
+  String trackingHoursAgo(int hours) {
+    return '${hours}h ago';
+  }
+
+  @override
+  String trackingDaysAgo(int days) {
+    return '${days}d ago';
   }
 
   @override
@@ -2417,7 +2457,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Pickup cancelled — reposted to the open pool for other riders.';
 
   @override
-  String get riderPriorityBadge => 'Reopened · Priority';
+  String get riderPriorityBadge => 'Reopened';
 
   @override
   String get selfPickupMarkDistributionComplete => 'Mark Distribution Complete';

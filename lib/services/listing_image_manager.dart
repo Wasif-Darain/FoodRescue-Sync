@@ -30,4 +30,21 @@ class ListingImageManager {
     }
     return url;
   }
+
+  /// Uploads a video to Cloudinary's video upload endpoint. Returns the
+  /// secure URL of the uploaded video.
+  Future<String> uploadVideoBytes(Uint8List bytes, {String filename = 'upload.mp4'}) async {
+    final uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/video/upload');
+    final request = http.MultipartRequest('POST', uri)
+      ..fields['upload_preset'] = uploadPreset
+      ..files.add(http.MultipartFile.fromBytes('file', bytes, filename: filename));
+    final response = await request.send().timeout(const Duration(seconds: 60));
+    final responseBody = await response.stream.bytesToString();
+    final json = jsonDecode(responseBody) as Map<String, dynamic>;
+    final url = json['secure_url'] as String?;
+    if (url == null) {
+      throw Exception('Cloudinary video upload failed: ${json['error']?['message'] ?? responseBody}');
+    }
+    return url;
+  }
 }

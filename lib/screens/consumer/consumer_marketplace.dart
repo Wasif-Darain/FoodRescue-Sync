@@ -12,6 +12,7 @@ import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/block_provider.dart';
 import '../../providers/consumer_provider.dart';
+import 'pickup_coordination.dart' show showAssignRiderSheet;
 import '../../widgets/ui/block_button.dart';
 import '../../l10n/l10n_ext.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -26,7 +27,7 @@ class ConsumerMarketplace extends StatefulWidget {
 class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
   String _selectedCategory = 'All';
   String _filter = 'All';
-  bool _showRecentlyExpired = false;
+  bool _showExpired = false;
 
   List<(String, String)> _categories(AppLocalizations t) => [
     ('All', t.mktCatAll),
@@ -60,23 +61,33 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                       (l.quantity > 0 && (l.claimDeadline == null || l.claimDeadline!.isAfter(now)))),
             )
             .toList();
-        // Recently-expired listings (deadline passed within the last 12h)
-        // live under their own tab; older ones are never fetched/shown, so
-        // consumers see what they just missed without stale clutter.
+        // Expired listings: the effective window end — the same chain the
+        // card countdown uses (claim deadline, else the donor-set pickup
+        // end, else created + 4h) — has already passed, and the listing was
+        // posted no older than 12h ago. Older ones are never shown, so
+        // consumers see what they just missed without stale clutter. (The
+        // old filter required claimDeadline != null, which most listings
+        // never have, so the tab was permanently empty.)
         final recentCutoff = now.subtract(const Duration(hours: 12));
+        DateTime effectiveExpiry(ListingModel l) =>
+            l.claimDeadline ?? l.pickupEnd ?? l.createdAt.add(const Duration(hours: 4));
         final expiredListings = (snapshot.data ?? [])
             .where(
               (l) =>
                   !blocked.contains(l.donorId) &&
                   l.status != ListingStatusModel.claimed &&
-                  l.claimDeadline != null &&
-                  l.claimDeadline!.isBefore(now) &&
-                  l.claimDeadline!.isAfter(recentCutoff),
+                  l.quantity > 0 &&
+                  l.createdAt.isAfter(recentCutoff) &&
+                  effectiveExpiry(l).isBefore(now),
             )
             .toList()
-          ..sort((a, b) => b.claimDeadline!.compareTo(a.claimDeadline!));
-        final listings = _showRecentlyExpired ? expiredListings : allListings;
+          ..sort((a, b) => effectiveExpiry(b).compareTo(effectiveExpiry(a)));
+        final listings = _showExpired ? expiredListings : allListings;
         final availableCount = listings.where((l) => l.status == ListingStatusModel.active).length;
+        // Real countdown: the claim deadline when set, otherwise the
+        // listing's creation time + the standard 4-hour window. Falling
+        // back to `now + 4h` (the old behaviour) made every listing without
+        // a deadline show an identical, fabricated "3h 59m …" countdown.
         final filtered = listings
             .map(
               (l) => Listing(
@@ -90,10 +101,13 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                 price: l.price,
                 quantity: l.quantity.toInt(),
                 listingType: l.listingType,
-                pickupStart: l.claimDeadline ?? now,
-                pickupEnd: l.claimDeadline ?? now.add(const Duration(hours: 4)),
+                pickupStart: l.claimDeadline ?? l.pickupStart ?? l.createdAt,
+                pickupEnd: l.claimDeadline ??
+                    l.pickupEnd ??
+                    l.createdAt.add(const Duration(hours: 4)),
                 latitude: l.latitude,
                 longitude: l.longitude,
+                distance: consumer.distanceKmTo(l.latitude, l.longitude),
                 status: l.status == ListingStatusModel.claimed ? ListingStatus.claimed : ListingStatus.active,
                 category: l.category,
                 imageUrl: l.photoUrls.isNotEmpty ? l.photoUrls.first : null,
@@ -378,7 +392,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
               ),
               const SizedBox(height: 14),
 
-              // Available vs Recently Expired (last 12h) tabs.
+              // Available vs Expired (posted within the last 12h) tabs.
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
@@ -390,14 +404,14 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                     Expanded(child: _MarketTab(
                       label: t.mktTabAvailable,
                       icon: Icons.storefront_outlined,
-                      selected: !_showRecentlyExpired,
-                      onTap: () => setState(() => _showRecentlyExpired = false),
+                      selected: !_showExpired,
+                      onTap: () => setState(() => _showExpired = false),
                     )),
                     Expanded(child: _MarketTab(
                       label: t.mktTabRecentlyExpired(expiredListings.length),
                       icon: Icons.history_outlined,
-                      selected: _showRecentlyExpired,
-                      onTap: () => setState(() => _showRecentlyExpired = true),
+                      selected: _showExpired,
+                      onTap: () => setState(() => _showExpired = true),
                     )),
                   ],
                 ),
@@ -473,7 +487,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                   child: Column(
                     children: [
                       Icon(
-                        _showRecentlyExpired
+                        _showExpired
                             ? Icons.history_outlined
                             : Icons.storefront_outlined,
                         size: 48,
@@ -483,7 +497,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        _showRecentlyExpired
+                        _showExpired
                             ? t.mktNoRecentlyExpired
                             : t.mktNoListings,
                         style: TextStyle(
@@ -496,7 +510,7 @@ class _ConsumerMarketplaceState extends State<ConsumerMarketplace> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _showRecentlyExpired
+                        _showExpired
                             ? t.mktNoRecentlyExpiredHint
                             : t.mktCheckBackSoon,
                         style: TextStyle(
@@ -733,44 +747,84 @@ class _ListingCard extends StatelessWidget {
                     Positioned(
                       top: 10,
                       left: 10,
+                      right: 10,
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          AppBadge(
-                            label: listing.listingType == ListingType.donation
-                                ? t.commonFree
-                                : '৳${listing.price.toStringAsFixed(0)}',
-                            variant: listing.listingType == ListingType.donation
-                                ? BadgeVariant.green
-                                : BadgeVariant.orange,
+                          // Left side badges - wrapped to prevent overlap
+                          Flexible(
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                AppBadge(
+                                  label: listing.listingType == ListingType.donation
+                                      ? t.commonFree
+                                      : '৳${listing.price.toStringAsFixed(0)}',
+                                  variant: listing.listingType == ListingType.donation
+                                      ? BadgeVariant.green
+                                      : BadgeVariant.orange,
+                                ),
+                                if (isClaimed)
+                                  AppBadge(label: t.mktClaimedBadge, variant: BadgeVariant.gray)
+                                else if (listing.isPriority)
+                                  AppBadge(label: t.mktPriorityBadge, variant: BadgeVariant.red),
+                                if (listing.imageCount > 1)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 7,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.55),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.photo_library_outlined,
+                                          size: 10,
+                                          color: Colors.white70,
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          '${listing.imageCount}',
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                          if (isClaimed) ...[
-                            const SizedBox(width: 6),
-                            AppBadge(label: t.mktClaimedBadge, variant: BadgeVariant.gray),
-                          ] else if (listing.isPriority) ...[
-                            const SizedBox(width: 6),
-                            AppBadge(label: t.mktPriorityBadge, variant: BadgeVariant.red),
-                          ],
-                          if (listing.imageCount > 1) ...[
-                            const SizedBox(width: 6),
+                          // Right side - km badge
+                          if (listing.distance != null) ...[
+                            const SizedBox(width: 4),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 3,
+                                horizontal: 8,
+                                vertical: 4,
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.black.withValues(alpha: 0.55),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const Icon(
-                                    Icons.photo_library_outlined,
+                                    Icons.location_on,
                                     size: 10,
                                     color: Colors.white70,
                                   ),
-                                  const SizedBox(width: 3),
+                                  const SizedBox(width: 2),
                                   Text(
-                                    '${listing.imageCount}',
+                                    t.mktKmBadge(listing.distance!.toStringAsFixed(1)),
                                     style: const TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w500,
@@ -782,38 +836,6 @@ class _ListingCard extends StatelessWidget {
                             ),
                           ],
                         ],
-                      ),
-                    ),
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.55),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on,
-                              size: 10,
-                              color: Colors.white70,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              t.mktKmBadge(listing.distance.toString()),
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ],
@@ -1075,7 +1097,7 @@ class _ClaimActionsState extends State<_ClaimActions> {
     if (!mounted) return;
     final consumer = context.read<ConsumerProvider>();
     final t = context.l10n;
-    final success = await consumer.claimListing(
+    final pickupId = await consumer.claimListing(
       widget.listing.docId ?? '',
       widget.listing.quantity,
       scheduledTime: scheduledTime,
@@ -1087,19 +1109,25 @@ class _ClaimActionsState extends State<_ClaimActions> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          success
+          pickupId != null
               ? (scheduledTime == null
                     ? t.mktClaimedMsg(widget.listing.title)
                     : t.mktScheduledMsg(widget.listing.title))
               : t.mktClaimFailedMsg(widget.listing.title),
         ),
-        backgroundColor: success
+        backgroundColor: pickupId != null
             ? (scheduledTime == null
                   ? const Color(0xFF16A34A)
                   : const Color(0xFF2563EB))
             : const Color(0xFFDC2626),
       ),
     );
+    // Rider delivery chosen — offer to assign a specific rider now (same
+    // delivery-choice flow as accepting a direct donation); skipping leaves
+    // the pickup in the open pool for any rider to self-claim.
+    if (pickupId != null && !_selfPickup && mounted) {
+      showAssignRiderSheet(context, pickupId);
+    }
   }
 
   @override

@@ -104,9 +104,15 @@ class _DonorConsumersState extends State<DonorConsumers> {
                   (_availabilityFilter == 'Unavailable' && !a.isAvailable);
               return searchMatch && availMatch && !blocked.contains(a.uid);
             }).toList()..sort(
-              (a, b) => donor
-                  .donationCountFor(b.name)
-                  .compareTo(donor.donationCountFor(a.name)),
+              (a, b) {
+                // Rank by donation count (top consumers first), newest-joined
+                // as a stable tie-break.
+                final byCount = donor
+                    .donationCountFor(b.name)
+                    .compareTo(donor.donationCountFor(a.name));
+                if (byCount != 0) return byCount;
+                return b.joinedAt.compareTo(a.joinedAt);
+              },
             );
 
         return AppLayout(

@@ -250,10 +250,14 @@ class _LiveTrackingPageState extends State<_LiveTrackingPage> {
     );
   }
 
+  /// Always renders as h-m-s (e.g. "0:12:45 ago") so users can see exactly
+  /// how stale a rider's broadcast location is, down to the second.
   String _relativeTime(DateTime time) {
     final diff = DateTime.now().difference(time);
-    if (diff.inSeconds < 60) return context.l10n.trackingSecondsAgo(diff.inSeconds);
-    return context.l10n.trackingMinutesAgo(diff.inMinutes);
+    final h = diff.inHours;
+    final m = diff.inMinutes.remainder(60);
+    final s = diff.inSeconds.remainder(60);
+    return context.l10n.trackingHmsAgo('$h:$m:$s');
   }
 }
 

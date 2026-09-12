@@ -43,17 +43,12 @@ class _CountdownTimerState extends State<CountdownTimer> {
 
   void _startTimer() {
     _timer?.cancel();
-    // Seconds are only displayed below one hour, so tick at the coarsest
-    // rate that still keeps the visible label accurate: 1s under an hour,
-    // 30s under a day, 5min beyond that (also covers the negative/expired
-    // state, which is static text).
-    final diff = _expiry.difference(DateTime.now());
-    final interval = diff.inHours.abs() >= 24
-        ? const Duration(minutes: 5)
-        : diff.inMinutes.abs() >= 60
-            ? const Duration(seconds: 30)
-            : const Duration(seconds: 1);
-    _timer = Timer.periodic(interval, (_) {
+    // Tick at a fixed 1s interval so the label is always fresh and the
+    // countdown visibly seconds-down in every regime (expiry can be anywhere
+    // from seconds to days away). The earlier adaptive-rate code only set the
+    // interval once and never re-evaluated it, so a timer that started >24h
+    // out kept ticking at the 5-min rate even once it was under an hour.
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
         setState(() {
           // Refresh the cached expiry each tick so a long-lived, never-

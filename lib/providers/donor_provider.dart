@@ -34,7 +34,8 @@ class DonorProvider extends ChangeNotifier {
         .snapshots()
         .map(
           (snapshot) =>
-              snapshot.docs.map((doc) => _inventoryItemFromDoc(doc)).toList(),
+              snapshot.docs.map((doc) => _inventoryItemFromDoc(doc)).toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
         );
   }
 
@@ -86,7 +87,8 @@ class DonorProvider extends ChangeNotifier {
         .listen((snapshot) {
           _inventory = snapshot.docs
               .map((doc) => _inventoryItemFromDoc(doc))
-              .toList();
+              .toList()
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
           _isLoading = false;
           notifyListeners();
         });
@@ -113,6 +115,9 @@ class DonorProvider extends ChangeNotifier {
       isSurplus: data['isSurplus'] as bool? ?? false,
       category: data['category'] as String? ?? '',
       imageUrl: data['imageUrl'] as String?,
+      createdAt: data['createdAt'] is Timestamp
+          ? (data['createdAt'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -120,11 +125,15 @@ class DonorProvider extends ChangeNotifier {
     final data = doc.data() as Map<String, dynamic>;
     final created = data['createdAt'] is Timestamp
         ? (data['createdAt'] as Timestamp).toDate()
-        : DateTime.now();
+        : (data['pickupStart'] is Timestamp
+              ? (data['pickupStart'] as Timestamp).toDate()
+              : DateTime.now());
     final deadline = data['claimDeadline'];
     final end = deadline is Timestamp
         ? deadline.toDate()
-        : created.add(const Duration(hours: 4));
+        : (data['pickupEnd'] is Timestamp
+              ? (data['pickupEnd'] as Timestamp).toDate()
+              : created.add(const Duration(hours: 4)));
     final photoUrls =
         (data['photoUrls'] as List?)?.cast<String>() ?? const <String>[];
     return Listing(
@@ -179,6 +188,7 @@ class DonorProvider extends ChangeNotifier {
       'isSurplus': isSurplus,
       'category': category,
       'imageUrl': null,
+      'createdAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -242,6 +252,7 @@ class DonorProvider extends ChangeNotifier {
       'category': category,
       'photoUrls': photoUrls ?? [],
       'address': address,
+      'createdAt': FieldValue.serverTimestamp(),
     });
     return docRef.id;
   }
@@ -395,7 +406,7 @@ class DonorProvider extends ChangeNotifier {
     if (d.status != DonationScheduleStatus.scheduled) {
       return 'This donation can no longer be edited.';
     }
-    if (d.scheduledTime.difference(DateTime.now()).inHours < 12) {
+    if (d.scheduledTime.isBefore(DateTime.now().add(const Duration(hours: 12)))) {
       return 'Changes must be made at least 12 hours before the scheduled pickup time.';
     }
     if (d.docId != null) {
@@ -421,7 +432,7 @@ class DonorProvider extends ChangeNotifier {
     if (d.status != DonationScheduleStatus.scheduled) {
       return 'This donation can no longer be cancelled.';
     }
-    if (d.scheduledTime.difference(DateTime.now()).inHours < 12) {
+    if (d.scheduledTime.isBefore(DateTime.now().add(const Duration(hours: 12)))) {
       return 'Cancellations must be made at least 12 hours before the scheduled pickup time.';
     }
     if (d.docId != null) {
@@ -447,7 +458,7 @@ class DonorProvider extends ChangeNotifier {
       var blocked = 0;
       for (final d in _scheduledDonations) {
         if (d.status != DonationScheduleStatus.scheduled) continue;
-        if (d.scheduledTime.difference(now).inHours < 12) {
+        if (d.scheduledTime.isBefore(now.add(const Duration(hours: 12)))) {
           blocked++;
           continue;
         }

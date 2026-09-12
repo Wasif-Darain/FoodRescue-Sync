@@ -158,6 +158,12 @@ class NotificationService {
         importance: Importance.max,
       );
       final plugin = FlutterLocalNotificationsPlugin();
+      // Initialize the plugin with Android-specific settings BEFORE creating
+      // the channel — without this, the channel creation silently no-ops on
+      // some Android versions (the plugin's platform impl isn't wired up yet).
+      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const initSettings = InitializationSettings(android: androidSettings);
+      await plugin.initialize(initSettings);
       await plugin
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()

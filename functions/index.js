@@ -49,6 +49,13 @@ exports.sendNotificationPush = onDocumentCreated(
           notificationId: event.params.notificationId,
           payloadType,
         },
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'high_importance_channel',
+            sound: 'default',
+          },
+        },
       });
     } catch (err) {
       console.error('Failed to send push:', err);

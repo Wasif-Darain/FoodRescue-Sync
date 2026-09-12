@@ -126,6 +126,7 @@ class _LogRow extends StatelessWidget {
     final t = context.l10n;
     final date = '${log.completedAt.year}-${log.completedAt.month.toString().padLeft(2, '0')}-${log.completedAt.day.toString().padLeft(2, '0')}';
     final otherId = isDonor ? log.recipientId : log.donorId;
+    final otherName = isDonor ? log.recipientDisplayName : log.donorDisplayName;
     final itemSummary = log.itemSummary.entries
         .map((e) => '${e.key} (${e.value.toStringAsFixed(1)} kg)')
         .join(', ');
@@ -139,7 +140,7 @@ class _LogRow extends StatelessWidget {
           DetailRow(
             Icons.person_outline,
             isDonor ? 'Recipient' : 'Donor',
-            otherId.isEmpty ? '-' : otherId,
+            isDonor ? log.recipientDisplayName : log.donorDisplayName,
           ),
           if (itemSummary.isNotEmpty)
             DetailRow(Icons.inventory_2_outlined, 'Items', itemSummary),
@@ -155,7 +156,7 @@ class _LogRow extends StatelessWidget {
                 blockSheetMenuItem(
                   context,
                   targetUid: otherId,
-                  targetLabel: otherId,
+                  targetLabel: otherName,
                 ),
               ],
       ),
@@ -177,8 +178,8 @@ class _LogRow extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             isDonor
-                ? t.donationLogRecipient(log.recipientId, date)
-                : 'Donor: ${log.donorId} · $date',
+                ? t.donationLogRecipient(log.recipientDisplayName, date)
+                : 'Donor: ${log.donorDisplayName} · $date',
             style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

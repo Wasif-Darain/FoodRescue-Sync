@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
 import '../../widgets/ui/stat_card.dart';
@@ -206,6 +207,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                     icon: const Icon(Icons.trending_up),
                     color: 'blue',
                     subtitle: t.rewardsPointsNow(thisPeriodPoints),
+                    onTap: () => context.go('/leaderboard'),
                   ),
                   StatCard(
                     label: t.rewardsRescuedMeals,
@@ -224,11 +226,100 @@ class _RewardsScreenState extends State<RewardsScreen> {
                 ],
               ),
               const SizedBox(height: 24),
+              if (rewards.level != 'Novice') _buildCertificate(rewards),
               _buildBadges(rewards),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildCertificate(_RewardsData rewards) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.l10n;
+    final user = context.read<AuthProvider>().user;
+    final userName = user?.name ?? 'Contributor';
+    final levelLabel = _levelLabel(t, rewards.level);
+    final date = '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(t.rewardsCertificate, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
+            AppBadge(label: t.rewardsCertificateEarned, variant: BadgeVariant.green),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _HoverScale(
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: isDark ? const Color(0xFFF59E0B) : const Color(0xFFD97706), width: 2),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(Icons.workspace_premium, size: 48, color: isDark ? const Color(0xFFF59E0B) : const Color(0xFFD97706)),
+                const SizedBox(height: 12),
+                Text(
+                  t.rewardsCertificateTitle,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212)),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  t.rewardsCertificateSubtitle(levelLabel),
+                  style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  userName,
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212)),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  t.rewardsCertificateDesc(rewards.totalWeight.toStringAsFixed(0), rewards.totalDonations),
+                  style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Divider(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(t.rewardsCertificateDate, style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                        Text(date, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(t.rewardsCertificateLevel, style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
+                        Text(levelLabel, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFFF59E0B) : const Color(0xFFD97706))),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 

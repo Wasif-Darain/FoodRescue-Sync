@@ -815,15 +815,15 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String mktTabRecentlyExpired(int count) {
-    return 'সম্প্রতি মেয়াদোত্তীর্ণ ($count)';
+    return 'মেয়াদোত্তীর্ণ ($count)';
   }
 
   @override
-  String get mktNoRecentlyExpired => 'সম্প্রতি মেয়াদোত্তীর্ণ কোনো লিস্টিং নেই';
+  String get mktNoRecentlyExpired => 'মেয়াদোত্তীর্ণ কোনো লিস্টিং নেই';
 
   @override
   String get mktNoRecentlyExpiredHint =>
-      'গত ১২ ঘণ্টায় মেয়াদোত্তীর্ণ লিস্টিং এখানে দেখা যাবে।';
+      '১২ ঘণ্টার মধ্যে পোস্ট করা এবং মেয়াদোত্তীর্ণ হওয়া লিস্টিং এখানে দেখা যাবে।';
 
   @override
   String mktListedBy(String donorName) {
@@ -898,7 +898,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get mktClaimedBadge => 'ক্লেইম করা হয়েছে';
 
   @override
-  String get mktPriorityBadge => 'পুনরায় চালু · অগ্রাধিকার';
+  String get mktPriorityBadge => 'পুনরায় চালু';
 
   @override
   String get commonFreeLabel => 'ফ্রি';
@@ -1244,6 +1244,31 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get rewardsLocked => 'লকড';
+
+  @override
+  String get rewardsCertificate => 'সার্টিফিকেট';
+
+  @override
+  String get rewardsCertificateEarned => 'অর্জিত';
+
+  @override
+  String get rewardsCertificateTitle => 'অর্জনের সার্টিফিকেট';
+
+  @override
+  String rewardsCertificateSubtitle(String level) {
+    return '$level স্তরে পৌঁছানোর জন্য প্রদান করা হয়েছে';
+  }
+
+  @override
+  String rewardsCertificateDesc(String kg, int donations) {
+    return '$donations দানে জুড়ে $kg কেজি খাবার সংরক্ষণ করা হয়েছে';
+  }
+
+  @override
+  String get rewardsCertificateDate => 'তারিখ';
+
+  @override
+  String get rewardsCertificateLevel => 'স্তর';
 
   @override
   String get levelPlatinum => 'প্ল্যাটিনাম';
@@ -2243,6 +2268,11 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String trackingHmsAgo(String time) {
+    return '$time আগে';
+  }
+
+  @override
   String trackingSecondsAgo(int seconds) {
     return '$seconds সেকেন্ড আগে';
   }
@@ -2250,6 +2280,16 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String trackingMinutesAgo(int minutes) {
     return '$minutes মিনিট আগে';
+  }
+
+  @override
+  String trackingHoursAgo(int hours) {
+    return '$hours ঘন্টা আগে';
+  }
+
+  @override
+  String trackingDaysAgo(int days) {
+    return '$days দিন আগে';
   }
 
   @override
@@ -2427,7 +2467,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'পিকআপ বাতিল হয়েছে — অন্য রাইডারদের জন্য ওপেন পুলে আবার পোস্ট করা হয়েছে।';
 
   @override
-  String get riderPriorityBadge => 'পুনরায় চালু · অগ্রাধিকার';
+  String get riderPriorityBadge => 'পুনরায় চালু';
 
   @override
   String get selfPickupMarkDistributionComplete => 'বিতরণ সম্পন্ন চিহ্নিত করুন';

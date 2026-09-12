@@ -29,6 +29,20 @@ class ConsumerProvider extends ChangeNotifier {
   bool _selfTrackingPermissionDenied = false;
   bool get selfTrackingPermissionDenied => _selfTrackingPermissionDenied;
 
+  /// The consumer's own position (from their saved profile location), or
+  /// null when it hasn't been set — used for distance badges in the market.
+  double? get latitude => _latitude;
+  double? get longitude => _longitude;
+
+  /// Straight-line distance in km from the consumer's saved position to
+  /// [lat]/[lng], or null when either side is unknown.
+  double? distanceKmTo(double? lat, double? lng) {
+    if (_latitude == null || _longitude == null || lat == null || lng == null) {
+      return null;
+    }
+    return _haversineKm(_latitude!, _longitude!, lat, lng);
+  }
+
   ConsumerProvider() {
     _authSub = _auth.authStateChanges().listen(_onAuthChanged);
   }
@@ -90,7 +104,7 @@ class ConsumerProvider extends ChangeNotifier {
             if (distanceKm != null && distanceKm <= _maxRadiusKm) {
               message =
                   'New listing "${listing.title}" is available ${distanceKm.toStringAsFixed(1)} km away from you.';
-            } else if (ageHours >= _unattendedAfterHours) {
+            } else if (_unattendedAfterHours > 0 && ageHours >= _unattendedAfterHours) {
               message =
                   'Listing "${listing.title}" has been unattended for over $_unattendedAfterHours hours and is still available.';
             }
@@ -302,7 +316,7 @@ class ConsumerProvider extends ChangeNotifier {
       await _notifyUser(
         donorId,
         payloadType: 'request',
-        message: 'A consumer accepted your direct donation: $itemName.',
+        message: '${_auth.currentUser?.displayName ?? 'A consumer'} accepted your direct donation: $itemName.',
         targetRoute: '/donor/consumers',
       );
       return pickupRef.id;
@@ -311,7 +325,7 @@ class ConsumerProvider extends ChangeNotifier {
       await _notifyUser(
         donorId,
         payloadType: 'request',
-        message: 'A consumer rejected your direct donation: $itemName.',
+        message: '${_auth.currentUser?.displayName ?? 'A consumer'} rejected your direct donation: $itemName.',
         targetRoute: '/donor/consumers',
       );
       return null;
@@ -379,7 +393,10 @@ class ConsumerProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> claimListing(
+  /// Claims [listingId] and creates the pickup. Returns the new pickup's id
+  /// on success (so the UI can immediately offer rider assignment, matching
+  /// the direct-donation accept flow), or null on failure.
+  Future<String?> claimListing(
     String listingId,
     int claimQuantity, {
     DateTime? scheduledTime,
@@ -387,7 +404,7 @@ class ConsumerProvider extends ChangeNotifier {
     bool selfPickup = false,
   }) async {
     final uid = _auth.currentUser?.uid;
-    if (uid == null) return false;
+    if (uid == null) return null;
     try {
       late final double lat;
       late final double lng;
@@ -416,7 +433,7 @@ class ConsumerProvider extends ChangeNotifier {
               : ListingStatusModel.active.name,
         });
       });
-      if (!claimed) return false;
+      if (!claimed) return null;
       final requestRef = await _firestore.collection('requests').add({
         'consumerId': uid,
         'listingId': listingId,
@@ -427,7 +444,7 @@ class ConsumerProvider extends ChangeNotifier {
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
-      await _firestore.collection('pickups').add({
+      final pickupRef = await _firestore.collection('pickups').add({
         'consumerId': uid,
         'donorId': listingData['donorId'] as String?,
         'requestId': requestRef.id,
@@ -454,9 +471,9 @@ class ConsumerProvider extends ChangeNotifier {
             'Your listing "${listingData['title'] ?? 'a listing'}" was claimed by a consumer.',
         targetRoute: '/donor/consumers',
       );
-      return true;
+      return pickupRef.id;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 
@@ -545,7 +562,7 @@ class ConsumerProvider extends ChangeNotifier {
         riderUid,
         payloadType: 'pickup',
         listingId: pickupId,
-        message: 'You were assigned a pickup — accept or decline it from your dashboard.',
+        message: '${_auth.currentUser?.displayName ?? 'A consumer'} assigned you a pickup. Accept or decline it from your dashboard.',
         targetRoute: '/rider',
       );
       return null;

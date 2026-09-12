@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/pickup.dart';
+import '../services/listing_image_manager.dart';
 import '../services/push_notification_sender.dart';
 
 /// Backs the Rider dashboard: a pool of unclaimed pickups any rider can
@@ -42,7 +44,10 @@ class RiderProvider extends ChangeNotifier {
                 if (aBoost != null && bBoost != null) return bBoost.compareTo(aBoost);
                 if (aBoost != null) return -1;
                 if (bBoost != null) return 1;
-                return 0;
+                // Newest first among equally-prioritized pickups.
+                final aTime = a.scheduledTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+                final bTime = b.scheduledTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+                return bTime.compareTo(aTime);
               }),
       );
 
@@ -56,7 +61,12 @@ class RiderProvider extends ChangeNotifier {
         .collection('pickups')
         .where('volunteerDriverId', isEqualTo: uid)
         .snapshots()
-        .map((snap) => snap.docs.map((d) => PickupModel.fromFirestore(d)).where((p) => !p.assignmentPending).toList());
+        .map((snap) => snap.docs.map((d) => PickupModel.fromFirestore(d)).where((p) => !p.assignmentPending).toList()
+          ..sort((a, b) {
+            final aTime = a.scheduledTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final bTime = b.scheduledTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return bTime.compareTo(aTime);
+          }));
   }
 
   /// Pickups a consumer directly assigned to this rider that are still
@@ -71,7 +81,12 @@ class RiderProvider extends ChangeNotifier {
         .collection('pickups')
         .where('volunteerDriverId', isEqualTo: uid)
         .snapshots()
-        .map((snap) => snap.docs.map((d) => PickupModel.fromFirestore(d)).where((p) => p.assignmentPending).toList());
+        .map((snap) => snap.docs.map((d) => PickupModel.fromFirestore(d)).where((p) => p.assignmentPending).toList()
+          ..sort((a, b) {
+            final aTime = a.scheduledTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final bTime = b.scheduledTime ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return bTime.compareTo(aTime);
+          }));
   }
 
   /// Accepts a directly-assigned pickup — it moves from Assignment Requests
@@ -189,14 +204,129 @@ class RiderProvider extends ChangeNotifier {
   }
 
   /// Rider has handed the order off to the consumer — the rider's own leg is
-  /// done here. The consumer takes over from this point: they still need to
-  /// distribute it to the community and mark that complete before the
-  /// pickup is fully `completed`.
-  Future<void> markCompleted(String pickupId) async {
+  /// done here. Creates the donation_logs entry and notifies the donor.
+  Future<void> markCompleted(String pickupId, {Uint8List? distributionPhotoBytes}) async {
     stopTracking(pickupId);
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+
+    final pickupDoc = await _firestore.collection('pickups').doc(pickupId).get();
+    final pickupData = pickupDoc.data();
+    if (pickupData == null) return;
+
+    String? distributionPhotoUrl;
+    if (distributionPhotoBytes != null) {
+      try {
+        final manager = ListingImageManager();
+        distributionPhotoUrl = await manager.uploadBytes(
+          distributionPhotoBytes,
+          filename: 'distribution_${pickupId}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        );
+      } catch (_) {}
+    }
+
     await _firestore.collection('pickups').doc(pickupId).update({
       'status': PickupStatusModel.delivered.name,
+      'completedAt': FieldValue.serverTimestamp(),
+      if (distributionPhotoUrl != null) 'distributionPhotoUrl': distributionPhotoUrl,
     });
+
+    await _createDonationLog(pickupId, pickupData);
+    await _decrementInventory(pickupData);
+    await _notifyDonorOnCompletion(pickupData);
+  }
+
+  /// Creates a donation_logs entry so the completed donation shows up in
+  /// both the donor's and consumer's Donation Log screens.
+  Future<void> _createDonationLog(String pickupId, Map<String, dynamic> pickupData) async {
+    try {
+      final donorId = pickupData['donorId'] as String? ?? '';
+      final donorName = pickupData['donorName'] as String? ?? 'A donor';
+      final consumerId = pickupData['consumerId'] as String? ?? '';
+      final listingId = pickupData['listingId'] as String? ?? '';
+
+      String consumerName = '';
+      if (consumerId.isNotEmpty) {
+        try {
+          final consumerDoc = await _firestore.collection('users').doc(consumerId).get();
+          consumerName = consumerDoc.data()?['name'] as String? ?? '';
+        } catch (_) {}
+      }
+
+      double totalWeight = 0;
+      if (listingId.isNotEmpty) {
+        try {
+          final listingDoc = await _firestore.collection('listings').doc(listingId).get();
+          totalWeight = ((listingDoc.data()?['quantity'] as num?)?.toDouble()) ?? 0;
+        } catch (_) {}
+      }
+
+      await _firestore.collection('donation_logs').add({
+        'donorId': donorId,
+        'donorName': donorName,
+        'recipientId': consumerId,
+        'recipientName': consumerName,
+        'listingId': listingId,
+        'totalWeight': totalWeight,
+        'completedAt': FieldValue.serverTimestamp(),
+        'pickupId': pickupId,
+      });
+    } catch (_) {}
+  }
+
+  /// Decrements inventory when food is distributed.
+  Future<void> _decrementInventory(Map<String, dynamic> pickupData) async {
+    try {
+      final listingId = pickupData['listingId'] as String?;
+      if (listingId == null || listingId.isEmpty) return;
+
+      final inventorySnap = await _firestore
+          .collection('inventory_items')
+          .where('listingId', isEqualTo: listingId)
+          .where('donorId', isEqualTo: pickupData['donorId'])
+          .limit(1)
+          .get();
+
+      if (inventorySnap.docs.isNotEmpty) {
+        final invDoc = inventorySnap.docs.first;
+        final currentQty = (invDoc.data()['quantity'] as num?)?.toInt() ?? 0;
+        if (currentQty > 0) {
+          await invDoc.reference.update({
+            'quantity': currentQty - 1,
+            'lastDistributedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// Notifies donor with clear who/what/when.
+  Future<void> _notifyDonorOnCompletion(Map<String, dynamic> pickupData) async {
+    try {
+      final donorId = pickupData['donorId'] as String? ?? '';
+      final consumerId = pickupData['consumerId'] as String? ?? '';
+      final listingTitle = pickupData['listingTitle'] as String? ?? 'food donation';
+      if (donorId.isEmpty) return;
+
+      String consumerName = 'A recipient';
+      if (consumerId.isNotEmpty) {
+        try {
+          final consumerDoc = await _firestore.collection('users').doc(consumerId).get();
+          final name = consumerDoc.data()?['name'] as String?;
+          if (name != null && name.isNotEmpty) consumerName = name;
+        } catch (_) {}
+      }
+
+      final now = DateTime.now();
+      final when = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} on ${now.day}/${now.month}/${now.year}';
+
+      await sendPushNotification(
+        recipientUid: donorId,
+        message: 'Your donation of "$listingTitle" was delivered to $consumerName at $when. Thank you for rescuing food!',
+        payloadType: 'donation_completed',
+        targetRoute: '/donor/donation-log',
+      );
+    } catch (_) {}
   }
 
   /// Makes sure every one of the rider's currently-`enRoute` deliveries has
