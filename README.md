@@ -1,87 +1,73 @@
 # FoodRescue-Sync
 
-FoodRescue-Sync is a mobile application designed to connect food donors, consumers, and organizations in a unified platform for surplus food redistribution. The application enables donors to list surplus food items, consumers to discover available food, and organizations to coordinate bulk requests and pickups.
-
-## Project Overview
-
-This Flutter-based application implements a three-role system comprising donors, consumers, and organizations. The platform facilitates food surplus management by providing real-time marketplace discovery, inventory tracking, pickup coordination, leaderboards, rewards, and notification management. The backend is powered by Firebase (Authentication, Firestore) with Cloudinary for image uploads.
+Surplus food redistribution app connecting donors, consumers, and riders. Donors list surplus food, consumers discover and claim it, riders deliver it.
 
 ## Tech Stack
 
-While the project relies primarily on Firebase, here is the current state of the listed stack:
-
-- **UI:** Flutter (Dart)
-- **State Management:** Provider
-- **Local Database / Backend:** Firebase (Firestore, Firebase Auth)
-- **Intelligence Engine:** TensorFlow Lite — **not yet implemented.** The original proposal mentioned it, but the current codebase does not include it. There are no `tflite`/`tflite_flutter` dependencies in `pubspec.yaml`.
-- **Location Services:** OpenStreetMap — implemented via the `flutter_map` package which renders OpenStreetMap tiles and uses OSRM for routing directions.
-- **Image Uploads:** Cloudinary (REST API).
-
-> **Note:** Of the listed stack, **TensorFlow Lite is the only item not fully implemented.** All other items (UI, Provider, Firebase, OpenStreetMap) are present and working.
+- Flutter, Dart
+- Provider, GoRouter
+- Firebase Auth, Cloud Firestore, Firebase Messaging, Firebase Hosting
+- Cloudinary
+- OpenStreetMap, OSRM, Nominatim
+- Geolocator, Flutter TTS, Flutter Local Notifications
+- Image Picker, HTTP, URL Launcher, Shared Preferences, Intl
 
 ## Prerequisites
 
-Before running the project locally, ensure you have:
+- Flutter SDK 3.12+ (`flutter --version`)
+- Firebase CLI (`firebase --version`) + access to the `foodrescue-sync` project
+- Android: Android Studio + SDK, or a connected device with USB debugging
+- iOS: macOS + Xcode (iOS builds only run on macOS)
+- Web: Chrome
 
-1. Flutter SDK (3.12 or higher)
-2. Dart SDK (bundled with Flutter)
-3. Android Studio or Xcode (for Android/iOS respectively)
-4. A code editor (VS Code recommended)
-5. Access to the team's shared **Firebase project**
+## Setup
 
-## Installation & Setup
+- `git clone https://github.com/Wasif-Darain/FoodRescue-Sync.git`
+- `cd FoodRescue-Sync`
+- `flutter pub get`
+- `flutterfire configure` (select `foodrescue-sync`; regenerates `lib/firebase_options.dart`)
+- `flutter doctor`
 
-1. **Clone the repository**:
+## Run
 
-   ```bash
-   git clone [https://github.com/Wasif-Darain/FoodRescue-Sync.git](https://github.com/Wasif-Darain/FoodRescue-Sync.git)
-   cd FoodRescue-Sync
-   ```
+- Android: `flutter run` (or `flutter run -d <device-id>`)
+- iOS: `flutter run -d ios` (macOS only)
+- Web: `flutter run -d chrome`
 
-2. **Install Dart dependencies**:
-   ```bash
-   flutter pub get
-   ```
+## Project Structure
 
-3. **Link to the shared Firebase project**:
-   ```bash
-   flutterfire configure
-   ```
-   
-> **Note:** Select the shared team project when prompted to generate your local `lib/firebase_options.dart` file. If `flutterfire` is not installed, run `dart pub global activate flutterfire_cli` first.
+- `lib/main.dart` — app entry, Firebase init, providers, router
+- `lib/router.dart` — GoRouter routes and role guards
+- `lib/screens/donor/` — dashboard, create listing, expiry tracker, donation log
+- `lib/screens/consumer/` — marketplace, surplus radar, bulk request, request tracker, pickup coordination
+- `lib/screens/rider/` — delivery pool, navigation, live tracking
+- `lib/screens/admin/` — dashboard, accounts, user detail, reports, statistics
+- `lib/screens/shared/` — profile, notifications, reviews, help, language, privacy
+- `lib/screens/rewards/`, `lib/screens/leaderboard/` — tiers, points, rankings
+- `lib/providers/` — auth, donor, consumer, rider, admin, theme, locale, block
+- `lib/services/` — Cloudinary uploads, FCM service, push relay sender
+- `lib/models/` — Firestore models
+- `lib/widgets/` — layout and reusable UI
+- `lib/l10n/` — English + Bengali strings
+- `functions/` — Cloud Functions (FCM push, stats; needs Blaze to deploy)
+- `apps_script/` — free push relay used instead of Cloud Functions
+- `test/`, `integration_test/` — unit/widget and flow tests
 
-4. **Verify the Flutter environment**:
-   ```bash
-   flutter doctor
-   ```
+## Key Features
 
+- Role-based auth with admin approval (donor, consumer, rider, admin)
+- Donor inventory with expiry tracking and surplus flags
+- Donation and flash-sale listings with photos and pickup windows
+- Marketplace with category filters and live countdowns
+- Surplus Radar map with OSRM road routes
+- Bulk requests, request tracking, pickup scheduling
+- Rider pool with direct assignment, TTS navigation, live tracking
+- Donation logs shared by donor and recipient
+- Rewards tiers, points, badges, leaderboards from real activity
+- Push + in-app notifications with per-type preferences
+- Ratings, reviews, reports, user blocking
+- English/Bengali UI with dark mode
 
-
-## Running the Project
-
-Once configured, run:
-
-```bash
-flutter run -d chrome        # for web
-flutter run -d <device-id>   # for Android / iOS
-
-```
-
-For hot reload:
-
-```bash
-flutter run -d chrome --continuous
-
-```
-
-To build a release:
-
-```bash
-flutter build apk   # Android
-flutter build ios   # iOS
-flutter build web   # Web
-
-```
 
 ## Firestore Collection Schema
 
