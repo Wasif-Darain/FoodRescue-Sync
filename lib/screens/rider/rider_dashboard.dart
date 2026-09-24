@@ -12,6 +12,13 @@ import '../../widgets/ui/live_tracking_map.dart';
 import '../../widgets/ui/rider_navigation_map.dart';
 import '../../widgets/ui/cancellation_dialog.dart';
 
+/// Main screen for delivery riders.
+///
+/// Combines three live Firestore-backed streams from [RiderProvider]:
+///  * available pickups   – open jobs any rider can claim,
+///  * pending assignments – jobs offered directly to this rider,
+///  * my deliveries       – jobs this rider has already accepted.
+/// It shows summary counts, permission warnings and a card list per section.
 class RiderDashboard extends StatelessWidget {
   const RiderDashboard({super.key});
 
@@ -26,6 +33,8 @@ class RiderDashboard extends StatelessWidget {
       title: t.riderDashTitle,
       subtitle: t.riderDashSubtitle,
       currentRoute: '/rider',
+      // Three nested StreamBuilders so the whole page rebuilds whenever any of
+      // the three lists changes.
       child: StreamBuilder<List<PickupModel>>(
         stream: rider.availablePickupsStream,
         builder: (context, availableSnap) {
@@ -47,17 +56,20 @@ class RiderDashboard extends StatelessWidget {
               final completed = mine
                   .where((p) => p.status == PickupStatusModel.delivered || p.status == PickupStatusModel.distributing || p.status == PickupStatusModel.completed)
                   .toList();
+              // Make sure location tracking is running for the rider's jobs.
               rider.ensureTracking(mine);
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ---- Greeting card ----
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
                       borderRadius: BorderRadius.circular(18),
+                      // Hard-edged offset shadow (blurRadius 0): the app's card style.
                       boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
                     ),
                     child: Row(
@@ -66,21 +78,25 @@ class RiderDashboard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Greets the rider by first name.
                               Text(t.riderDashGreeting(user.name.split(' ').first), style: TextStyle(color: isDark ? Colors.white : const Color(0xFF121212), fontSize: 18, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 6),
                               Text(t.riderDashTagline, style: TextStyle(color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontSize: 13)),
                             ],
                           ),
                         ),
+                        // Scooter icon on a soft blue tinted tile.
                         Container(
                           width: 52,
                           height: 52,
-                          decoration: BoxDecoration(color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(14)),
+                          decoration: BoxDecoration(color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.18 : 0.10), borderRadius: BorderRadius.circular(14)),
                           child: const Icon(Icons.moped_outlined, color: Color(0xFF2563EB), size: 26),
                         ),
                       ],
                     ),
                   ),
+                  // Warning banner shown only when location permission was
+                  // denied (tracking can't work without it).
                   if (rider.permissionDenied) ...[
                     const SizedBox(height: 16),
                     Container(
@@ -104,6 +120,7 @@ class RiderDashboard extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 20),
+                  // ---- Summary counters (equal-height row of three cards) ----
                   IntrinsicHeight(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -116,9 +133,10 @@ class RiderDashboard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  // ---- Direct assignment requests (only if any exist) ----
                   if (pending.isNotEmpty) ...[
                     const SizedBox(height: 24),
-                    Text(t.riderAssignmentRequests, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+                    _SectionTitle(text: t.riderAssignmentRequests, color: const Color(0xFFEA580C)),
                     const SizedBox(height: 12),
                     ...pending.map((p) => Padding(
                           padding: const EdgeInsets.only(bottom: 12),
@@ -126,7 +144,8 @@ class RiderDashboard extends StatelessWidget {
                         )),
                   ],
                   const SizedBox(height: 24),
-                  Text(t.riderAvailablePickups, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+                  // ---- Open pickups the rider can claim ----
+                  _SectionTitle(text: t.riderAvailablePickups, color: const Color(0xFF2563EB)),
                   const SizedBox(height: 12),
                   if (available.isEmpty)
                     _EmptyNote(text: t.riderNoAvailable, isDark: isDark)
@@ -136,7 +155,8 @@ class RiderDashboard extends StatelessWidget {
                           child: _AvailablePickupCard(pickup: p),
                         )),
                   const SizedBox(height: 24),
-                  Text(t.riderMyDeliveries, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+                  // ---- Deliveries currently in progress ----
+                  _SectionTitle(text: t.riderMyDeliveries, color: const Color(0xFF16A34A)),
                   const SizedBox(height: 12),
                   if (active.isEmpty)
                     _EmptyNote(text: t.riderNoDeliveries, isDark: isDark)
@@ -157,6 +177,29 @@ class RiderDashboard extends StatelessWidget {
   }
 }
 
+/// Section heading with a small colored bar on the left so each section
+/// (requests / available / mine) is easy to tell apart at a glance.
+class _SectionTitle extends StatelessWidget {
+  final String text;
+  final Color color;
+  const _SectionTitle({required this.text, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(children: [
+      Container(
+        width: 4,
+        height: 16,
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
+      ),
+      const SizedBox(width: 8),
+      Text(text, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF121212))),
+    ]);
+  }
+}
+
+/// Small summary tile showing a number and its label (e.g. "3 Active").
 class _RiderStat extends StatelessWidget {
   final int count;
   final String label;
@@ -170,11 +213,18 @@ class _RiderStat extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
       ),
       child: Column(children: [
-        Text('$count', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+        // Short accent line in the stat's color.
+        Container(
+          width: 24,
+          height: 3,
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+        ),
+        Text('$count', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
         const SizedBox(height: 2),
         Text(label, style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575), fontWeight: FontWeight.w500)),
       ]),
@@ -182,6 +232,7 @@ class _RiderStat extends StatelessWidget {
   }
 }
 
+/// Placeholder shown when a list section has no items.
 class _EmptyNote extends StatelessWidget {
   final String text;
   final bool isDark;
@@ -202,18 +253,23 @@ class _EmptyNote extends StatelessWidget {
   }
 }
 
+/// Formats a scheduled time as "d/M/yyyy · HH:mm"; empty string if null.
 String _formatScheduled(DateTime? d) {
   if (d == null) return '';
   return '${d.day}/${d.month}/${d.year} · ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 }
 
+/// Card for an open pickup that any rider may claim (blue outline).
 class _AvailablePickupCard extends StatelessWidget {
   final PickupModel pickup;
   const _AvailablePickupCard({required this.pickup});
 
+  /// Tries to claim this pickup and reports the result in a snackbar:
+  /// green on success, red with the error message on failure.
   Future<void> _claim(BuildContext context) async {
     final t = context.l10n;
     final error = await context.read<RiderProvider>().claimPickup(pickup.id);
+    // The card may have left the screen while the claim was in flight.
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(error ?? t.riderClaimedMsg),
@@ -236,6 +292,8 @@ class _AvailablePickupCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Title row: listing title (or "Pickup from <donor>" fallback) and
+          // a red "priority" badge when the pickup has been boosted.
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Expanded(
               child: Text(
@@ -248,16 +306,19 @@ class _AvailablePickupCard extends StatelessWidget {
               AppBadge(label: t.riderPriorityBadge, variant: BadgeVariant.red),
             ],
           ]),
+          // Donor name line (only when known).
           if (pickup.donorName != null && pickup.donorName!.isNotEmpty) ...[
             const SizedBox(height: 2),
             Text(t.riderPickupFrom(pickup.donorName!), style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
           ],
           const SizedBox(height: 6),
+          // Pickup address (single line, ellipsized).
           Row(children: [
             Icon(Icons.location_on_outlined, size: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
             const SizedBox(width: 4),
             Expanded(child: Text(pickup.address?.isNotEmpty == true ? pickup.address! : t.riderNoAddress, style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), overflow: TextOverflow.ellipsis)),
           ]),
+          // Scheduled pickup time, if any.
           if (pickup.scheduledTime != null) ...[
             const SizedBox(height: 4),
             Row(children: [
@@ -267,6 +328,7 @@ class _AvailablePickupCard extends StatelessWidget {
             ]),
           ],
           const SizedBox(height: 12),
+          // Full-width claim button.
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -282,10 +344,13 @@ class _AvailablePickupCard extends StatelessWidget {
   }
 }
 
+/// Card for a pickup assigned directly to this rider (orange outline) with
+/// Accept / Decline buttons.
 class _AssignmentRequestCard extends StatelessWidget {
   final PickupModel pickup;
   const _AssignmentRequestCard({required this.pickup});
 
+  /// Accepts or declines the assignment, then shows a confirmation snackbar.
   Future<void> _respond(BuildContext context, bool accept) async {
     final t = context.l10n;
     final rider = context.read<RiderProvider>();
@@ -316,6 +381,7 @@ class _AssignmentRequestCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Listing title, falling back to "Pickup from <donor>".
           Text(
             pickup.listingTitle?.isNotEmpty == true ? pickup.listingTitle! : t.riderPickupFrom(pickup.donorName ?? ''),
             style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)),
@@ -323,12 +389,14 @@ class _AssignmentRequestCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(t.riderAssignedDirectly, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575))),
           const SizedBox(height: 6),
+          // Pickup address.
           Row(children: [
             Icon(Icons.location_on_outlined, size: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
             const SizedBox(width: 4),
             Expanded(child: Text(pickup.address?.isNotEmpty == true ? pickup.address! : t.riderNoAddress, style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), overflow: TextOverflow.ellipsis)),
           ]),
           const SizedBox(height: 12),
+          // Decline (red outline) and Accept (green filled) side by side.
           Row(children: [
             Expanded(
               child: OutlinedButton(
@@ -352,10 +420,14 @@ class _AssignmentRequestCard extends StatelessWidget {
   }
 }
 
+/// Card for a delivery the rider has accepted and is working on.
+/// Offers navigation, live map and (while not yet picked up) cancellation.
 class _MyDeliveryCard extends StatelessWidget {
   final PickupModel pickup;
   const _MyDeliveryCard({required this.pickup});
 
+  /// Primary action: if the job is only scheduled, mark it "en route" first,
+  /// then open the turn-by-turn navigation screen.
   Future<void> _advance(BuildContext context) async {
     if (pickup.status == PickupStatusModel.scheduled) {
       await context.read<RiderProvider>().markEnRoute(pickup.id);
@@ -364,6 +436,8 @@ class _MyDeliveryCard extends StatelessWidget {
     await showRiderNavigation(context, pickup.id);
   }
 
+  /// Asks the rider for a cancellation reason, then cancels the accepted
+  /// pickup. Does nothing if the dialog is dismissed.
   Future<void> _cancel(BuildContext context) async {
     final t = context.l10n;
     final rider = context.read<RiderProvider>();
@@ -372,6 +446,7 @@ class _MyDeliveryCard extends StatelessWidget {
       title: t.riderCancelPickup,
       confirmLabel: t.riderCancelPickup,
     );
+    // null = user closed the dialog without confirming.
     if (reason == null) return;
     final error = await rider.cancelAcceptedPickup(pickup.id, reason);
     if (!context.mounted) return;
@@ -385,12 +460,14 @@ class _MyDeliveryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final t = context.l10n;
+    // Status label + badge color; anything unlisted counts as "claimed".
     final (statusLabel, variant) = switch (pickup.status) {
       PickupStatusModel.enRoute => (t.pickupStatusEnRoute, BadgeVariant.orange),
       PickupStatusModel.pickedUp => (t.pickupStatusPickedUp, BadgeVariant.purple),
       PickupStatusModel.completed => (t.pickupStatusCompleted, BadgeVariant.green),
       _ => (t.riderStatusClaimed, BadgeVariant.blue),
     };
+    // Button text: "Start" for new jobs, "Resume" once already under way.
     final actionLabel = pickup.status == PickupStatusModel.scheduled ? t.riderStartDelivery : t.riderResumeNavigation;
 
     return Container(
@@ -403,6 +480,7 @@ class _MyDeliveryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Title + status badge.
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Expanded(
               child: Text(
@@ -415,6 +493,8 @@ class _MyDeliveryCard extends StatelessWidget {
             const SizedBox(width: 8),
             AppBadge(label: statusLabel, variant: variant),
           ]),
+          // "Deliver to <name>": the consumer's name is loaded live from their
+          // user document (shows "…" until it arrives).
           if (pickup.consumerId != null && pickup.consumerId!.isNotEmpty) ...[
             const SizedBox(height: 4),
             StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -426,16 +506,19 @@ class _MyDeliveryCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 6),
+          // Address.
           Row(children: [
             Icon(Icons.location_on_outlined, size: 12, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)),
             const SizedBox(width: 4),
             Expanded(child: Text(pickup.address?.isNotEmpty == true ? pickup.address! : t.riderNoAddress, style: TextStyle(fontSize: 11.5, color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575)), overflow: TextOverflow.ellipsis)),
           ]),
+          // Countdown to the scheduled time.
           if (pickup.scheduledTime != null) ...[
             const SizedBox(height: 6),
             Align(alignment: Alignment.centerLeft, child: CountdownTimer(expiry: pickup.scheduledTime!, fontSize: 9)),
           ],
           const SizedBox(height: 12),
+          // Action row: start/resume navigation + live map shortcut.
           Row(children: [
             Expanded(
               child: ElevatedButton.icon(
@@ -452,6 +535,7 @@ class _MyDeliveryCard extends StatelessWidget {
               child: const Icon(Icons.map_outlined, size: 18),
             ),
           ]),
+          // Cancel is only offered before the food has been picked up.
           if (pickup.status == PickupStatusModel.scheduled || pickup.status == PickupStatusModel.enRoute) ...[
             const SizedBox(height: 8),
             SizedBox(
