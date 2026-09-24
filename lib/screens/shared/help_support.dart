@@ -1,287 +1,222 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/layout/app_layout.dart';
-import '../../widgets/ui/app_button.dart';
-import '../../widgets/ui/user_badge.dart';
+import '../../models/notification_model.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/block_provider.dart';
 import '../../l10n/l10n_ext.dart';
+import '../../utils/display_name.dart';
 
-const _supportEmail = 'support@foodrescuesync.app';
-
-Future<void> _showContentDialog(BuildContext context, String title, String content) {
-  return showDialog(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(title),
-      content: SingleChildScrollView(child: Text(content, style: const TextStyle(height: 1.5))),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(dialogContext.l10n.commonClose)),
-      ],
-    ),
-  );
-}
-
-Future<void> _showMessageDialog(BuildContext context, String title, String type) async {
-  final controller = TextEditingController();
-  final t = context.l10n;
-  final message = await showDialog<String>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(title),
-      content: TextField(
-        controller: controller,
-        maxLines: 4,
-        decoration: InputDecoration(hintText: t.helpMessageHint, border: const OutlineInputBorder()),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(t.commonCancel)),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
-          child: Text(t.helpSend),
-        ),
-      ],
-    ),
-  );
-  if (message == null) return;
-  if (!context.mounted) return;
-  if (message.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.helpMessageEmpty)));
-    return;
-  }
-  final user = FirebaseAuth.instance.currentUser;
-  await FirebaseFirestore.instance.collection('support_messages').add({
-    'uid': user?.uid,
-    'email': user?.email,
-    'type': type,
-    'message': message,
-    'createdAt': Timestamp.now(),
-  });
-  if (!context.mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(t.helpMessageSent), backgroundColor: const Color(0xFF16A34A)),
-  );
-}
-
-Future<void> _getInTouch(BuildContext context) async {
-  final t = context.l10n;
-  final uri = Uri(scheme: 'mailto', path: _supportEmail, query: 'subject=FoodRescue Sync Support');
-  final launched = await launchUrl(uri);
-  if (!context.mounted || launched) return;
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.helpNoEmailApp)));
-}
-
-class HelpSupport extends StatelessWidget {
-  const HelpSupport({super.key});
+/// The NotificationCenter widget displays a list of notifications for the current user.
+/// It listens to Firestore for notification updates and filters out notifications from blocked users.
+class NotificationCenter extends StatelessWidget {
+  const NotificationCenter({super.key});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF121212);
-    final subColor = isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575);
-    final cardColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
-    final borderColor = isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2);
-    final t = context.l10n;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
 
-    return AppLayout(
-      title: t.helpTitle,
-      subtitle: t.helpSubtitle,
-      currentRoute: '/profile',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: cardColor,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.fromBorderSide(BorderSide(color: borderColor)),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
+    // Stream that listens to Firestore notifications for the logged-in user.
+    final stream = uid == null
+        ? Stream<List<NotificationModel>>.value([]) // no user logged in, empty stream
+        : FirebaseFirestore.instance
+            .collection('notifications')
+            .where('recipientUid', isEqualTo: uid)
+            .snapshots()
+            .map((snap) => snap.docs
+                .map((doc) => NotificationModel.fromFirestore(doc))
+                .toList()
+              // Sort notifications descending by creation date (most recent first)
+              ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+
+    return StreamBuilder<List<NotificationModel>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        // Get the current list of blocked user IDs from BlockProvider
+        final blocked = context.watch<BlockProvider>().blockedUids;
+        // Filter out notifications from blocked users
+        final notifications = (snapshot.data ?? [])
+            .where((n) => n.senderUid.isEmpty || !blocked.contains(n.senderUid))
+            .toList();
+        // Count unread notifications
+        final unread = notifications.where((n) => !n.isRead).length;
+        final t = context.l10n;
+
+        return AppLayout(
+          title: t.notifCenterTitle,
+          subtitle: t.notifCenterUnread(unread),
+          currentRoute: '/notifications',
+          action: TextButton(
+            onPressed: () async {
+              if (uid == null) return;
+              // Mark all unread notifications for this user as read in a batch write
+              final batch = FirebaseFirestore.instance.batch();
+              final query = await FirebaseFirestore.instance
+                  .collection('notifications')
+                  .where('recipientUid', isEqualTo: uid)
+                  .where('isRead', isEqualTo: false)
+                  .get();
+              for (final doc in query.docs) {
+                batch.update(doc.reference, {'isRead': true});
+              }
+              await batch.commit();
+            },
+            child: Text(
+              t.notifCenterMarkAllRead,
+              style: TextStyle(
+                color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A),
+                fontSize: 13,
+              ),
             ),
-            child: Column(
-              children: [
-                _HelpTile(
-                  icon: Icons.help_outline,
-                  title: t.helpFaq,
-                  subtitle: t.helpFaqSub,
-                  textColor: textColor,
-                  subColor: subColor,
-                  onTap: () => _showContentDialog(context, t.helpFaq, t.helpFaqContent),
-                ),
-                _HelpTile(
-                  icon: Icons.chat_outlined,
-                  title: t.helpContactSupport,
-                  subtitle: t.helpContactSupportSub,
-                  textColor: textColor,
-                  subColor: subColor,
-                  onTap: () => _showMessageDialog(context, t.helpContactSupport, 'contact'),
-                ),
-                _HelpTile(
-                  icon: Icons.report_problem_outlined,
-                  title: t.helpReportIssue,
-                  subtitle: t.helpReportIssueSub,
-                  textColor: textColor,
-                  subColor: subColor,
-                  onTap: () => _showMessageDialog(context, t.helpReportIssue, 'report'),
-                ),
-                _HelpTile(
-                  icon: Icons.description_outlined,
-                  title: t.helpTerms,
-                  subtitle: t.helpTermsSub,
-                  textColor: textColor,
-                  subColor: subColor,
-                  onTap: () => _showContentDialog(context, t.helpTerms, t.helpTermsContent),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: AppButton(
-                    label: t.helpGetInTouch,
-                    icon: const Icon(Icons.mail_outline, size: 16),
-                    fullWidth: true,
-                    onPressed: () => _getInTouch(context),
-                  ),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14),
+                  offset: const Offset(0, 4),
+                  blurRadius: 0,
                 ),
               ],
             ),
+            // Show empty state if no notifications, otherwise show list of notifications
+            child: notifications.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.notifications_off_outlined,
+                          size: 48,
+                          color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          t.notifCenterEmpty,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : const Color(0xFF121212),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Column(
+                    children: notifications.map((n) => _NotificationTile(notification: n)).toList(),
+                  ),
           ),
-          const SizedBox(height: 20),
-          Text(t.helpRankingSystem, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
-          const SizedBox(height: 4),
-          Text(t.helpRankingSystemSub, style: TextStyle(fontSize: 12, color: subColor)),
-          const SizedBox(height: 14),
-          _TierSection(
-            title: t.helpDonorTiers,
-            icon: Icons.volunteer_activism_outlined,
-            color: const Color(0xFF16A34A),
-            tiers: [
-              ('Novice', t.levelNovice, t.tierDonorNoviceDesc),
-              ('Contributor', t.tierContributor, t.tierDonorContributorDesc),
-              ('Provider', t.tierProvider, t.tierDonorProviderDesc),
-              ('Patron', t.tierPatron, t.tierDonorPatronDesc),
-              ('Master', t.tierMaster, t.tierDonorMasterDesc),
-              ('Legend', t.tierLegend, t.tierDonorLegendDesc),
-            ],
-            isDark: isDark,
-            cardColor: cardColor,
-            borderColor: borderColor,
-            textColor: textColor,
-            subColor: subColor,
-          ),
-          const SizedBox(height: 14),
-          _TierSection(
-            title: t.helpConsumerTiers,
-            icon: Icons.restaurant_outlined,
-            color: const Color(0xFFEA580C),
-            tiers: [
-              ('Novice', t.levelNovice, t.tierConsumerNoviceDesc),
-              ('Scout', t.tierScout, t.tierConsumerScoutDesc),
-              ('Saver', t.tierSaver, t.tierConsumerSaverDesc),
-              ('Rescuer', t.tierRescuer, t.tierConsumerRescuerDesc),
-              ('Master', t.tierMaster, t.tierConsumerMasterDesc),
-              ('Legend', t.tierLegend, t.tierConsumerLegendDesc),
-            ],
-            isDark: isDark,
-            cardColor: cardColor,
-            borderColor: borderColor,
-            textColor: textColor,
-            subColor: subColor,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-class _TierSection extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final List<(String, String, String)> tiers;
-  final bool isDark;
-  final Color cardColor;
-  final Color borderColor;
-  final Color textColor;
-  final Color subColor;
-
-  const _TierSection({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.tiers,
-    required this.isDark,
-    required this.cardColor,
-    required this.borderColor,
-    required this.textColor,
-    required this.subColor,
-  });
+/// Widget to represent a single notification tile in the notification center.
+class _NotificationTile extends StatelessWidget {
+  final NotificationModel notification;
+  const _NotificationTile({required this.notification});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.fromBorderSide(BorderSide(color: borderColor)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.14), offset: const Offset(0, 4), blurRadius: 0)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(width: 8),
-              Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColor)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          for (final (colorKey, label, desc) in tiers)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Determine icon and color based on notification type
+    final (icon, color) = switch (notification.payloadType) {
+      'listing' => (Icons.storefront_outlined, const Color(0xFF16A34A)),
+      'request' => (Icons.assignment_outlined, const Color(0xFF2563EB)),
+      'pickup' => (Icons.local_shipping_outlined, const Color(0xFFEA580C)),
+      'cancellation' => (Icons.cancel_outlined, const Color(0xFFDC2626)),
+      _ => (Icons.notifications_outlined, const Color(0xFF757575)),
+    };
+
+    // Background color differs if notification is read or unread, adapted to theme
+    final bg = notification.isRead
+        ? (isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF))
+        : (isDark ? const Color(0xFF0D2818) : const Color(0xFFDCFCE7));
+
+    return GestureDetector(
+      onTap: () async {
+        // Mark notification as read in Firestore if still unread
+        if (!notification.isRead) {
+          await FirebaseFirestore.instance
+              .collection('notifications')
+              .doc(notification.id)
+              .update({'isRead': true});
+        }
+        if (!context.mounted) return;
+
+        final auth = context.read<AuthProvider>();
+        final target = notification.routeFor(auth.user?.mode);
+
+        // If the notification points to a different module, switch user mode first
+        final owner = modeForRoute(target);
+        if (owner != null) auth.switchToMode(owner);
+
+        if (!context.mounted) return;
+        context.go(target); // Navigate to the notification's target route
+      },
+      child: Container(
+        color: bg,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Circle icon with background tint based on notification type
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(width: 14),
+            // Notification message and formatted date/time
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  UserBadge(label: label, colorKey: colorKey, isLegend: colorKey == 'Legend', fontSize: 9),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(desc, style: TextStyle(fontSize: 11.5, color: subColor)),
+                  Text(
+                    sanitizeLegacyNotificationMessage(notification.message),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? const Color(0xFFE5E5E5) : const Color(0xFF525252),
+                      fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${notification.createdAt.hour.toString().padLeft(2, '0')}:${notification.createdAt.minute.toString().padLeft(2, '0')} · ${notification.createdAt.day}/${notification.createdAt.month}/${notification.createdAt.year}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575),
+                    ),
                   ),
                 ],
               ),
             ),
-        ],
+            // Small green dot indicator if notification is unread
+            if (!notification.isRead)
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(top: 6),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF16A34A),
+                  shape: BoxShape.circle,
+                ),
+              ),
+          ],
+        ),
       ),
-    );
-  }
-}
-
-class _HelpTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color textColor;
-  final Color subColor;
-  final VoidCallback onTap;
-
-  const _HelpTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.textColor,
-    required this.subColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return ListTile(
-      leading: Icon(icon, size: 20, color: const Color(0xFF16A34A)),
-      title: Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textColor)),
-      subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: subColor)),
-      trailing: Icon(Icons.arrow_forward_ios, size: 12, color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFBFBFBF)),
-      dense: true,
-      onTap: onTap,
     );
   }
 }
