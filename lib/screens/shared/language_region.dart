@@ -10,6 +10,7 @@ const _regionOptions = ['Bangladesh', 'India', 'Pakistan', 'Nepal'];
 const _timeZoneOptions = ['GMT+6 (Dhaka)', 'GMT+5:30 (Kolkata)', 'GMT+5 (Karachi)', 'GMT+0 (UTC)'];
 const _currencyOptions = ['BDT (৳)', 'USD (\$)', 'INR (₹)', 'EUR (€)'];
 
+// Displays the user's language, region, time zone, and currency preferences.
 class LanguageRegion extends StatefulWidget {
   const LanguageRegion({super.key});
 
@@ -25,12 +26,14 @@ class _LanguageRegionState extends State<LanguageRegion> {
   @override
   void initState() {
     super.initState();
+    // Restore saved preferences after the widget is initialized.
     _load();
   }
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
+    // Keep the current defaults when a preference has not been saved yet.
     setState(() {
       _region = prefs.getString('pref_region') ?? _regionOptions.first;
       _timeZone = prefs.getString('pref_timezone') ?? _timeZoneOptions.first;
@@ -45,6 +48,7 @@ class _LanguageRegionState extends State<LanguageRegion> {
     required String prefsKey,
     required void Function(String) apply,
   }) async {
+    // Show the supplied options in a reusable radio-selection dialog.
     final selected = await showDialog<String>(
       context: context,
       builder: (dialogContext) => SimpleDialog(
@@ -70,6 +74,7 @@ class _LanguageRegionState extends State<LanguageRegion> {
     );
     if (selected == null || selected == current) return;
     apply(selected);
+    // Persist the new value so it is restored on the next visit.
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(prefsKey, selected);
     if (!mounted) return;
@@ -81,6 +86,7 @@ class _LanguageRegionState extends State<LanguageRegion> {
   Future<void> _pickLanguage(AppLocalizations t) async {
     final localeProvider = context.read<LocaleProvider>();
     final current = localeProvider.locale.languageCode;
+    // Language selection is handled by LocaleProvider rather than preferences.
     final selected = await showDialog<String>(
       context: context,
       builder: (dialogContext) => SimpleDialog(
@@ -118,6 +124,7 @@ class _LanguageRegionState extends State<LanguageRegion> {
 
   @override
   Widget build(BuildContext context) {
+    // Derive the screen colors from the active theme.
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final subColor = isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575);
@@ -221,6 +228,7 @@ class _RegionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Keep each preference row visually consistent and independently tappable.
     return ListTile(
       leading: Icon(icon, size: 20, color: const Color(0xFF16A34A)),
       title: Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textColor)),
