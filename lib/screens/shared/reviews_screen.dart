@@ -12,8 +12,11 @@ class ReviewsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Empty string means "not signed in".
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
+    // Live stream of reviews where the current user is the target.
+    // If signed out, emit an empty list so the empty state is shown.
     final reviewsStream = uid.isEmpty
         ? Stream<List<ReviewModel>>.value([])
         : FirebaseFirestore.instance
@@ -24,6 +27,8 @@ class ReviewsScreen extends StatelessWidget {
             final reviews = snap.docs
                 .map((doc) => ReviewModel.fromFirestore(doc))
                 .toList()
+              // Sorted client-side (newest first) so the query needs no
+              // composite Firestore index.
               ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
             return reviews;
           });
@@ -35,10 +40,12 @@ class ReviewsScreen extends StatelessWidget {
       child: StreamBuilder<List<ReviewModel>>(
         stream: reviewsStream,
         builder: (context, snapshot) {
+          // Show a spinner until the first snapshot arrives.
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           final reviews = snapshot.data ?? [];
+          // Empty state: star icon + "No reviews yet".
           if (reviews.isEmpty) {
             return Center(
               child: Column(
@@ -51,6 +58,7 @@ class ReviewsScreen extends StatelessWidget {
               ),
             );
           }
+          // Scrollable list of reviews with a divider between each.
           return ListView.separated(
             itemCount: reviews.length,
             separatorBuilder: (_, __) => Divider(color: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE2E2E2)),
@@ -62,6 +70,8 @@ class ReviewsScreen extends StatelessWidget {
   }
 }
 
+/// One review entry: rating, reviewer name, date, optional text, and
+/// optional image/video attachments.
 class _ReviewRow extends StatelessWidget {
   final ReviewModel review;
   const _ReviewRow({required this.review});
@@ -77,6 +87,8 @@ class _ReviewRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header row: star + "n/5", reviewer name, and date pushed to the
+          // far right by the Spacer.
           Row(children: [
             Icon(Icons.star, size: 14, color: const Color(0xFFF59E0B)),
             const SizedBox(width: 4),
@@ -84,15 +96,19 @@ class _ReviewRow extends StatelessWidget {
             const SizedBox(width: 8),
             Text(review.raterName, style: TextStyle(fontSize: 11, color: subColor)),
             const Spacer(),
+            // Date formatted as yyyy-MM-dd (zero-padded month/day).
             Text(
               '${review.createdAt.year}-${review.createdAt.month.toString().padLeft(2, '0')}-${review.createdAt.day.toString().padLeft(2, '0')}',
               style: TextStyle(fontSize: 10, color: subColor),
             ),
           ]),
+          // Optional written review text.
           if (review.reviewText != null && review.reviewText!.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(review.reviewText!, style: TextStyle(fontSize: 13, color: textColor)),
           ],
+          // Optional image: shown as a cropped thumbnail; tap to open a
+          // full-size, zoomable/pannable preview in a dialog.
           if (review.imageUrl != null && review.imageUrl!.isNotEmpty) ...[
             const SizedBox(height: 8),
             GestureDetector(
@@ -109,6 +125,7 @@ class _ReviewRow extends StatelessWidget {
                   height: 120,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  // Fallback placeholder if the image fails to load.
                   errorBuilder: (_, __, ___) => Container(
                     height: 60,
                     color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5),
@@ -118,6 +135,8 @@ class _ReviewRow extends StatelessWidget {
               ),
             ),
           ],
+          // Optional video: there's no inline player yet, so show a small
+          // "Video attached" row whose button opens a dialog with the URL.
           if (review.videoUrl != null && review.videoUrl!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Container(
