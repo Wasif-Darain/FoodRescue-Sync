@@ -8,6 +8,7 @@ import '../../models/models.dart';
 import '../../l10n/l10n_ext.dart';
 import '../../l10n/gen/app_localizations.dart';
 
+// Helper map to get localized account type labels from AccountType enum
 Map<AccountType, String> _accountTypeLabel(AppLocalizations t) => {
   AccountType.restaurant: t.accountTypeRestaurant,
   AccountType.caterer: t.accountTypeCaterer,
@@ -19,6 +20,7 @@ Map<AccountType, String> _accountTypeLabel(AppLocalizations t) => {
   AccountType.rider: t.accountTypeRider,
 };
 
+// Widget for a labeled slider setting with an icon, hint, current value display and slider control
 class _SettingSlider extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -30,6 +32,7 @@ class _SettingSlider extends StatelessWidget {
   final int divisions;
   final String sliderLabel;
   final ValueChanged<double> onChanged;
+
   const _SettingSlider({
     required this.icon,
     required this.label,
@@ -49,6 +52,7 @@ class _SettingSlider extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Row showing icon, label, and current selected value
         Row(
           children: [
             Icon(
@@ -77,6 +81,7 @@ class _SettingSlider extends StatelessWidget {
             ),
           ],
         ),
+        // Hint text explaining the setting
         Text(
           hint,
           style: TextStyle(
@@ -84,6 +89,7 @@ class _SettingSlider extends StatelessWidget {
             color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF757575),
           ),
         ),
+        // Slider to update the setting value
         Slider(
           value: value,
           min: min,
@@ -97,6 +103,7 @@ class _SettingSlider extends StatelessWidget {
   }
 }
 
+// Main screen widget for editing user profile information
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
 
@@ -105,23 +112,26 @@ class EditProfile extends StatefulWidget {
 }
 
 class _EditProfileState extends State<EditProfile> {
-  late final TextEditingController _nameCtrl;
-  late final TextEditingController _phoneCtrl;
-  final _currentPasswordCtrl = TextEditingController();
-  final _newPasswordCtrl = TextEditingController();
-  bool _saving = false;
-  bool _changingPassword = false;
+  late final TextEditingController _nameCtrl; // controller for name input
+  late final TextEditingController _phoneCtrl; // controller for phone input
+  final _currentPasswordCtrl = TextEditingController(); // current password input controller
+  final _newPasswordCtrl = TextEditingController(); // new password input controller
+
+  bool _saving = false; // flag to indicate if profile is being saved
+  bool _changingPassword = false; // flag to indicate if password change is in progress
 
   @override
   void initState() {
     super.initState();
     final auth = context.read<AuthProvider>();
+    // Initialize controllers with existing user data
     _nameCtrl = TextEditingController(text: auth.user!.name);
     _phoneCtrl = TextEditingController(text: auth.phone);
   }
 
   @override
   void dispose() {
+    // Dispose controllers to free resources
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     _currentPasswordCtrl.dispose();
@@ -129,49 +139,75 @@ class _EditProfileState extends State<EditProfile> {
     super.dispose();
   }
 
+  // Utility to show a message snack bar, optionally with error styling
   void _message(String value, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(value), backgroundColor: isError ? const Color(0xFFEF4444) : const Color(0xFF16A34A)),
     );
   }
 
+  // Save updated profile information
   Future<void> _save() async {
     final t = context.l10n;
     final name = _nameCtrl.text.trim();
+
+    // Validate that name is not empty
     if (name.isEmpty) {
       _message(t.editProfileNameRequired, isError: true);
       return;
     }
-    setState(() => _saving = true);
+
+    setState(() => _saving = true); // show loading state
+
     final auth = context.read<AuthProvider>();
+
+    // Attempt to update profile with new name and phone number
     final ok = await auth.updateProfile(name: name, phone: _phoneCtrl.text.trim());
+
     if (!mounted) return;
-    setState(() => _saving = false);
+
+    setState(() => _saving = false); // hide loading state
+
+    // Show success or error message
     _message(ok ? t.editProfileProfileUpdated : (auth.errorMessage ?? ''), isError: !ok);
   }
 
+  // Change password flow with validations
   Future<void> _changePassword() async {
     final t = context.l10n;
     final current = _currentPasswordCtrl.text;
     final next = _newPasswordCtrl.text;
+
+    // Validate that both current and new passwords are entered
     if (current.isEmpty || next.isEmpty) {
       _message(t.editProfileEnterCurrentAndNew, isError: true);
       return;
     }
+
+    // Check new password strength (minimum length 8)
     if (next.length < 8) {
       _message(t.editProfileWeakPassword, isError: true);
       return;
     }
-    setState(() => _changingPassword = true);
+
+    setState(() => _changingPassword = true); // show loading on change password button
+
     final auth = context.read<AuthProvider>();
+
+    // Attempt to change password
     final ok = await auth.changePassword(currentPassword: current, newPassword: next);
+
     if (!mounted) return;
-    setState(() => _changingPassword = false);
+
+    setState(() => _changingPassword = false); // hide loading
+
     if (ok) {
+      // Clear fields on success
       _currentPasswordCtrl.clear();
       _newPasswordCtrl.clear();
       _message(t.editProfilePasswordChanged);
     } else {
+      // Show error if current password wrong or other failure
       _message(auth.errorMessage ?? t.editProfileWrongCurrentPassword, isError: true);
     }
   }
@@ -179,6 +215,7 @@ class _EditProfileState extends State<EditProfile> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Get current user from AuthProvider
     final user = context.watch<AuthProvider>().user!;
     final auth = context.watch<AuthProvider>();
     final t = context.l10n;
@@ -186,7 +223,7 @@ class _EditProfileState extends State<EditProfile> {
     return AppLayout(
       title: t.editProfileTitle,
       subtitle: t.editProfileSubtitle,
-      currentRoute: '/profile',
+      currentRoute: '/profile', // current navigation route
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -205,9 +242,11 @@ class _EditProfileState extends State<EditProfile> {
             ),
           ],
         ),
+        // Main content column for profile editing form
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Section title for personal info inputs
             Text(
               t.editProfilePersonalInfo,
               style: TextStyle(
@@ -217,13 +256,18 @@ class _EditProfileState extends State<EditProfile> {
               ),
             ),
             const SizedBox(height: 18),
+
+            // Editable fields for name and email (email read-only)
             _EditableFieldRow(
               children: [
                 _EditableField(label: t.editProfileFullName, controller: _nameCtrl),
                 _EditableField(label: t.editProfileEmailAddress, controller: TextEditingController(text: user.email), readOnly: true),
               ],
             ),
+
             const SizedBox(height: 14),
+
+            // Editable fields for phone and account type (account type read-only)
             _EditableFieldRow(
               children: [
                 _EditableField(label: t.editProfilePhoneNumber, controller: _phoneCtrl, keyboardType: TextInputType.phone),
@@ -234,7 +278,10 @@ class _EditProfileState extends State<EditProfile> {
                 ),
               ],
             ),
+
             const SizedBox(height: 14),
+
+            // Section label and picker for location
             Text(
               t.editProfileLocation,
               style: TextStyle(
@@ -246,6 +293,8 @@ class _EditProfileState extends State<EditProfile> {
               ),
             ),
             const SizedBox(height: 4),
+
+            // Tap area to pick location, update location, and show current address or placeholder
             InkWell(
               borderRadius: BorderRadius.circular(8),
               onTap: () async {
@@ -277,6 +326,7 @@ class _EditProfileState extends State<EditProfile> {
                         : const Color(0xFFE2E2E2),
                   ),
                 ),
+                // Row showing location icon, address text, and edit icon
                 child: Row(
                   children: [
                     Icon(
@@ -312,7 +362,10 @@ class _EditProfileState extends State<EditProfile> {
                 ),
               ),
             ),
+
             const SizedBox(height: 18),
+
+            // Section title for radar notification settings
             Text(
               t.editProfileRadarNotifications,
               style: TextStyle(
@@ -323,7 +376,10 @@ class _EditProfileState extends State<EditProfile> {
                     : const Color(0xFF525252),
               ),
             ),
+
             const SizedBox(height: 4),
+
+            // Slider for max radius in kilometers notifications
             _SettingSlider(
               icon: Icons.radar_outlined,
               label: t.editProfileRadarLabel,
@@ -336,6 +392,8 @@ class _EditProfileState extends State<EditProfile> {
               sliderLabel: '${auth.maxRadiusKm.toStringAsFixed(0)} km',
               onChanged: (v) => auth.updateMaxRadiusKm(v),
             ),
+
+            // Slider for unattended hours threshold setting
             _SettingSlider(
               icon: Icons.schedule_outlined,
               label: t.editProfileUnattendedLabel,
@@ -348,11 +406,17 @@ class _EditProfileState extends State<EditProfile> {
               sliderLabel: '${auth.unattendedAfterHours} h',
               onChanged: (v) => auth.updateUnattendedAfterHours(v.round()),
             ),
+
             const SizedBox(height: 22),
+
+            // Divider to separate sections
             Divider(
               color: isDark ? const Color(0xFF3F3F46) : const Color(0xFF262626),
             ),
+
             const SizedBox(height: 18),
+
+            // Section title for changing password
             Text(
               t.editProfileChangePassword,
               style: TextStyle(
@@ -361,7 +425,10 @@ class _EditProfileState extends State<EditProfile> {
                 color: isDark ? Colors.white : const Color(0xFFF5F5F5),
               ),
             ),
+
             const SizedBox(height: 16),
+
+            // Row of editable fields: current password and new password
             _EditableFieldRow(
               children: [
                 _EditableField(
@@ -378,13 +445,19 @@ class _EditProfileState extends State<EditProfile> {
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
+
+            // Button to trigger password change, disabled when in progress
             AppButton(
               label: _changingPassword ? t.commonLoading : t.editProfileChangePassword,
               outlined: true,
               onPressed: _changingPassword ? null : _changePassword,
             ),
+
             const SizedBox(height: 22),
+
+            // Buttons for saving profile changes or cancelling edits
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -398,6 +471,7 @@ class _EditProfileState extends State<EditProfile> {
                   label: t.commonCancel,
                   outlined: true,
                   onPressed: () {
+                    // Reset fields to original values if cancelled
                     _nameCtrl.text = auth.user!.name;
                     _phoneCtrl.text = auth.phone;
                   },
@@ -411,13 +485,15 @@ class _EditProfileState extends State<EditProfile> {
   }
 }
 
+// A reusable widget representing a labeled editable input field with optional readOnly or obscured text
 class _EditableField extends StatelessWidget {
-  final String label;
-  final TextEditingController controller;
-  final bool readOnly;
-  final bool obscure;
-  final String? placeholder;
-  final TextInputType? keyboardType;
+  final String label; // Label above the input field
+  final TextEditingController controller; // Controller managing the text
+  final bool readOnly; // Whether input is read-only
+  final bool obscure; // Whether to hide input text (for passwords)
+  final String? placeholder; // Placeholder hint text
+  final TextInputType? keyboardType; // Keyboard type (e.g. phone, email)
+
   const _EditableField({
     required this.label,
     required this.controller,
@@ -433,6 +509,7 @@ class _EditableField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Label text
         Text(
           label,
           style: TextStyle(
@@ -442,6 +519,8 @@ class _EditableField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
+
+        // The actual text input field
         TextField(
           controller: controller,
           readOnly: readOnly,
@@ -473,14 +552,18 @@ class _EditableField extends StatelessWidget {
   }
 }
 
+// Widget to arrange a list of child widgets either in a row or column,
+// switching layout responsively based on available width
 class _EditableFieldRow extends StatelessWidget {
   final List<Widget> children;
+
   const _EditableFieldRow({required this.children});
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        // If narrow, stack children vertically with spacing
         if (constraints.maxWidth < 420) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -492,6 +575,7 @@ class _EditableFieldRow extends StatelessWidget {
             ],
           );
         }
+        // If wider, arrange children horizontally with spacing
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
